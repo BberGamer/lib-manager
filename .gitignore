@@ -1,0 +1,114 @@
+# Build output (Ant / NetBeans)
+/build/
+/dist/
+/target/
+/out/
+*.class
+*.war
+*.ear
+
+# NetBeans user-specific files
+/nbproject/private/
+/nbproject/private.properties
+/nbproject/private.xml
+nbactions-*.xml
+
+# IntelliJ IDEA
+/.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata/
+bin/
+
+# Visual Studio Code
+.vscode/
+
+# Operating system files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.pid.lock
+*.stackdump
+hs_err_pid*
+replay_pid*
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+*~
+.cache/
+.tmp/
+tmp/
+temp/
+
+# Test and coverage output
+test-output/
+coverage/
+.coverage/
+junit-reports/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+secrets/
+/db.properties
+
+# Cấu hình cục bộ hiện tại của project LMS
+/src/java/utils/DBContext.java
+/web/META-INF/context.xml
+
+# Certificates and private keys
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+
+# Local database files and dumps
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+*.mv.db
+*.trace.db
+*.sql.gz
+*.dump
+
+# Application-server generated files
+work/
+generated/
+.glassfish/
+.payara/
+.tomcat/
+
+# Dependency/tool caches
+.mvn/timing.properties
+.gradle/
+
+# Codex/local agent state (keep shared AGENTS.md tracked)
+.codex/
+.agents/
