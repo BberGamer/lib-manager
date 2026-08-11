@@ -4,6 +4,8 @@
 package model;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Đại diện cho bản ghi trong bảng {@code categories}, độc lập với tầng HTTP và JDBC.
@@ -19,26 +21,28 @@ public class Category {
     private String createdBy;
     private String updatedBy;
 
+    private Set<Book> books = new HashSet<>();
     /**
      * Khởi tạo đối tượng rỗng để JSP và tầng điều phối có thể gán dữ liệu biểu mẫu.
      */
     public Category() {
     }
 
-    /**
-     * Khởi tạo dữ liệu nhập cần thiết khi tạo hoặc cập nhật thể loại.
-     *
-     * @param id mã thể loại, bằng 0 đối với bản ghi chưa lưu
-     * @param name tên thể loại
-     * @param description mô tả tùy chọn
-     */
     public Category(int id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
     }
 
-    /** @return mã định danh của thể loại */
+    public Category(String name, String description) {
+        this.name = name;
+        this.description = description;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.isDeleted = false;
+    }
+
+    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -116,5 +120,27 @@ public class Category {
     /** @param updatedBy tài khoản thực hiện cập nhật gần nhất */
     public void setUpdatedBy(String updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+
+    @Override
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", isDeleted=" + isDeleted +
+                ", createdBy='" + createdBy + '\'' +
+                ", updatedBy='" + updatedBy + '\'' +
+                '}';
     }
 }

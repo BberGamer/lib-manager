@@ -68,6 +68,22 @@ public class CategoryDao {
     }
 
     /**
+     * Lấy toàn bộ danh sách thể loại chưa xóa (phục vụ chọn ở Form).
+     */
+    public List<Category> findAll() throws Exception {
+        String sql = "SELECT " + ACTIVE_COLUMNS + " FROM categories WHERE is_deleted = 0 ORDER BY name ASC";
+        List<Category> list = new ArrayList<>();
+        try (Connection conn = openConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapCategory(rs));
+            }
+        }
+        return list;
+    }
+
+    /**
      * Tìm một thể loại chưa xóa theo mã.
      *
      * @param id mã thể loại
