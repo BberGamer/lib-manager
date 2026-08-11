@@ -46,6 +46,8 @@ public class BookDAOImpl implements BookDAO {
         if ("publish_year".equals(sort)) sortCol = "b.publish_year";
         else if ("available".equals(sort)) sortCol = "b.available";
         else if ("price".equals(sort)) sortCol = "b.price";
+        else if ("created_at".equals(sort)) sortCol = "b.created_at";
+        else if ("id".equals(sort)) sortCol = "b.id";
         
         String sortOrder = "ASC";
         if ("DESC".equalsIgnoreCase(order)) sortOrder = "DESC";
