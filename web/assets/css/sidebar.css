@@ -1,0 +1,246 @@
+/*
+ * Định dạng sidebar quản trị, gồm nhận diện, hồ sơ người dùng, điều hướng,
+ * hành động tài khoản và chế độ hiển thị trên thiết bị di động.
+ */
+
+.admin-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #1f232a 0%, #161a20 100%);
+  color: #fff;
+  padding: 24px 18px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: transform var(--transition) ease, left var(--transition) ease;
+}
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  text-decoration: none;
+  color: #fff;
+}
+.admin-sidebar-brand .brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+.admin-sidebar-brand .brand-icon i {
+  font-size: 1.2rem;
+  color: #fff;
+}
+.admin-sidebar-brand .brand-title {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+.admin-sidebar-brand .brand-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 400;
+  display: block;
+}
+.admin-sidebar-usercard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition);
+}
+.admin-sidebar-usercard:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.admin-sidebar-usercard-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(244, 121, 32, 0.15);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  border: 1.5px solid rgba(244, 121, 32, 0.3);
+}
+.admin-sidebar-usercard-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.admin-sidebar-usercard-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-sidebar-usercard-role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.admin-sidebar-usercard-role.admin {
+  color: #ff9e42;
+}
+.admin-sidebar-usercard-role.librarian {
+  color: #3b82f6;
+}
+.admin-sidebar-nav-container {
+  flex: 1;
+  overflow-y: auto;
+  margin-right: -8px;
+  padding-right: 8px;
+}
+
+/* Giữ khả năng cuộn khi menu dài nhưng giảm độ nổi của thanh cuộn. */
+.admin-sidebar-nav-container::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-sidebar-nav-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+.admin-sidebar-nav-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.25);
+}
+.admin-nav-group {
+  margin-bottom: 24px;
+}
+.admin-nav-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-left: 10px;
+}
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.admin-nav-item i {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  opacity: 0.85;
+}
+.admin-nav-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.admin-nav-item.active {
+  background: rgba(244, 121, 32, 0.12);
+  border-color: rgba(244, 121, 32, 0.2);
+  color: var(--primary-light);
+  font-weight: 600;
+}
+.admin-nav-item.active i {
+  color: var(--primary);
+  opacity: 1;
+}
+.admin-sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-sidebar-footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+.admin-sidebar-logout-form {
+    margin: 0;
+}
+.admin-sidebar-logout-form .admin-sidebar-footer-btn {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.admin-sidebar-footer-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+.admin-sidebar-footer-btn.logout-btn:hover {
+  background: rgba(255, 71, 87, 0.12);
+  color: #ff4757;
+}
+.admin-sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.admin-sidebar-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    height: 100vh;
+    width: 280px;
+    box-shadow: 5px 0 25px rgba(0,0,0,0.25);
+    z-index: 1000;
+  }
+  .admin-sidebar.show {
+    left: 0;
+  }
+}
