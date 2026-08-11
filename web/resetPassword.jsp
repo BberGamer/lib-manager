@@ -1,14 +1,11 @@
-<%-- 
-  Tên file: login.jsp 
-  Mục đích: Trang hiển thị giao diện đăng nhập cho người dùng và thủ thư/quản trị viên. 
-  Tầng: Giao diện (Presentation Layer - JSP View) 
-  Controller: LoginServlet (/login)
-  Attributes:
-    - request: error (thông báo lỗi), success (thông báo thành công)
+<%--
+  Tên file: resetPassword.jsp
+  Mục đích: Trang đặt lại mật khẩu mới cho người dùng.
+  Tầng: Giao diện (Presentation Layer - JSP View)
+  Trách nhiệm: Hiển thị form cho phép người dùng nhập Email và Mật khẩu mới để cập nhật tài khoản, đồng bộ với login.jsp.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css">
 
@@ -16,45 +13,47 @@
     <section class="login-section">
         <div class="container">
             <div class="login-container">
-                <!-- Login Form -->
+                <!-- Reset Password Form -->
                 <div class="login-card">
                     <div class="login-header">
-                        <h1>Đăng nhập</h1>
-                        <p>Vào tài khoản của bạn để truy cập thư viện</p>
+                        <h1>Đặt lại mật khẩu</h1>
+                        <p>Nhập địa chỉ email và mật khẩu mới của bạn</p>
                     </div>
 
-                    <c:if test="${not empty error}">
+                    <c:if test="${not empty mess}">
                         <div class="alert alert-danger">
                             <i class="fa-solid fa-circle-exclamation"></i>
-                            <c:out value="${error}" />
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty success}">
-                        <div class="alert alert-success">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <c:out value="${success}" />
+                            <c:out value="${mess}" />
                         </div>
                     </c:if>
 
-                    <form method="POST" action="${pageContext.request.contextPath}/login" class="login-form">
+                    <form method="POST" action="${pageContext.request.contextPath}/resetPassword" class="login-form">
                         <div class="form-group">
-                            <label for="username">Tên đăng nhập</label>
-                            <input type="text" id="username" name="username" value="<c:out value="${param.username}"/>" required placeholder="Nhập tên đăng nhập" class="form-control">
+                            <label for="email">Địa chỉ Email</label>
+                            <input type="email" id="email" name="email" value="${email}"
+                                   required placeholder="Nhập địa chỉ email" class="form-control">
                         </div>
 
                         <div class="form-group">
-                            <label for="password">Mật khẩu</label>
-                            <input type="password" id="password" name="password" required placeholder="Nhập mật khẩu" class="form-control">
+                            <label for="password">Mật khẩu mới</label>
+                            <input type="password" id="password" name="password"
+                                   required placeholder="Nhập mật khẩu mới" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">Xác nhận mật khẩu mới</label>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   required placeholder="Nhập lại mật khẩu mới" class="form-control">
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+                            <i class="fa-solid fa-key"></i> Đặt lại mật khẩu
                         </button>
                     </form>
 
                     <div class="form-actions-sub">
-                        <a href="${pageContext.request.contextPath}/requestPassword" class="btn-forgot-password">
-                            <i class="fa-solid fa-key"></i> Quên mật khẩu?
+                        <a href="${pageContext.request.contextPath}/login" class="btn-forgot-password">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại Đăng nhập
                         </a>
                     </div>
                 </div>
@@ -79,5 +78,3 @@
         </div>
     </section>
 </main>
-
-<%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

@@ -38,6 +38,6 @@ public class LoginServlet extends HttpServlet {
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi máy chủ: " + e.getMessage());
         }
-        request.getRequestDispatcher("/view/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/login.jsp").forward(request, response);
     }
 }
