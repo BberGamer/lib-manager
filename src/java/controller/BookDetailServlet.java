@@ -409,7 +409,7 @@ public class BookDetailServlet extends HttpServlet {
      * Load dữ liệu cho form (categories, authors).
      */
     private void loadFormData(HttpServletRequest request) throws Exception {
-        CategoryDAO catDao = new CategoryDAOImpl();
+        CategoryDao catDao = new CategoryDao();
         AuthorDAO authorDao = new AuthorDAOImpl();
         request.setAttribute("categoriesList", catDao.findAll());
         request.setAttribute("authorsList", authorDao.findAll());
