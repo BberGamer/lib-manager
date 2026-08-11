@@ -13,7 +13,7 @@ import java.sql.Timestamp;
  *
  * Trạng thái sách:
  *   - available > 0  → "Còn sách"
- *   - available == 0 && quantity > 0 → "Đặt trước"
+ *   - available == 0 AND quantity > 0 → "Đặt trước"
  *   - quantity == 0  → "Hết sách"
  */
 public class Book {

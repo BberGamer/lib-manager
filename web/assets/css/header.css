@@ -1,0 +1,301 @@
+/*
+ * Định dạng header dùng chung, gồm thanh điều hướng công khai và header quản trị
+ * trên thiết bị di động.
+ */
+
+/* ===================== NAVBAR ===================== */
+.navbar {
+  background: var(--navbar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: box-shadow var(--transition);
+}
+.navbar.scrolled {
+  box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+  border-bottom-color: var(--border-light);
+}
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  gap: 24px;
+}
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.navbar-brand .brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 0 12px rgba(244,121,32,0.35);
+}
+.navbar-brand .brand-accent {
+  color: var(--primary);
+}
+.navbar-logo {
+    display: block;
+    width: auto;
+    height: 36px;
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 4px;
+  list-style: none;
+}
+.navbar-nav .nav-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+  font-weight: 500;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.navbar-nav .nav-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+.navbar-nav .nav-link.active {
+  color: var(--primary);
+  background: rgba(244,121,32,0.08);
+  border: 1px solid rgba(244,121,32,0.18);
+}
+
+/* TrÃƒÂ¬nh bÃƒÂ y menu quÃ¡ÂºÂ£n trÃ¡Â»â€¹ thÃ¡ÂºÂ£ xuÃ¡Â»â€˜ng trong thanh Ã„â€˜iÃ¡Â»Âu hÃ†Â°Ã¡Â»â€ºng. */
+.nav-item.dropdown {
+  position: relative;
+}
+.nav-item.dropdown > .dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  padding: 8px 0;
+  list-style: none;
+  z-index: 1050;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all var(--transition);
+}
+.nav-item.dropdown:hover > .dropdown-menu {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+.dropdown-item:hover, .dropdown-item.active {
+  background: var(--bg-surface);
+  color: var(--primary);
+}
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+.nav-chevron {
+    margin-left: 4px;
+}
+.notification-nav-item,
+.notification-nav-link {
+    position: relative;
+}
+.notification-nav-link {
+    display: inline-flex;
+}
+.notification-unread-dot {
+    position: absolute;
+    top: 2px;
+    right: -5px;
+    width: 8px;
+    height: 8px;
+    background-color: #e94560;
+    border-radius: 50%;
+}
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1010;
+  flex-shrink: 0;
+}
+.logout-form {
+    margin: 0;
+}
+.btn-login {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 1020;
+  transition: all var(--transition);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(244,121,32,0.3);
+}
+.btn-login:hover {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 10px;
+  background: var(--bg-surface);
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+  text-decoration: none;
+}
+.user-info:hover {
+  background: rgba(244, 121, 32, 0.08);
+  border-color: rgba(244, 121, 32, 0.3);
+}
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.user-info-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-info .user-role-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--primary);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.user-role-badge.admin     { background: var(--danger); }
+.user-role-badge.librarian { background: var(--primary); }
+.user-role-badge.reader    { background: var(--success); color: #000; }
+
+/* Header rÃƒÂºt gÃ¡Â»Ân cho khu vÃ¡Â»Â±c quÃ¡ÂºÂ£n trÃ¡Â»â€¹ trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh nhÃ¡Â»Â. */
+.admin-mobile-header {
+  display: none;
+  background: #1f232a;
+  color: #fff;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.admin-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.admin-mobile-brand img {
+  height: 28px;
+  width: auto;
+}
+.admin-mobile-toggle {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+.admin-mobile-toggle:hover {
+  background: rgba(255,255,255,0.05);
+}
+.admin-mobile-spacer {
+    width: 32px;
+}
+
+@media (max-width: 1024px) {
+  .admin-mobile-header {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-nav {
+    display: none;
+  }
+}
