@@ -7,6 +7,7 @@ import java.io.IOException;
 import model.User;
 import service.LoginService;
 
+
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 

@@ -1,0 +1,347 @@
+/* ============================================================
+   Tên file: login.css
+   Mục đích: Định dạng giao diện trang đăng nhập (login.jsp) theo thiết kế mẫu
+   Tầng: Giao diện (Presentation Layer - CSS Asset)
+   Trách nhiệm: Đảm bảo giao diện giống 100% hình ảnh mẫu gồm:
+               - Nền trang màu xám xanh nhạt (#f4f6fc)
+               - Khung form đăng nhập dạng card màu trắng tròn góc (16px) với shadow mềm
+               - Ô nhập liệu (input) có nền màu xám xanh nhạt (#edf2f9) bo góc (10px)
+               - Nút Đăng nhập phủ màu cam FPT (#f47920) rực rỡ với bo góc (10px) và đổ bóng
+               - Link Quên mật khẩu màu cam căn giữa có icon chìa khóa
+               - Khối thông tin bên phải hiển thị Logo FPT, tiêu đề và danh sách icon tích xanh (#22c55e)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@600;700;800&display=swap');
+
+:root {
+  --login-bg: #f4f6fc;
+  --login-card-bg: #ffffff;
+  --login-input-bg: #edf2f9;
+  --login-input-border: #e2e8f0;
+  --login-text-main: #1e293b;
+  --login-text-sub: #94a3b8;
+  --login-text-label: #475569;
+  --login-primary: #f47920;
+  --login-primary-hover: #d4600a;
+  --login-primary-gradient: linear-gradient(135deg, #ff7a18 0%, #f47920 100%);
+  --login-success-icon: #22c55e;
+}
+
+/* ============================================================
+   PAGE LAYOUT & CONTAINER
+   ============================================================ */
+body {
+    background-color: var(--login-bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--login-text-main);
+    margin: 0;
+    padding: 0;
+}
+
+.page-wrapper {
+    padding-bottom: 0 !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--login-bg);
+    padding: 40px 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.login-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    align-items: center;
+}
+
+/* ============================================================
+   LEFT CARD: LOGIN FORM
+   ============================================================ */
+.login-card {
+    background: var(--login-card-bg);
+    border-radius: 16px;
+    padding: 44px 40px 36px;
+    box-shadow: 0 12px 36px rgba(30, 41, 59, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid #eef2f6;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header h1 {
+    font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--login-text-main);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.3px;
+}
+
+.login-header p {
+    font-size: 13.5px;
+    color: var(--login-text-sub);
+    margin: 0;
+    font-weight: 400;
+}
+
+.login-form {
+    margin-bottom: 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--login-text-label);
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--login-input-bg);
+    border: 1px solid var(--login-input-border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--login-text-main);
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.form-control:focus {
+    background-color: #ffffff;
+    border-color: var(--login-primary);
+    box-shadow: 0 0 0 3.5px rgba(244, 121, 32, 0.15);
+}
+
+.form-control::placeholder {
+    color: var(--login-text-sub);
+    opacity: 0.8;
+}
+
+/* Submit Button */
+.btn-block,
+.btn-primary.btn-block {
+    width: 100%;
+    padding: 13px 20px;
+    background: var(--login-primary-gradient);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(244, 121, 32, 0.35);
+    transition: all 0.2s ease-in-out;
+    margin-top: 24px;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.btn-block:hover,
+.btn-primary.btn-block:hover {
+    background: linear-gradient(135deg, #ff8c33 0%, #d4600a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(244, 121, 32, 0.45);
+    color: #ffffff;
+}
+
+.btn-block:active,
+.btn-primary.btn-block:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(244, 121, 32, 0.3);
+}
+
+/* Sub Actions */
+.form-actions-sub {
+    text-align: center;
+    margin-top: 22px;
+}
+
+.btn-forgot-password {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--login-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
+
+.btn-forgot-password i {
+    font-size: 13px;
+    color: var(--login-primary);
+}
+
+.btn-forgot-password:hover {
+    color: var(--login-primary-hover);
+    text-decoration: underline;
+}
+
+/* Nút Login dùng ở Header Nav (nếu có) */
+.btn-login {
+    padding: 8px 20px;
+    border-radius: 8px;
+    background: var(--login-primary-gradient);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(244, 121, 32, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #ff8c33 0%, #d4600a 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   RIGHT SECTION: INFO & LOGO
+   ============================================================ */
+.login-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.info-box {
+    max-width: 380px;
+    width: 100%;
+}
+
+.info-logo-wrap {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.info-logo-img {
+    height: 54px;
+    width: auto;
+    object-fit: contain;
+}
+
+.info-box h3 {
+    font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--login-text-main);
+    margin: 0 0 10px 0;
+    letter-spacing: -0.2px;
+}
+
+.info-box p {
+    font-size: 13.5px;
+    color: var(--login-text-sub);
+    margin: 0 0 18px 0;
+}
+
+.info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    text-align: left;
+    display: inline-block;
+}
+
+.info-box li {
+    font-size: 13.5px;
+    color: var(--login-text-label);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.info-box li:last-child {
+    margin-bottom: 0;
+}
+
+.info-box i,
+.info-box .fa-check {
+    color: var(--login-success-icon);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   ALERTS
+   ============================================================ */
+.alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 868px) {
+    .login-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        max-width: 440px;
+    }
+
+    .login-card {
+        padding: 36px 28px;
+    }
+
+    .login-header h1 {
+        font-size: 24px;
+    }
+}
