@@ -56,13 +56,9 @@ src/
 `-- java/
     `-- <base-package>/
         |-- controller/     # HttpServlet request/response orchestration
-        |-- service/        # Business logic and transaction boundaries
         |-- dao/            # JDBC persistence, one DAO per entity
         |-- model/          # Domain entities, DTOs, and JavaBeans
-        |-- filter/         # Authentication, authorization, encoding
-        |-- listener/       # Application/session lifecycle listeners
-        |-- constants/      # Shared constants and enums
-        |-- exception/      # Application-specific exceptions
+        |-- service/        # Business logic and transaction boundaries
         `-- utils/          # Small, stateless, general-purpose helpers
 web/
 |-- assets/
@@ -84,6 +80,12 @@ web/
 
 - Do not put Java source files under `web/`.
 - Do not put JSP files under `src/java/`.
+- Backend Java code must be organized only into `controller`, `dao`, `model`,
+  `service`, and `utils`; do not create additional top-level backend packages.
+- Put servlets, HTTP filters, and application/session listeners in `controller`.
+- Put entities, DTOs, enums, and model-specific constants in `model`.
+- Put business-specific exceptions with their owning service, and put reusable
+  stateless technical helpers or technical constants in `utils`.
 - Put protected JSP files under `WEB-INF/views` so they cannot be requested
   directly by URL.
 - Access a protected JSP only through a controller using
@@ -120,7 +122,7 @@ Use plural resource names in URLs, for example `/products` and `/orders`.
 Follow this dependency flow:
 
 ```text
-Browser -> Filter -> Controller -> Service -> DAO -> Database
+Browser -> Controller (Filter/Servlet) -> Service -> DAO -> Database
                               |
                               `-> request attributes -> JSP
 ```
@@ -404,7 +406,8 @@ session.setAttribute("authenticatedUser", userSession);
 - Regenerate/change the session ID after successful login when supported.
 - Invalidate the session on logout.
 - Set an inactivity timeout appropriate for the application.
-- Use a filter to protect route groups and verify authentication.
+- Use a filter in the `controller` package to protect route groups and verify
+  authentication.
 - Check authorization on every protected operation, including direct URL access.
 - Do not rely on hidden buttons or menus as authorization controls.
 - Verify ownership when a user accesses or changes a record by ID.
@@ -551,9 +554,11 @@ Place reusable logic in the layer that owns the responsibility:
 - shared business rules belong in a service or focused domain component;
 - shared persistence behavior belongs in the relevant DAO or a focused database
   helper;
-- shared request-independent validation belongs in a focused validator;
+- shared request-independent business validation belongs in a service; generic
+  stateless validation helpers may belong in `utils`;
 - generic stateless technical behavior may belong in `utils`;
-- repeated fixed values belong in `constants` or an enum;
+- repeated fixed values belong in a focused constants class under `utils`, or
+  in an enum under `model` when they represent a closed set of domain values;
 - repeated JSP presentation belongs in a reusable JSP fragment;
 - repeated CSS and JavaScript behavior belongs in shared asset files or focused
   reusable functions.
