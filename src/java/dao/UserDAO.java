@@ -4,6 +4,7 @@ import model.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import utils.DBContext;
 
 public class UserDAO {
 

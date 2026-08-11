@@ -1,6 +1,6 @@
 package utils;
 
-import dao.DBContext;
+import utils.DBContext;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
