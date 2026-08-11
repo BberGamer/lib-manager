@@ -32,7 +32,7 @@
 <c:url var="notificationManagementUrl" value="/notification/manage" />
 <c:url var="shelfManagementUrl" value="/shelf" />
 <c:url var="authorsUrl" value="/authors" />
-<c:url var="categoriesUrl" value="/categories" />
+<c:url var="categoriesUrl" value="/admin/categories" />
 <c:url var="usersUrl" value="/users" />
 <c:url var="profileUrl" value="/user/profile" />
 <c:url var="loginUrl" value="/login" />
@@ -52,6 +52,10 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="${styleUrl}">
+    <c:if test="${not empty pageStylesheet}">
+        <c:url var="pageStylesheetUrl" value="${pageStylesheet}" />
+        <link rel="stylesheet" href="${pageStylesheetUrl}">
+    </c:if>
     <script src="${headerScriptUrl}" defer></script>
 </head>
 <body>

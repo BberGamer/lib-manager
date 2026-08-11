@@ -19,7 +19,7 @@
 <c:url var="sidebarShelfUrl" value="/shelf" />
 <c:url var="sidebarBooksUrl" value="/books" />
 <c:url var="sidebarAuthorsUrl" value="/authors" />
-<c:url var="sidebarCategoriesUrl" value="/categories" />
+<c:url var="sidebarCategoriesUrl" value="/admin/categories" />
 <c:url var="sidebarUsersUrl" value="/users" />
 <c:url var="sidebarLogoutUrl" value="/logout" />
 
