@@ -30,8 +30,10 @@
 
     String nextOrder = "ASC".equals(sortOrder) ? "DESC" : "ASC";
 
-    // Helper: build URL giữ nguyên params hiện tại khi thay 1 param
-    // (dùng inline trong JSP)
+    // Detect context via rolePath attribute set by BookListServlet
+    String rolePathBooks = (String) request.getAttribute("rolePath");
+    String detailBase    = ctx + ("/librarian".equals(rolePathBooks) ? "/librarian/book/detail" :
+                           ("/admin".equals(rolePathBooks) ? "/admin/book/detail" : "/book/detail"));
 %>
 
 <main class="page-wrapper">
@@ -101,9 +103,11 @@
                     <button type="submit" class="btn btn-primary" id="searchBtn">
                         <i class="fa-solid fa-search"></i> Tìm
                     </button>
+                    <% if (rolePathBooks == null || rolePathBooks.isEmpty()) { %>
                     <a href="<%= ctx %>/books" class="btn btn-outline" title="Xóa bộ lọc">
                         <i class="fa-solid fa-rotate-right"></i>
                     </a>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -185,7 +189,7 @@
             <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
             <h3>Không tìm thấy sách nào</h3>
             <p>Thử thay đổi từ khóa hoặc bộ lọc danh mục.</p>
-            <a href="<%= ctx %>/books" class="btn btn-outline" style="margin-top:16px;">
+            <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/books" class="btn btn-outline" style="margin-top:16px;">
                 <i class="fa-solid fa-rotate-right"></i> Xóa bộ lọc
             </a>
         </div>
@@ -239,7 +243,7 @@
                                 <% } %>
                             </td>
                             <td class="book-info-cell">
-                                <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>" class="book-title-link" title="<%= b.getTitle() %>"><%= b.getTitle() %></a>
+                                <a href="<%= detailBase %>?id=<%= b.getId() %>" class="book-title-link" title="<%= b.getTitle() %>"><%= b.getTitle() %></a>
                                 <span class="book-isbn"><%= b.getIsbn() %></span>
                             </td>
                             <td>
@@ -264,7 +268,7 @@
                             <td style="text-align:center;">
                                 <div style="display:flex; gap:6px; justify-content:center;">
                                     <% if (isAdmin) { %>
-                                    <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
+                                    <a href="<%= detailBase %>?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
@@ -303,7 +307,7 @@
         <div class="books-grid">
             <% for (Book b : books) { %>
                 <div class="book-card">
-                    <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>" class="book-cover">
+                    <a href="<%= detailBase %>?id=<%= b.getId() %>" class="book-cover">
                         <% if (b.getCoverImage() != null && !b.getCoverImage().trim().isEmpty()) { %>
                             <img src="<%= utils.UploadUtility.resolveUrl(b.getCoverImage(), request.getContextPath()) %>"
                                  alt="<%= b.getTitle() %>"
@@ -329,7 +333,7 @@
                                 <%= b.getCategory() != null ? b.getCategory() : "—" %>
                             </a>
                         </div>
-                        <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>" class="book-title" title="<%= b.getTitle() %>"><%= b.getTitle() %></a>
+                        <a href="<%= detailBase %>?id=<%= b.getId() %>" class="book-title" title="<%= b.getTitle() %>"><%= b.getTitle() %></a>
                         <% if (b.getPublisher() != null) { %>
                             <div class="book-publisher">
                                 <i class="fa-solid fa-building fa-xs"></i>
@@ -349,7 +353,7 @@
                             <span></span>
                         <% } %>
                         <div style="display:flex; gap:6px;">
-                            <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>" class="btn btn-outline btn-sm" title="Xem chi tiết">
+                            <a href="<%= detailBase %>?id=<%= b.getId() %>" class="btn btn-outline btn-sm" title="Xem chi tiết">
                                 <i class="fa-solid fa-eye"></i>
                             </a>
                             <% if (loggedUser != null && !isAdminLib) { %>
@@ -462,7 +466,6 @@
 <!-- ==================== DELETE MODAL ==================== -->
 <div id="deleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:36px; max-width:440px; width:90%; box-shadow:var(--shadow-lg); position:relative;">
-        <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(to right,var(--danger),#ff6b6b); border-radius:var(--radius-lg) var(--radius-lg) 0 0;"></div>
         <div style="font-size:2.5rem; margin-bottom:14px; text-align:center;">🗑️</div>
         <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:10px; text-align:center;">Xác nhận xóa sách</h3>
         <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:28px; text-align:center; line-height:1.6;" id="deleteBookTitle"></p>

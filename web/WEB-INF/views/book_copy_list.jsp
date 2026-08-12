@@ -23,6 +23,9 @@
     // Retrieve success and error alerts
     String success = request.getParameter("success");
     String error = request.getParameter("error");
+
+    String rolePath = (String) request.getAttribute("rolePath");
+    if (rolePath == null) rolePath = "";
 %>
 
 <main class="page-wrapper">
@@ -37,7 +40,7 @@
                 </div>
                 <h1 class="books-page-title"><%= book != null ? book.getTitle() : "Đầu sách không tồn tại" %></h1>
                 <p class="books-page-subtitle">
-                    <a href="<%= ctx %>/book/detail?id=<%= book != null ? book.getId() : "" %>" style="color:var(--primary);">
+                    <a href="<%= ctx %><%= rolePath %>/book/detail?id=<%= book != null ? book.getId() : "" %>" style="color:var(--primary);">
                         <i class="fa-solid fa-arrow-left"></i> Quay lại chi tiết sách
                     </a>
                 </p>
@@ -48,7 +51,7 @@
                     <span class="bps-num"><%= totalRecords %></span>
                     <span class="bps-lbl">Tổng bản sao</span>
                 </div>
-                <a href="<%= ctx %>/book/copy/add?bookId=<%= book.getId() %>" class="btn btn-primary">
+                <a href="<%= ctx %><%= rolePath %>/book/copy/add?bookId=<%= book.getId() %>" class="btn btn-primary">
                     <i class="fa-solid fa-plus"></i> Thêm bản sao
                 </a>
             </div>
@@ -77,7 +80,7 @@
     <% } %>
 
     <!-- ==================== SEARCH & FILTER BAR ==================== -->
-    <form id="searchForm" action="<%= ctx %>/book/copies" method="get">
+    <form id="searchForm" action="<%= ctx %><%= rolePath %>/book/copies" method="get">
         <input type="hidden" name="bookId" value="<%= book != null ? book.getId() : "" %>">
         <input type="hidden" name="page" value="1">
 
@@ -131,9 +134,6 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fa-solid fa-search"></i> Tìm
                     </button>
-                    <a href="<%= ctx %>/book/copies?bookId=<%= book != null ? book.getId() : "" %>" class="btn btn-outline" title="Xóa bộ lọc">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </a>
                 </div>
             </div>
         </div>
@@ -145,9 +145,6 @@
             <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
             <h3>Không tìm thấy bản sao nào</h3>
             <p>Thử thay đổi từ khóa barcode hoặc bộ lọc trạng thái/vị trí.</p>
-            <a href="<%= ctx %>/book/copies?bookId=<%= book != null ? book.getId() : "" %>" class="btn btn-outline" style="margin-top:16px;">
-                <i class="fa-solid fa-rotate-right"></i> Xóa bộ lọc
-            </a>
         </div>
     <% } else { %>
         <div class="data-table-wrap">
@@ -221,7 +218,7 @@
                             </td>
                             <td style="text-align:center;">
                                 <div style="display:flex; gap:6px; justify-content:center;">
-                                    <a href="<%= ctx %>/book/copy/edit?id=<%= bc.getId() %>" class="btn btn-outline btn-sm" style="padding: 4px 8px;" title="Chỉnh sửa bản sao">
+                                    <a href="<%= ctx %><%= rolePath %>/book/copy/edit?id=<%= bc.getId() %>" class="btn btn-outline btn-sm" style="padding: 4px 8px;" title="Chỉnh sửa bản sao">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     <% 
@@ -246,13 +243,18 @@
         </div>
 
         <!-- ==================== PAGINATION ==================== -->
-        <% if (totalPages > 1) { %>
+        <% if (totalPages > 1) {
+            String pgBaseUrl = ctx + rolePath + "/book/copies?bookId=" + book.getId()
+                + "&keyword=" + java.net.URLEncoder.encode(keyword,"UTF-8")
+                + "&status=" + java.net.URLEncoder.encode(selectedStatus,"UTF-8")
+                + "&area=" + java.net.URLEncoder.encode(selectedArea,"UTF-8")
+                + "&page=";
+        %>
             <nav aria-label="Phân trang">
                 <ul class="pagination">
                     <!-- Prev -->
                     <li class="page-item <%= currentPageNum <= 1 ? "disabled" : "" %>">
-                        <a class="page-link"
-                           href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= currentPageNum - 1 %>">
+                        <a class="page-link" href="<%= pgBaseUrl %><%= currentPageNum - 1 %>">
                             <i class="fa-solid fa-chevron-left fa-xs"></i>
                         </a>
                     </li>
@@ -261,14 +263,14 @@
                        if (totalPages <= 7) {
                            for (int pg = 1; pg <= totalPages; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                </li>
                            <% }
                        } else {
                            // Show first 2 pages
                            for (int pg = 1; pg <= 2; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                </li>
                            <% }
 
@@ -276,7 +278,7 @@
                                // Current page is near the start
                                for (int pg = 3; pg <= 5; pg++) { %>
                                    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                       <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                       <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                    </li>
                                <% } %>
                                <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -285,7 +287,7 @@
                                <li class="page-item disabled"><span class="page-link">…</span></li>
                                <% for (int pg = totalPages - 4; pg <= totalPages - 2; pg++) { %>
                                    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                       <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                       <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                    </li>
                                <% }
                            } else {
@@ -293,7 +295,7 @@
                                <li class="page-item disabled"><span class="page-link">…</span></li>
                                <% for (int pg = currentPageNum - 1; pg <= currentPageNum + 1; pg++) { %>
                                    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                       <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                       <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                    </li>
                                <% } %>
                                <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -302,7 +304,7 @@
                            // Show last 2 pages
                            for (int pg = totalPages - 1; pg <= totalPages; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= pg %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= pgBaseUrl %><%= pg %>"><%= pg %></a>
                                </li>
                            <% }
                        }
@@ -310,8 +312,7 @@
 
                     <!-- Next -->
                     <li class="page-item <%= currentPageNum >= totalPages ? "disabled" : "" %>">
-                        <a class="page-link"
-                           href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>&keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&status=<%= java.net.URLEncoder.encode(selectedStatus,"UTF-8") %>&area=<%= java.net.URLEncoder.encode(selectedArea,"UTF-8") %>&page=<%= currentPageNum + 1 %>">
+                        <a class="page-link" href="<%= pgBaseUrl %><%= currentPageNum + 1 %>">
                             <i class="fa-solid fa-chevron-right fa-xs"></i>
                         </a>
                     </li>
@@ -326,7 +327,6 @@
 <!-- ===== DELETE CONFIRMATION MODAL ===== -->
 <div id="deleteCopyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:36px; max-width:440px; width:90%; box-shadow:var(--shadow-lg); position:relative;">
-        <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(to right,var(--danger),#ff6b6b); border-radius:var(--radius-lg) var(--radius-lg) 0 0;"></div>
         <div style="font-size:2.5rem; margin-bottom:14px; text-align:center;">🗑️</div>
         <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:10px; text-align:center;">Xác nhận xóa bản sao</h3>
         <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:28px; text-align:center; line-height:1.6;">
@@ -347,7 +347,7 @@
 <script>
 function confirmDeleteCopy(id, barcode) {
     document.getElementById('deleteBarcodeLabel').textContent = barcode;
-    document.getElementById('confirmDeleteLink').href = '<%= ctx %>/book/copy/delete?id=' + id;
+    document.getElementById('confirmDeleteLink').href = '<%= ctx %><%= rolePath %>/book/copy/delete?id=' + id;
     document.getElementById('deleteCopyModal').style.display = 'flex';
 }
 document.getElementById('deleteCopyModal').addEventListener('click', function(e) {

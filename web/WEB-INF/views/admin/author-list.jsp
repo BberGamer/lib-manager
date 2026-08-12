@@ -30,7 +30,6 @@
                     <input type="search" name="keyword" maxlength="150" value="${fn:escapeXml(keyword)}" placeholder="Tìm theo tên tác giả...">
                 </label>
                 <button class="author-button primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm</button>
-                <a class="author-button reset" href="${authorListUrl}" aria-label="Đặt lại bộ lọc"><i class="fa-solid fa-rotate-right"></i></a>
             </form>
         </section>
 

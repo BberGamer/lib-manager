@@ -56,9 +56,6 @@
                     <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
                         <i class="fa-solid fa-magnifying-glass"></i> Lọc kết quả
                     </button>
-                    <a href="${pageContext.request.contextPath}/admin/fine/list" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-left: 8px; display: inline-block;">
-                        Đặt lại
-                    </a>
                 </div>
             </form>
         </div>

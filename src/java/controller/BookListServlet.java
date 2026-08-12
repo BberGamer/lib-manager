@@ -37,6 +37,11 @@ public class BookListServlet extends HttpServlet {
         if ("/admin/books".equals(path) || "/librarian/books".equals(path)) {
             request.setAttribute("isManagePageAttr", true);
         }
+        if ("/librarian/books".equals(path)) {
+            request.setAttribute("rolePath", "/librarian");
+        } else if ("/admin/books".equals(path)) {
+            request.setAttribute("rolePath", "/admin");
+        }
         
         request.setAttribute("activePage", "books");
         request.setAttribute("pageTitle", "Danh sách sách – FPT Library");

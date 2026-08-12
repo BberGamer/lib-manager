@@ -11,6 +11,10 @@
     String errorMsg = (String) session.getAttribute("errorMsg");
     if (successMsg != null) session.removeAttribute("successMsg");
     if (errorMsg != null) session.removeAttribute("errorMsg");
+
+    String ctx = request.getContextPath();
+    String rolePath = (String) request.getAttribute("rolePath");
+    if (rolePath == null) rolePath = "";
 %>
 
 <main class="page-wrapper">
@@ -36,7 +40,7 @@
 
         <!-- Filter bar -->
         <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px;">
-            <form action="${pageContext.request.contextPath}/admin/shelf" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <form action="<%= ctx %><%= rolePath %>/shelf" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div style="flex: 1; min-width: 250px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tìm kiếm bản sao</label>
                     <input type="text" name="keyword" value="${keyword}" placeholder="Nhập mã Barcode hoặc tiêu đề sách..." 
@@ -58,9 +62,6 @@
                     <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
                         <i class="fa-solid fa-magnifying-glass"></i> Định vị
                     </button>
-                    <a href="${pageContext.request.contextPath}/admin/shelf" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-left: 8px; display: inline-block;">
-                        Đặt lại
-                    </a>
                 </div>
             </form>
         </div>
@@ -135,7 +136,7 @@
             String kw   = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
             String ar   = request.getAttribute("selectedArea") != null ? (String) request.getAttribute("selectedArea") : "";
             String ctx2 = request.getContextPath();
-            String baseUrl = ctx2 + "/admin/shelf?area=" + java.net.URLEncoder.encode(ar,"UTF-8")
+            String baseUrl = ctx2 + rolePath + "/shelf?area=" + java.net.URLEncoder.encode(ar,"UTF-8")
                            + "&keyword=" + java.net.URLEncoder.encode(kw,"UTF-8") + "&page=";
         %>
         <nav aria-label="Phân trang" style="margin-top: 30px;">
@@ -216,7 +217,7 @@
         <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-map-location-dot" style="color: var(--text-brand);"></i> Định vị bản sao sách</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Điều chỉnh vị trí lưu trữ vật lý của cuốn sách để thuận tiện tìm kiếm.</p>
         
-        <form action="${pageContext.request.contextPath}/admin/shelf/update" method="post">
+        <form action="<%= ctx %><%= rolePath %>/shelf/update" method="post">
             <input type="hidden" name="id" id="locCopyId">
             
             <div style="margin-bottom: 16px;">

@@ -27,6 +27,74 @@
     if (selectedStatus == null) {
         selectedStatus = (isEdit && copy != null) ? copy.getStatus() : "AVAILABLE";
     }
+%>
+<style>
+/* Premium button styles */
+.back-btn-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff !important;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(244,121,32,0.25);
+    transition: all 0.2s ease;
+}
+.back-btn-custom:hover {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(244,121,32,0.35);
+}
+
+.btn-cancel-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-cancel-custom:hover {
+    background: var(--bg-body);
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+.btn-submit-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff !important;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(244,121,32,0.25);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-submit-custom:hover {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(244,121,32,0.35);
+}
+</style>
+<%
 
     String area = (String) request.getAttribute("area");
     if (area == null) {
@@ -50,6 +118,9 @@
 
     int bookId = (book != null) ? book.getId() : 0;
     int copyId = (copy != null) ? copy.getId() : 0;
+
+    String rolePath = (String) request.getAttribute("rolePath");
+    if (rolePath == null) rolePath = "";
 %>
 
 <main class="page-wrapper">
@@ -73,7 +144,7 @@
                 </p>
             </div>
             <div class="books-page-stats">
-                <a href="<%= ctx %>/book/copies?bookId=<%= bookId %>" class="btn btn-outline">
+                <a href="<%= ctx %><%= rolePath %>/book/copies?bookId=<%= bookId %>" class="back-btn-custom">
                     <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách bản sao
                 </a>
             </div>
@@ -99,7 +170,7 @@
     <% } %>
 
     <!-- ===== FORM ===== -->
-    <form id="copyForm" action="<%= isEdit ? ctx + "/book/copy/edit" : ctx + "/book/copy/add" %>" method="post" novalidate>
+    <form id="copyForm" action="<%= isEdit ? ctx + rolePath + "/book/copy/edit" : ctx + rolePath + "/book/copy/add" %>" method="post" novalidate>
         <% if (isEdit) { %>
             <input type="hidden" name="id" value="<%= copyId %>">
         <% } %>
@@ -201,11 +272,11 @@
         </div>
 
         <!-- Submit Buttons -->
-        <div class="book-form-buttons" style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
-            <a href="<%= ctx %>/book/copies?bookId=<%= bookId %>" class="btn btn-outline">
+        <div class="book-form-buttons" style="margin-top: 28px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px;">
+            <a href="<%= ctx %><%= rolePath %>/book/copies?bookId=<%= bookId %>" class="btn-cancel-custom">
                 <i class="fa-solid fa-xmark"></i> Hủy
             </a>
-            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+            <button type="submit" class="btn-submit-custom" id="submitBtn">
                 <i class="fa-solid fa-<%= isEdit ? "floppy-disk" : "plus" %>"></i>
                 <%= isEdit ? "Lưu thay đổi" : "Thêm bản sao" %>
             </button>

@@ -56,10 +56,6 @@
                 <button class="category-button category-button-primary" type="submit">
                     <i class="fa-solid fa-magnifying-glass"></i> Tìm
                 </button>
-                <a class="category-button category-button-reset" href="${categoryListUrl}"
-                   title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc">
-                    <i class="fa-solid fa-rotate-right"></i>
-                </a>
             </form>
         </section>
 
