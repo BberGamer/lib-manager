@@ -1,8 +1,7 @@
 <%--
-  Tên file: resetPassword.jsp
   Mục đích: Trang đặt lại mật khẩu mới cho người dùng.
   Tầng: Giao diện (Presentation Layer - JSP View)
-  Trách nhiệm: Hiển thị form cho phép người dùng nhập Email và Mật khẩu mới để cập nhật tài khoản, đồng bộ với login.jsp.
+  Hiển thị form cho phép người dùng nhập Email và Mật khẩu mới để cập nhật tài khoản, đồng bộ với login.jsp.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
