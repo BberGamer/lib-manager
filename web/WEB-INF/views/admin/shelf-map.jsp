@@ -129,17 +129,84 @@
         </div>
 
         <!-- Pagination -->
-        <c:if test="${totalPages > 1}">
-            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
-                <c:forEach begin="1" end="${totalPages}" var="i">
-                    <a href="${pageContext.request.contextPath}/admin/shelf?area=${selectedArea}&keyword=${keyword}&page=${i}" 
-                       class="btn ${currentPageNum == i ? 'btn-primary' : 'btn-secondary'}" 
-                       style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; text-decoration: none; padding: 0;">
-                        ${i}
+        <% if (((Integer)request.getAttribute("totalPages")) != null && (Integer)request.getAttribute("totalPages") > 1) {
+            int totalPg = (Integer) request.getAttribute("totalPages");
+            int curPg   = (Integer) request.getAttribute("currentPageNum");
+            String kw   = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
+            String ar   = request.getAttribute("selectedArea") != null ? (String) request.getAttribute("selectedArea") : "";
+            String ctx2 = request.getContextPath();
+            String baseUrl = ctx2 + "/admin/shelf?area=" + java.net.URLEncoder.encode(ar,"UTF-8")
+                           + "&keyword=" + java.net.URLEncoder.encode(kw,"UTF-8") + "&page=";
+        %>
+        <nav aria-label="Phân trang" style="margin-top: 30px;">
+            <ul class="pagination">
+                <!-- Prev -->
+                <li class="page-item <%= curPg <= 1 ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrl %><%= curPg - 1 %>">
+                        <i class="fa-solid fa-chevron-left fa-xs"></i>
                     </a>
-                </c:forEach>
-            </div>
-        </c:if>
+                </li>
+
+                <%
+                   if (totalPg <= 7) {
+                       for (int pg = 1; pg <= totalPg; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   } else {
+                       // Show first 2 pages
+                       for (int pg = 1; pg <= 2; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+
+                       if (curPg <= 4) {
+                           // Near start
+                           for (int pg = 3; pg <= 5; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% } else if (curPg >= totalPg - 3) { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = totalPg - 4; pg <= totalPg - 2; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = curPg - 1; pg <= curPg + 1; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% }
+
+                       // Show last 2 pages
+                       for (int pg = totalPg - 1; pg <= totalPg; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   }
+                %>
+
+                <!-- Next -->
+                <li class="page-item <%= curPg >= totalPg ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrl %><%= curPg + 1 %>">
+                        <i class="fa-solid fa-chevron-right fa-xs"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <% } %>
+
+
     </div>
 </main>
 

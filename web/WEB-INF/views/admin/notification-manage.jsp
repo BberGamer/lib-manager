@@ -185,17 +185,72 @@
             </div>
             
             <!-- Pagination for History -->
-            <c:if test="${totalPages > 1}">
-                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
-                    <c:forEach begin="1" end="${totalPages}" var="i">
-                        <a href="${pageContext.request.contextPath}${rolePath}/notification/manage?filterType=${selectedFilterType}&page=${i}" 
-                           class="btn btn-sm ${currentPageNum == i ? 'btn-primary' : 'btn-secondary'}" 
-                           style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; padding: 0;">
-                            ${i}
-                        </a>
-                    </c:forEach>
-                </div>
-            </c:if>
+            <%
+                Integer totalPgN = (Integer) request.getAttribute("totalPages");
+                Integer curPgN   = (Integer) request.getAttribute("currentPageNum");
+                String ftN       = request.getAttribute("selectedFilterType") != null ? (String) request.getAttribute("selectedFilterType") : "";
+                String rolePathN = request.getAttribute("rolePath") != null ? (String) request.getAttribute("rolePath") : "/librarian";
+                if (totalPgN == null) totalPgN = 1;
+                if (curPgN   == null) curPgN   = 1;
+                String baseUrlN  = request.getContextPath() + rolePathN + "/notification/manage?filterType="
+                                 + java.net.URLEncoder.encode(ftN, "UTF-8") + "&page=";
+                if (totalPgN > 1) {
+            %>
+            <nav aria-label="Phân trang thông báo" style="margin-top: 24px;">
+                <ul class="pagination">
+                    <li class="page-item <%= curPgN <= 1 ? "disabled" : "" %>">
+                        <a class="page-link" href="<%= baseUrlN %><%= curPgN - 1 %>"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
+                    </li>
+                    <%
+                       if (totalPgN <= 7) {
+                           for (int pg = 1; pg <= totalPgN; pg++) { %>
+                               <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else {
+                           for (int pg = 1; pg <= 2; pg++) { %>
+                               <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                           if (curPgN <= 4) {
+                               for (int pg = 3; pg <= 5; pg++) { %>
+                                   <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% } %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% } else if (curPgN >= totalPgN - 3) { %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                               <% for (int pg = totalPgN - 4; pg <= totalPgN - 2; pg++) { %>
+                                   <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% }
+                           } else { %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                               <% for (int pg = curPgN - 1; pg <= curPgN + 1; pg++) { %>
+                                   <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% } %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% }
+                           for (int pg = totalPgN - 1; pg <= totalPgN; pg++) { %>
+                               <li class="page-item <%= pg == curPgN ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlN %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       }
+                    %>
+                    <li class="page-item <%= curPgN >= totalPgN ? "disabled" : "" %>">
+                        <a class="page-link" href="<%= baseUrlN %><%= curPgN + 1 %>"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
+                    </li>
+                </ul>
+            </nav>
+            <% } %>
+
         </div>
 
         <!-- TAB 2: AUTOMATIC REMINDERS -->
