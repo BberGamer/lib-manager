@@ -37,8 +37,8 @@ public class HomeServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
 
         try {
-            // Truy vấn 6 đầu sách mới nhất hiển thị trên trang chủ
-            List<Book> latestBooks = bookDAO.searchBooks(null, null, "id", "DESC", 1, 6);
+            // Truy vấn tối đa 8 đầu sách mới được tạo trong vòng 15 ngày qua
+            List<Book> latestBooks = bookDAO.getLatestBooks(15, 8);
             int totalBooks = bookDAO.countBooks(null, null);
             List<String> categories = bookDAO.getAllCategories();
             int totalCategories = (categories != null) ? categories.size() : 0;
