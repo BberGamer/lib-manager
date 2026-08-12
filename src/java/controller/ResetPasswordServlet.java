@@ -29,17 +29,17 @@ public class ResetPasswordServlet extends HttpServlet {
                 ResetSPasswordService service = new ResetSPasswordService();
                 if(tokenForgetPassword == null) {
                     request.setAttribute("mess", "token invalid");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 if(tokenForgetPassword.isIsUsed()) {
                     request.setAttribute("mess", "token is used");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 if(service.isExpireTime(tokenForgetPassword.getExpiryTime())) {
                     request.setAttribute("mess", "token is expiry time");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 User user = DAOUser.getUserById(tokenForgetPassword.getUserId());
@@ -47,13 +47,13 @@ public class ResetPasswordServlet extends HttpServlet {
                     request.setAttribute("email", user.getEmail());
                 }
                 session.setAttribute("token", tokenForgetPassword.getToken());
-                request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/resetPassword.jsp").forward(request, response);
             } catch (Exception e) {
                 request.setAttribute("mess", e.getMessage());
-                request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
             }
         } else {
-            request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/resetPassword.jsp").forward(request, response);
         }
     } 
 
@@ -67,7 +67,7 @@ public class ResetPasswordServlet extends HttpServlet {
         if(!password.equals(confirmPassword)) {
             request.setAttribute("mess", "confirm password must same password");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/resetPassword.jsp").forward(request, response);
             return;
         }
         HttpSession session = request.getSession();
@@ -79,17 +79,17 @@ public class ResetPasswordServlet extends HttpServlet {
                 ResetSPasswordService service = new ResetSPasswordService();
                 if (tokenForgetPassword == null) {
                     request.setAttribute("mess", "token invalid");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 if (tokenForgetPassword.isIsUsed()) {
                     request.setAttribute("mess", "token is used");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 if (service.isExpireTime(tokenForgetPassword.getExpiryTime())) {
                     request.setAttribute("mess", "token is expiry time");
-                    request.getRequestDispatcher("requestPassword.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                     return;
                 }
                 tokenForgetPassword.setIsUsed(true);
@@ -98,10 +98,10 @@ public class ResetPasswordServlet extends HttpServlet {
             }
 
             DAOUser.updatePasswordByEmail(email, password);
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
         } catch (Exception e) {
             request.setAttribute("mess", e.getMessage());
-            request.getRequestDispatcher("resetPassword.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/resetPassword.jsp").forward(request, response);
         }
     }
 

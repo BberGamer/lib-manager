@@ -138,15 +138,31 @@ public class CategoryServlet extends HttpServlet {
      */
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, CategoryException {
+        String keyword = normalizeKeyword(request.getParameter("keyword"));
+        String sort = "created_at".equals(request.getParameter("sort")) ? "created_at" : "name";
+        String order = "DESC".equalsIgnoreCase(request.getParameter("order")) ? "DESC" : "ASC";
         int requestedPage = parsePositiveInt(request.getParameter("page")).orElse(1);
-        int totalPages = categoryService.getTotalPages();
+        int totalPages = categoryService.getTotalPages(keyword);
         int currentPage = Math.min(requestedPage, totalPages);
-        request.setAttribute("categoryList", categoryService.getCategories(currentPage));
+        request.setAttribute("categoryList", categoryService.getCategories(keyword, sort, order, currentPage));
+        request.setAttribute("totalCategories", categoryService.countCategories(keyword));
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("sortField", sort);
+        request.setAttribute("sortOrder", order);
         request.setAttribute("currentPage", currentPage);
         request.setAttribute("totalPages", totalPages);
         moveFlashToRequest(request, FLASH_SUCCESS);
         moveFlashToRequest(request, FLASH_ERROR);
         request.getRequestDispatcher(LIST_VIEW).forward(request, response);
+    }
+
+    /**
+     * Chuẩn hóa từ khóa tìm kiếm để giữ request attribute nhất quán.
+     * @param keyword từ khóa có thể null
+     * @return từ khóa đã bỏ khoảng trắng hoặc chuỗi rỗng
+     */
+    private String normalizeKeyword(String keyword) {
+        return keyword == null ? "" : keyword.trim();
     }
 
     /**
@@ -258,7 +274,7 @@ public class CategoryServlet extends HttpServlet {
     }
 
     /**
-     * Xóa mềm thể loại và chuyển thông báo nghiệp vụ qua flash session.
+     * Xóa vật lý thể loại không còn sách tham chiếu và chuyển thông báo qua flash session.
      * @param request request chứa mã thể loại
      * @param response response dùng để redirect
      * @throws IOException khi redirect thất bại
@@ -271,7 +287,7 @@ public class CategoryServlet extends HttpServlet {
             return;
         }
         try {
-            boolean deleted = categoryService.deleteCategory(id.get(), currentActor(request));
+            boolean deleted = categoryService.deleteCategory(id.get());
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa thể loại thành công." : "Không tìm thấy thể loại cần xóa.");
         } catch (CategoryValidationException exception) {

@@ -41,11 +41,11 @@
     <div class="container">
         <div class="books-page-header-inner">
             <div>
-                <div class="hero-eyebrow" style="margin-bottom:10px;">
+                <div class="hero-eyebrow">
                     <i class="fa-solid fa-book"></i> Kho sách
                 </div>
                 <h1 class="books-page-title">Danh sách sách</h1>
-                <p class="books-page-subtitle">Tra cứu, tìm kiếm và lọc đầu sách trong thư viện FPT</p>
+                <p class="books-page-subtitle">Tra cứu, tìm kiếm và lọc đầu sách trong Thư viện FPT University</p>
             </div>
             <div class="books-page-stats">
                 <div class="bps-item">

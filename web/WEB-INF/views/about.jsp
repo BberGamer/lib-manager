@@ -1,3 +1,7 @@
+<%--
+    Trang thông tin giới thiệu về Hệ thống Thư viện FPT University.
+    Controller render: AboutServlet (GET /about) — không yêu cầu đăng nhập.
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
@@ -12,16 +16,11 @@
                     <i class="fa-solid fa-circle-info"></i>
                     Về chúng tôi
                 </div>
-                <h1 style="font-family:'Be Vietnam Pro',sans-serif; font-size:clamp(1.9rem,3.5vw,3rem);
-                           font-weight:800; color:var(--text-primary); line-height:1.15;
-                           margin-bottom:18px; letter-spacing:-0.5px;">
+                <h1 class="hero-title">
                     Thư viện<br>
-                    <span style="background:linear-gradient(to right,var(--primary),var(--primary-light));
-                                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-                        FPT University
-                    </span>
+                    <span class="brand-gradient">FPT University</span>
                 </h1>
-                <p style="font-size:1rem; color:var(--text-secondary); line-height:1.8; max-width:500px;">
+                <p class="hero-sub">
                     Là trung tâm tri thức của cộng đồng FPT, chúng tôi cung cấp nguồn tài liệu
                     học thuật phong phú và môi trường học tập hiện đại.
                 </p>

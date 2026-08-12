@@ -25,22 +25,32 @@ public class CategoryDao {
             + "is_deleted, created_by, updated_by";
 
     /**
-     * Lấy danh sách thể loại chưa xóa theo trang.
+     * Lấy danh sách thể loại chưa xóa theo từ khóa, thứ tự và trang.
      *
+     * @param keyword từ khóa đã chuẩn hóa để tìm trong tên danh mục
+     * @param sort trường sắp xếp đã được giới hạn bởi service/controller
+     * @param order chiều sắp xếp ASC hoặc DESC
      * @param offset vị trí bản ghi đầu tiên, không âm
      * @param limit số bản ghi tối đa
      * @return danh sách thể loại, rỗng nếu không có dữ liệu
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public List<Category> findAll(int offset, int limit) throws SQLException, ClassNotFoundException {
+    public List<Category> findAll(String keyword, String sort, String order, int offset, int limit)
+            throws SQLException, ClassNotFoundException {
+        String sortColumn = "created_at".equals(sort) ? "created_at" : "name";
+        String sortOrder = "DESC".equalsIgnoreCase(order) ? "DESC" : "ASC";
         String sql = "SELECT " + ACTIVE_COLUMNS + " FROM categories "
-                + "WHERE is_deleted = 0 ORDER BY name ASC LIMIT ? OFFSET ?";
+                + "WHERE is_deleted = 0 AND (? = '' OR LOWER(name) LIKE LOWER(?)) "
+                + "ORDER BY " + sortColumn + " " + sortOrder + ", id ASC LIMIT ? OFFSET ?";
         List<Category> categories = new ArrayList<>();
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, limit);
-            statement.setInt(2, offset);
+            String searchPattern = "%" + keyword + "%";
+            statement.setString(1, keyword);
+            statement.setString(2, searchPattern);
+            statement.setInt(3, limit);
+            statement.setInt(4, offset);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     categories.add(mapCategory(resultSet));
@@ -51,19 +61,25 @@ public class CategoryDao {
     }
 
     /**
-     * Đếm toàn bộ thể loại đang hoạt động để phục vụ phân trang.
+     * Đếm thể loại đang hoạt động phù hợp với từ khóa để phục vụ phân trang.
      *
+     * @param keyword từ khóa đã chuẩn hóa để tìm trong tên danh mục
      * @return tổng số thể loại chưa xóa
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public int count() throws SQLException, ClassNotFoundException {
-        String sql = "SELECT COUNT(*) FROM categories WHERE is_deleted = 0";
+    public int count(String keyword) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) FROM categories WHERE is_deleted = 0 "
+                + "AND (? = '' OR LOWER(name) LIKE LOWER(?))";
         try (Connection connection = openConnection();
-                PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getInt(1);
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + keyword + "%";
+            statement.setString(1, keyword);
+            statement.setString(2, searchPattern);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt(1);
+            }
         }
     }
 
@@ -154,20 +170,18 @@ public class CategoryDao {
     }
 
     /**
-     * Xóa mềm thể loại và ghi nhận tài khoản thao tác.
+     * Xóa vật lý một thể loại đang hoạt động sau khi service đã kiểm tra quan hệ sách.
      *
      * @param id mã thể loại
-     * @param actor tài khoản quản trị thực hiện thao tác
-     * @return {@code true} nếu trạng thái bản ghi được thay đổi
-     * @throws SQLException khi cập nhật thất bại
+     * @return {@code true} nếu bản ghi được xóa
+     * @throws SQLException khi xóa thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public boolean softDelete(int id, String actor) throws SQLException, ClassNotFoundException {
-        String sql = "UPDATE categories SET is_deleted = 1, updated_by = ? WHERE id = ? AND is_deleted = 0";
+    public boolean deleteById(int id) throws SQLException, ClassNotFoundException {
+        String sql = "DELETE FROM categories WHERE id = ? AND is_deleted = 0";
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, actor);
-            statement.setInt(2, id);
+            statement.setInt(1, id);
             return statement.executeUpdate() == 1;
         }
     }
@@ -177,12 +191,13 @@ public class CategoryDao {
      *
      * @param name tên đã chuẩn hóa
      * @param excludedId mã cần bỏ qua, bằng 0 khi tạo mới
-     * @return {@code true} nếu tên đã được dùng bởi bản ghi bất kỳ, kể cả bản ghi xóa mềm
+     * @return {@code true} nếu tên đã được dùng bởi một bản ghi đang hoạt động
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
     public boolean existsByName(String name, int excludedId) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT 1 FROM categories WHERE LOWER(name) = LOWER(?) AND id <> ? LIMIT 1";
+        String sql = "SELECT 1 FROM categories WHERE LOWER(name) = LOWER(?) "
+                + "AND id <> ? AND is_deleted = 0 LIMIT 1";
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, name);
@@ -194,15 +209,49 @@ public class CategoryDao {
     }
 
     /**
-     * Kiểm tra thể loại còn được sách chưa xóa tham chiếu hay không.
+     * Khôi phục danh mục xóa mềm từ phiên bản cũ của ứng dụng để có thể tái sử dụng tên và mã hiện có.
+     *
+     * @param category dữ liệu danh mục mới đã được service kiểm tra
+     * @param actor tài khoản quản trị thực hiện thao tác
+     * @return danh mục được khôi phục hoặc rỗng nếu không có bản ghi lịch sử phù hợp
+     * @throws SQLException khi cập nhật hoặc đọc dữ liệu thất bại
+     * @throws ClassNotFoundException khi không tải được JDBC driver
+     */
+    public Optional<Category> restoreDeleted(Category category, String actor)
+            throws SQLException, ClassNotFoundException {
+        String updateSql = "UPDATE categories SET description = ?, is_deleted = 0, updated_by = ? "
+                + "WHERE LOWER(name) = LOWER(?) AND is_deleted = 1 LIMIT 1";
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(updateSql)) {
+            statement.setString(1, category.getDescription());
+            statement.setString(2, actor);
+            statement.setString(3, category.getName());
+            if (statement.executeUpdate() == 0) {
+                return Optional.empty();
+            }
+        }
+
+        String selectSql = "SELECT " + ACTIVE_COLUMNS + " FROM categories "
+                + "WHERE LOWER(name) = LOWER(?) AND is_deleted = 0 LIMIT 1";
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(selectSql)) {
+            statement.setString(1, category.getName());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? Optional.of(mapCategory(resultSet)) : Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * Kiểm tra thể loại còn được bất kỳ bản ghi sách nào tham chiếu hay không.
      *
      * @param categoryId mã thể loại cần kiểm tra
-     * @return {@code true} nếu ít nhất một sách đang hoạt động sử dụng thể loại
+     * @return {@code true} nếu ít nhất một sách, kể cả sách xóa mềm, sử dụng thể loại
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public boolean hasActiveBooks(int categoryId) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT 1 FROM books WHERE category_id = ? AND is_deleted = 0 LIMIT 1";
+    public boolean hasBooks(int categoryId) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT 1 FROM books WHERE category_id = ? LIMIT 1";
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, categoryId);

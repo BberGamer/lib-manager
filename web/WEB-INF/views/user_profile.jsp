@@ -1,3 +1,9 @@
+<%--
+  Mục đích: Trang xem và chỉnh sửa thông tin hồ sơ cá nhân người dùng.
+  Tầng: Presentation Layer (JSP View - WEB-INF/views/user_profile.jsp)
+  Phụ trách bởi: UserProfileServlet (/user/profile)
+  Thuộc tính nhận: request.profileUser, session.loggedUser, request.error, request.success
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.User" %>
 <%

@@ -29,7 +29,7 @@
     <div class="container">
         <div class="books-page-header-inner">
             <div>
-                <div class="hero-eyebrow" style="margin-bottom:10px;">
+                <div class="hero-eyebrow">
                     <i class="fa-solid fa-book-open"></i> Chi tiết sách
                 </div>
                 <h1 class="books-page-title"><%= book != null ? book.getTitle() : "Sách không tồn tại" %></h1>

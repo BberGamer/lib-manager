@@ -38,32 +38,60 @@ public class CategoryService {
     }
 
     /**
-     * Lấy một trang thể loại, tự chuẩn hóa số trang nhỏ hơn 1.
+     * Lấy một trang thể loại theo từ khóa và thứ tự, tự chuẩn hóa số trang nhỏ hơn 1.
+     * @param keyword từ khóa tìm theo tên danh mục
+     * @param sort trường sắp xếp được controller giới hạn
+     * @param order chiều sắp xếp ASC hoặc DESC
      * @param page số trang bắt đầu từ 1
      * @return danh sách thể loại của trang
      * @throws CategoryException khi không đọc được dữ liệu
      */
-    public List<Category> getCategories(int page) throws CategoryException {
+    public List<Category> getCategories(String keyword, String sort, String order, int page) throws CategoryException {
         int normalizedPage = Math.max(page, 1);
         try {
-            return categoryDao.findAll((normalizedPage - 1) * PAGE_SIZE, PAGE_SIZE);
+            return categoryDao.findAll(normalizeKeyword(keyword), sort, order,
+                    (normalizedPage - 1) * PAGE_SIZE, PAGE_SIZE);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể tải danh sách thể loại", exception);
         }
     }
 
     /**
-     * Tính tổng số trang và luôn trả về tối thiểu một trang cho giao diện.
+     * Tính tổng số trang theo từ khóa và luôn trả về tối thiểu một trang cho giao diện.
+     * @param keyword từ khóa tìm theo tên danh mục
      * @return tổng số trang
      * @throws CategoryException khi không đếm được dữ liệu
      */
-    public int getTotalPages() throws CategoryException {
+    public int getTotalPages(String keyword) throws CategoryException {
         try {
-            int totalItems = categoryDao.count();
+            int totalItems = categoryDao.count(normalizeKeyword(keyword));
             return Math.max(1, (int) Math.ceil((double) totalItems / PAGE_SIZE));
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể đếm thể loại", exception);
         }
+    }
+
+    /**
+     * Đếm số thể loại phù hợp với từ khóa để hiển thị tổng kết trên danh sách.
+     * @param keyword từ khóa tìm theo tên danh mục
+     * @return số thể loại phù hợp
+     * @throws CategoryException khi không thể đếm dữ liệu
+     */
+    public int countCategories(String keyword) throws CategoryException {
+        try {
+            return categoryDao.count(normalizeKeyword(keyword));
+        } catch (SQLException | ClassNotFoundException exception) {
+            throw new CategoryException("Không thể đếm thể loại", exception);
+        }
+    }
+
+    /**
+     * Chuẩn hóa từ khóa nullable trước khi chuyển xuống DAO.
+     * @param keyword từ khóa từ request
+     * @return từ khóa đã bỏ khoảng trắng hoặc chuỗi rỗng
+     */
+    private String normalizeKeyword(String keyword) {
+        return keyword == null ? "" : keyword.trim();
     }
 
     /**
@@ -97,6 +125,10 @@ public class CategoryService {
                 errors.put("name", "Tên thể loại đã tồn tại.");
             }
             rejectInvalid(errors);
+            Optional<Category> restoredCategory = categoryDao.restoreDeleted(category, actor);
+            if (restoredCategory.isPresent()) {
+                return restoredCategory.get();
+            }
             return categoryDao.insert(category, actor);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể tạo thể loại", exception);
@@ -128,22 +160,21 @@ public class CategoryService {
     }
 
     /**
-     * Xóa mềm thể loại nếu không còn sách đang hoạt động sử dụng.
+     * Xóa vật lý thể loại nếu không có bất kỳ sách nào tham chiếu.
      * @param id mã thể loại
-     * @param actor tài khoản quản trị thực hiện thao tác
      * @return {@code true} nếu xóa thành công
-     * @throws CategoryValidationException khi thể loại còn được sách sử dụng
+     * @throws CategoryValidationException khi thể loại còn được sách tham chiếu
      * @throws CategoryException khi không thể kiểm tra hoặc xóa dữ liệu
      */
-    public boolean deleteCategory(int id, String actor)
+    public boolean deleteCategory(int id)
             throws CategoryValidationException, CategoryException {
         try {
             Map<String, String> errors = new LinkedHashMap<>();
-            if (categoryDao.hasActiveBooks(id)) {
-                errors.put("delete", "Không thể xóa thể loại đang được sách sử dụng.");
+            if (categoryDao.hasBooks(id)) {
+                errors.put("delete", "Không thể xóa danh mục vì vẫn còn sách tham chiếu.");
             }
             rejectInvalid(errors);
-            return categoryDao.softDelete(id, actor);
+            return categoryDao.deleteById(id);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể xóa thể loại mã " + id, exception);
         }
