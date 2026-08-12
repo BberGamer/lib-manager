@@ -125,6 +125,10 @@ public class CategoryService {
                 errors.put("name", "Tên thể loại đã tồn tại.");
             }
             rejectInvalid(errors);
+            Optional<Category> restoredCategory = categoryDao.restoreDeleted(category, actor);
+            if (restoredCategory.isPresent()) {
+                return restoredCategory.get();
+            }
             return categoryDao.insert(category, actor);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể tạo thể loại", exception);
@@ -156,22 +160,21 @@ public class CategoryService {
     }
 
     /**
-     * Xóa mềm thể loại nếu không còn sách đang hoạt động sử dụng.
+     * Xóa vật lý thể loại nếu không có bất kỳ sách nào tham chiếu.
      * @param id mã thể loại
-     * @param actor tài khoản quản trị thực hiện thao tác
      * @return {@code true} nếu xóa thành công
-     * @throws CategoryValidationException khi thể loại còn được sách sử dụng
+     * @throws CategoryValidationException khi thể loại còn được sách tham chiếu
      * @throws CategoryException khi không thể kiểm tra hoặc xóa dữ liệu
      */
-    public boolean deleteCategory(int id, String actor)
+    public boolean deleteCategory(int id)
             throws CategoryValidationException, CategoryException {
         try {
             Map<String, String> errors = new LinkedHashMap<>();
-            if (categoryDao.hasActiveBooks(id)) {
-                errors.put("delete", "Không thể xóa thể loại đang được sách sử dụng.");
+            if (categoryDao.hasBooks(id)) {
+                errors.put("delete", "Không thể xóa danh mục vì vẫn còn sách tham chiếu.");
             }
             rejectInvalid(errors);
-            return categoryDao.softDelete(id, actor);
+            return categoryDao.deleteById(id);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể xóa thể loại mã " + id, exception);
         }
