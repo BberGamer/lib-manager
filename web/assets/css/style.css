@@ -382,6 +382,55 @@ img { max-width: 100%; display: block; }
   gap: 20px;
 }
 
+/* ===================== HERO & BANNER SHARED UTILITIES =====================
+ * Các lớp CSS tiện ích dùng chung cho các banner/hero section toàn bộ ứng dụng:
+ * Đồng bộ kiểu chữ tiêu đề, chữ gradient thương hiệu và badge biểu tượng.
+ */
+.hero-eyebrow,
+.greeting-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(244, 121, 32, 0.08);
+  border: 1px solid rgba(244, 121, 32, 0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--primary);
+}
+
+.hero-eyebrow i,
+.greeting-badge i {
+  color: var(--primary);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, #ff944d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.hero-title {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: clamp(1.9rem, 3.5vw, 3rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin-bottom: 18px;
+  letter-spacing: -0.5px;
+}
+
+.hero-sub {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 520px;
+  margin: 0;
+}
+
 /* ===================== ABOUT PAGE ===================== */
 .about-hero {
   background: var(--header-bg);
