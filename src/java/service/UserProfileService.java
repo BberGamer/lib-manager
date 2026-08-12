@@ -15,12 +15,11 @@ public class UserProfileService {
 
     // isAdmin = true -> cho phép sửa thêm role/active (chỉ admin mới có quyền này)
     public String updateProfile(User user, String fullName, String email, String phone,
-                                 String studentId, String avatar, String role, Integer active, boolean isAdmin) throws Exception {
+                                 String studentId, String role, Integer active, boolean isAdmin) throws Exception {
         user.setFullName(fullName);
         user.setEmail(email);
         user.setPhone(phone);
         user.setStudentId(studentId);
-        user.setAvatar(avatar);
 
         if (isAdmin) {
             if (role != null) user.setRole(role);
@@ -49,7 +48,6 @@ public class UserProfileService {
                 return "Mật khẩu cũ không chính xác.";
             }
         }
-
         String hashed = hashPassword(newPassword);
         boolean ok = userDAO.updatePassword(user.getId(), hashed);
         if (ok) {

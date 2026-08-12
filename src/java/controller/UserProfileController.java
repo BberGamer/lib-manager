@@ -87,7 +87,7 @@ public class UserProfileController extends HttpServlet {
                 }
 
                 error = userProfileService.updateProfile(targetUser, fullName, email, phone,
-                        studentId, avatar, role, active, isAdmin(logged));
+                        studentId, role, active, isAdmin(logged));
                 request.setAttribute(error == null ? "success" : "error",
                         error == null ? "Cập nhật thông tin cá nhân thành công." : error);
 
