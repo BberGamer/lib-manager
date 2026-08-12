@@ -30,6 +30,10 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>DashboardServlet</servlet-name>
+        <url-pattern>/librarian/dashboard/library</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DashboardServlet</servlet-name>
         <url-pattern>/dashboard/admin</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
@@ -48,6 +52,110 @@
     <servlet-mapping>
         <servlet-name>BookListServlet</servlet-name>
         <url-pattern>/admin/books</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BookListServlet</servlet-name>
+        <url-pattern>/librarian/books</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <servlet-class>controller.BorrowManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/admin/borrow/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/librarian/borrow/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/admin/borrow/confirm-loan</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/librarian/borrow/confirm-loan</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/admin/borrow/confirm-return</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BorrowManagementServlet</servlet-name>
+        <url-pattern>/librarian/borrow/confirm-return</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ReservationManagementServlet</servlet-name>
+        <servlet-class>controller.ReservationManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReservationManagementServlet</servlet-name>
+        <url-pattern>/admin/reservation/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReservationManagementServlet</servlet-name>
+        <url-pattern>/librarian/reservation/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReservationManagementServlet</servlet-name>
+        <url-pattern>/admin/reservation/update</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReservationManagementServlet</servlet-name>
+        <url-pattern>/librarian/reservation/update</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <servlet-class>controller.FineManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/admin/fine/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/librarian/fine/list</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/admin/fine/create</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/librarian/fine/create</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/admin/fine/update-status</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>FineManagementServlet</servlet-name>
+        <url-pattern>/librarian/fine/update-status</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShelfManagementServlet</servlet-name>
+        <servlet-class>controller.ShelfManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShelfManagementServlet</servlet-name>
+        <url-pattern>/admin/shelf</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ShelfManagementServlet</servlet-name>
+        <url-pattern>/librarian/shelf</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ShelfManagementServlet</servlet-name>
+        <url-pattern>/admin/shelf/update</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ShelfManagementServlet</servlet-name>
+        <url-pattern>/librarian/shelf/update</url-pattern>
     </servlet-mapping>
 
     <welcome-file-list>

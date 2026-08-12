@@ -26,18 +26,19 @@
 <c:url var="myReservationsUrl" value="/reservation/my" />
 <c:url var="myFinesUrl" value="/fine/my" />
 <c:url var="myNotificationsUrl" value="/notification/my" />
-<c:url var="borrowManagementUrl" value="/admin/borrow/list" />
-<c:url var="reservationManagementUrl" value="/admin/reservation/list" />
-<c:url var="fineManagementUrl" value="/admin/fine/list" />
-<c:url var="notificationManagementUrl" value="/admin/notification/manage" />
-<c:url var="shelfManagementUrl" value="/admin/shelf" />
-<c:url var="authorsUrl" value="/admin/authors" />
-<c:url var="categoriesUrl" value="/admin/categories" />
-<c:url var="usersUrl" value="/admin/users" />
+<c:set var="rolePath" value="${navUser.admin ? '/admin' : '/librarian'}" />
+<c:url var="borrowManagementUrl" value="${rolePath}/borrow/list" />
+<c:url var="reservationManagementUrl" value="${rolePath}/reservation/list" />
+<c:url var="fineManagementUrl" value="${rolePath}/fine/list" />
+<c:url var="notificationManagementUrl" value="${rolePath}/notification/manage" />
+<c:url var="shelfManagementUrl" value="${rolePath}/shelf" />
+<c:url var="authorsUrl" value="${rolePath}/authors" />
+<c:url var="categoriesUrl" value="${rolePath}/categories" />
+<c:url var="usersUrl" value="${rolePath}/users" />
 <c:url var="profileUrl" value="/user/profile" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
-<c:url var="libraryStatsUrl" value="/admin/dashboard/library" />
+<c:url var="libraryStatsUrl" value="${rolePath}/dashboard/library" />
 <c:url var="adminStatsUrl" value="/admin" />
 
 <!DOCTYPE html>
