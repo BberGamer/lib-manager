@@ -33,7 +33,7 @@ public class LoginServlet extends HttpServlet {
                 if (user.isAdmin()) {
                     response.sendRedirect(request.getContextPath() + "/admin");
                 } else if (user.isLibrarian()) {
-                    response.sendRedirect(request.getContextPath() + "/dashboard/library");
+                    response.sendRedirect(request.getContextPath() + "/librarian/dashboard/library");
                 } else {
                     response.sendRedirect(request.getContextPath() + "/home");
                 }
