@@ -75,6 +75,11 @@
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                         <span>Quản lý phạt</span>
                     </a>
+                    <a href="${sidebarNotificationUrl}"
+                       class="admin-nav-item ${sidebarCurrentPage eq 'notifications' ? 'active' : ''}">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span>Gửi thông báo</span>
+                    </a>
                 </nav>
             </div>
 
@@ -127,6 +132,11 @@
             <div class="admin-nav-group">
                 <div class="admin-nav-header">Dữ liệu &amp; Kho</div>
                 <nav class="admin-nav" aria-label="Điều hướng dữ liệu và kho">
+                    <a href="${sidebarShelfUrl}"
+                       class="admin-nav-item ${sidebarCurrentPage eq 'shelf' ? 'active' : ''}">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Vị trí kệ sách</span>
+                    </a>
                     <a href="${sidebarBooksUrl}"
                        class="admin-nav-item ${sidebarCurrentPage eq 'books' ? 'active' : ''}">
                         <i class="fa-solid fa-book"></i>
@@ -142,11 +152,6 @@
                         <i class="fa-solid fa-tags"></i>
                         <span>Quản lý danh mục</span>
                     </a>
-                    <a href="${sidebarShelfUrl}"
-                       class="admin-nav-item ${sidebarCurrentPage eq 'shelf' ? 'active' : ''}">
-                        <i class="fa-solid fa-layer-group"></i>
-                        <span>Vị trí kệ sách</span>
-                    </a>
                 </nav>
             </div>
 
@@ -157,7 +162,7 @@
                        class="admin-nav-item ${sidebarCurrentPage eq 'users' ? 'active' : ''}">
                         <i class="fa-solid fa-users-gear"></i>
                         <span>Quản lý tài khoản</span>
-                    </a>
+                      </a>
                 </nav>
             </div>
         </c:when>

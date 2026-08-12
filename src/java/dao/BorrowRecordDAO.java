@@ -297,4 +297,55 @@ public class BorrowRecordDAO {
             }
         }
     }
+
+    public List<BorrowRecord> getNearDueLoans(int days) throws Exception {
+        List<BorrowRecord> list = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
+          .append("u.username, u.full_name, u.email, u.phone, ")
+          .append("b.title, b.isbn, ")
+          .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+          .append("FROM borrow_records br ")
+          .append("INNER JOIN users u ON br.user_id = u.id ")
+          .append("INNER JOIN books b ON br.book_id = b.id ")
+          .append("LEFT JOIN book_copies bc ON br.copy_id = bc.id ")
+          .append("WHERE br.status = 'BORROWING' AND br.due_date >= CURDATE() AND br.due_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY) ")
+          .append("ORDER BY br.due_date ASC");
+
+        try (Connection conn = utils.DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            ps.setInt(1, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public List<BorrowRecord> getOverdueLoans() throws Exception {
+        List<BorrowRecord> list = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
+          .append("u.username, u.full_name, u.email, u.phone, ")
+          .append("b.title, b.isbn, ")
+          .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+          .append("FROM borrow_records br ")
+          .append("INNER JOIN users u ON br.user_id = u.id ")
+          .append("INNER JOIN books b ON br.book_id = b.id ")
+          .append("LEFT JOIN book_copies bc ON br.copy_id = bc.id ")
+          .append("WHERE br.status = 'OVERDUE' OR (br.status = 'BORROWING' AND br.due_date < CURDATE()) ")
+          .append("ORDER BY br.due_date ASC");
+
+        try (Connection conn = utils.DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
 }

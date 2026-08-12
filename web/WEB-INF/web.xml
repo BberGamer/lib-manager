@@ -158,6 +158,44 @@
         <url-pattern>/librarian/shelf/update</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>NotificationManagementServlet</servlet-name>
+        <servlet-class>controller.NotificationManagementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NotificationManagementServlet</servlet-name>
+        <url-pattern>/admin/notification/manage</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationManagementServlet</servlet-name>
+        <url-pattern>/librarian/notification/manage</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationManagementServlet</servlet-name>
+        <url-pattern>/admin/notification/send</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationManagementServlet</servlet-name>
+        <url-pattern>/librarian/notification/send</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>NotificationInboxServlet</servlet-name>
+        <servlet-class>controller.NotificationInboxServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NotificationInboxServlet</servlet-name>
+        <url-pattern>/notification/my</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationInboxServlet</servlet-name>
+        <url-pattern>/notification/read</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationInboxServlet</servlet-name>
+        <url-pattern>/notification/read-all</url-pattern>
+    </servlet-mapping>
+
     <welcome-file-list>
         <welcome-file>home</welcome-file>
     </welcome-file-list>
