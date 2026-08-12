@@ -1,8 +1,6 @@
 <%--
-  Tên file: requestPassword.jsp
   Mục đích: Trang yêu cầu gửi liên kết đặt lại mật khẩu qua Email.
-  Tầng: Giao diện (Presentation Layer - JSP View)
-  Trách nhiệm: Cho phép người dùng nhập địa chỉ Email để nhận liên kết khôi phục mật khẩu, đồng bộ với login.jsp.
+  Cho phép người dùng nhập địa chỉ Email để nhận liên kết khôi phục mật khẩu, đồng bộ với login.jsp.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
