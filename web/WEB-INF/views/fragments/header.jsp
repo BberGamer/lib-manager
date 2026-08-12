@@ -37,6 +37,8 @@
 <c:url var="profileUrl" value="/user/profile" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
+<c:url var="libraryStatsUrl" value="/dashboard/library" />
+<c:url var="adminStatsUrl" value="/dashboard/admin" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -153,7 +155,9 @@
                                        or navCurrentPage eq 'shelf'
                                        or navCurrentPage eq 'authors'
                                        or navCurrentPage eq 'categories'
-                                       or navCurrentPage eq 'users'}" />
+                                       or navCurrentPage eq 'users'
+                                       or navCurrentPage eq 'dashboard-library'
+                                       or navCurrentPage eq 'dashboard-admin'}" />
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link ${isManageActive ? 'active' : ''}">
                                     <i class="fa-solid fa-briefcase"></i> Quản lý
@@ -194,6 +198,17 @@
                                         <li><a href="${usersUrl}"
                                                class="dropdown-item ${navCurrentPage eq 'users' ? 'active' : ''}">
                                                 <i class="fa-solid fa-user-gear"></i> Tài khoản
+                                            </a></li>
+                                    </c:if>
+                                    <li class="dropdown-divider"></li>
+                                    <li><a href="${libraryStatsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'dashboard-library' ? 'active' : ''}">
+                                            <i class="fa-solid fa-chart-pie"></i> Thống kê Thư viện
+                                        </a></li>
+                                    <c:if test="${navUser.admin}">
+                                        <li><a href="${adminStatsUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'dashboard-admin' ? 'active' : ''}">
+                                                <i class="fa-solid fa-chart-line"></i> Thống kê Admin
                                             </a></li>
                                     </c:if>
                                 </ul>

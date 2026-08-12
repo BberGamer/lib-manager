@@ -22,6 +22,8 @@
 <c:url var="sidebarCategoriesUrl" value="/admin/categories" />
 <c:url var="sidebarUsersUrl" value="/users" />
 <c:url var="sidebarLogoutUrl" value="/logout" />
+<c:url var="sidebarLibraryStatsUrl" value="/dashboard/library" />
+<c:url var="sidebarAdminStatsUrl" value="/dashboard/admin" />
 
 <a href="${sidebarHomeUrl}" class="admin-sidebar-brand">
     <span class="brand-icon">
@@ -74,6 +76,24 @@
                 <i class="fa-solid fa-bullhorn"></i>
                 <span>Gửi thông báo</span>
             </a>
+        </nav>
+    </div>
+
+    <div class="admin-nav-group">
+        <div class="admin-nav-header">Báo cáo &amp; Thống kê</div>
+        <nav class="admin-nav" aria-label="Báo cáo thống kê">
+            <a href="${sidebarLibraryStatsUrl}"
+               class="admin-nav-item ${sidebarCurrentPage eq 'dashboard-library' ? 'active' : ''}">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Thống kê Thư viện</span>
+            </a>
+            <c:if test="${sidebarUser.admin}">
+                <a href="${sidebarAdminStatsUrl}"
+                   class="admin-nav-item ${sidebarCurrentPage eq 'dashboard-admin' ? 'active' : ''}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Thống kê Admin</span>
+                </a>
+            </c:if>
         </nav>
     </div>
 
