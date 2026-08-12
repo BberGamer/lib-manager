@@ -38,18 +38,19 @@
             <form action="${pageContext.request.contextPath}/admin/borrow/list" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div style="flex: 1; min-width: 250px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tìm kiếm</label>
-                    <input type="text" name="keyword" value="${keyword}" placeholder="Tên độc giả, tên sách, ISBN, Barcode..." 
+                    <input type="text" name="keyword" value="${keyword}" placeholder="Tên độc giả, tên sách, ISBN, mã vạch..."
                            style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
                 </div>
                 <div style="width: 200px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Trạng thái</label>
                     <select name="status" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="PENDING" ${selectedStatus == 'PENDING' ? 'selected' : ''}>Chờ duyệt mượn</option>
-                        <option value="BORROWING" ${selectedStatus == 'BORROWING' ? 'selected' : ''}>Đang mượn</option>
+                        <option value="PENDING_PICKUP" ${selectedStatus == 'PENDING_PICKUP' ? 'selected' : ''}>Chờ nhận sách</option>
+                        <option value="BORROWED" ${selectedStatus == 'BORROWED' ? 'selected' : ''}>Đang mượn</option>
                         <option value="RETURNED" ${selectedStatus == 'RETURNED' ? 'selected' : ''}>Đã trả</option>
                         <option value="OVERDUE" ${selectedStatus == 'OVERDUE' ? 'selected' : ''}>Quá hạn</option>
-                        <option value="LOST" ${selectedStatus == 'LOST' ? 'selected' : ''}>Làm mất</option>
+                        <option value="EXPIRED" ${selectedStatus == 'EXPIRED' ? 'selected' : ''}>Hết hạn nhận</option>
+                        <option value="CANCELLED" ${selectedStatus == 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
                     </select>
                 </div>
                 <div>
@@ -89,10 +90,10 @@
                         for (BorrowRecord br : borrowList) {
                             String badgeColor = "";
                             String badgeText = "";
-                            if ("PENDING".equals(br.getStatus())) {
+                            if ("PENDING_PICKUP".equals(br.getStatus())) {
                                 badgeColor = "background: #fff9e6; color: #f39c12;";
                                 badgeText = "Chờ duyệt mượn";
-                            } else if ("BORROWING".equals(br.getStatus())) {
+                            } else if ("BORROWED".equals(br.getStatus())) {
                                 badgeColor = "background: #ebf5fb; color: #2980b9;";
                                 badgeText = "Đang mượn";
                             } else if ("RETURNED".equals(br.getStatus())) {
@@ -101,9 +102,12 @@
                             } else if ("OVERDUE".equals(br.getStatus())) {
                                 badgeColor = "background: #fde8e7; color: #e74c3c;";
                                 badgeText = "Quá hạn";
-                            } else if ("LOST".equals(br.getStatus())) {
+                            } else if ("EXPIRED".equals(br.getStatus())) {
                                 badgeColor = "background: #f2f4f4; color: #7f8c8d;";
-                                badgeText = "Làm mất";
+                                badgeText = "Hết hạn nhận";
+                            } else if ("CANCELLED".equals(br.getStatus())) {
+                                badgeColor = "background: #f2f4f4; color: #7f8c8d;";
+                                badgeText = "Đã hủy";
                             }
                     %>
                         <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='none'">
@@ -131,11 +135,11 @@
                                 <span style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
                             </td>
                             <td style="padding: 16px 20px; text-align: right;">
-                                <% if ("PENDING".equals(br.getStatus())) { %>
-                                    <button class="btn btn-sm btn-primary" onclick="openLoanModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getUser().getFullName() %>')" style="font-size: 0.8rem; border-radius: 6px;">
-                                        <i class="fa-solid fa-check"></i> Cho mượn (Barcode)
+                                <% if ("PENDING_PICKUP".equals(br.getStatus())) { %>
+                                    <button class="btn btn-sm btn-primary" onclick="openLoanModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getUser().getFullName() %>', '<%= br.getBookCopy() != null ? br.getBookCopy().getBarcode() : "-" %>', '<%= br.getRequestDate() != null ? br.getRequestDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-" %>', '<%= br.getPickupDeadline() != null ? br.getPickupDeadline().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-" %>')" style="font-size: 0.8rem; border-radius: 6px;">
+                                        <i class="fa-solid fa-check"></i> Xác nhận giao sách
                                     </button>
-                                <% } else if ("BORROWING".equals(br.getStatus()) || "OVERDUE".equals(br.getStatus())) { %>
+                                <% } else if ("BORROWED".equals(br.getStatus()) || "OVERDUE".equals(br.getStatus())) { %>
                                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
                                         <button class="btn btn-sm btn-success" onclick="openReturnModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getBookCopy().getBarcode() %>')" style="font-size: 0.8rem; border-radius: 6px;">
                                             <i class="fa-solid fa-rotate-left"></i> Nhận trả
@@ -173,10 +177,10 @@
 <!-- Modal Cho Mượn (Assign Barcode) -->
 <div id="loanModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background: white; width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); position: relative;">
-        <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-barcode" style="color: var(--text-brand);"></i> Xác nhận cho mượn sách</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Phê duyệt yêu cầu mượn bằng cách quét hoặc nhập mã vạch (Barcode) của cuốn sách vật lý.</p>
+        <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-book-open" style="color: var(--text-brand);"></i> Xác nhận giao sách</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Xác nhận độc giả đã đến nhận đúng bản sao đang được thư viện giữ.</p>
         
-        <form action="${pageContext.request.contextPath}/admin/borrow/confirm-loan" method="post">
+        <form action="${pageContext.request.contextPath}${borrowActionPrefix}/borrow/confirm-pickup" method="post">
             <input type="hidden" name="id" id="loanRecordId">
             
             <div style="margin-bottom: 16px;">
@@ -189,10 +193,26 @@
                 <input type="text" id="loanBookTitle" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
             </div>
 
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Mã Barcode cuốn sách</label>
-                <input type="text" name="barcode" required placeholder="Nhập hoặc quét mã vạch của bản sao..." autofocus
-                       style="width: 100%; padding: 12px; border: 2px solid var(--text-brand); border-radius: 8px; font-size: 1rem; font-family: monospace;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã yêu cầu</label>
+                    <input type="text" id="loanRequestId" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã vạch bản sao</label>
+                    <input type="text" id="loanCopyBarcode" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; font-family: monospace;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Thời điểm yêu cầu</label>
+                    <input type="text" id="loanRequestDate" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Hạn cuối nhận sách</label>
+                    <input type="text" id="loanPickupDeadline" readonly style="width: 100%; padding: 10px; border: 1px solid #f2b8a0; border-radius: 8px; background: #fff8f4; color: #c65319; font-weight: 600;">
+                </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
@@ -209,7 +229,7 @@
         <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-rotate-left" style="color: #27ae60;"></i> Nhận trả sách</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Ghi nhận cuốn sách đã được hoàn trả về thư viện thành công.</p>
         
-        <form action="${pageContext.request.contextPath}/admin/borrow/confirm-return" method="post">
+        <form action="${pageContext.request.contextPath}${borrowActionPrefix}/borrow/confirm-return" method="post">
             <input type="hidden" name="id" id="returnRecordId">
             
             <div style="margin-bottom: 16px;">
@@ -218,7 +238,7 @@
             </div>
 
             <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã Barcode</label>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã vạch</label>
                 <input type="text" id="returnBarcode" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; font-family: monospace;">
             </div>
 
@@ -293,10 +313,14 @@
 </div>
 
 <script>
-    function openLoanModal(id, title, name) {
+    function openLoanModal(id, title, name, barcode, requestDate, pickupDeadline) {
         document.getElementById('loanRecordId').value = id;
         document.getElementById('loanBookTitle').value = title;
         document.getElementById('loanReaderName').value = name;
+        document.getElementById('loanRequestId').value = '#' + id;
+        document.getElementById('loanCopyBarcode').value = barcode;
+        document.getElementById('loanRequestDate').value = requestDate;
+        document.getElementById('loanPickupDeadline').value = pickupDeadline;
         document.getElementById('loanModal').style.display = 'flex';
     }
     

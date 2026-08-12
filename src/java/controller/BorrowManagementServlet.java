@@ -5,6 +5,7 @@ import dao.BookCopyDAO;
 import model.BorrowRecord;
 import model.BookCopy;
 import model.User;
+import service.BorrowService;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -13,13 +14,14 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(name = "BorrowManagementServlet", urlPatterns = {
-    "/admin/borrow/list", "/admin/borrow/confirm-loan", "/admin/borrow/confirm-return",
-    "/librarian/borrow/list", "/librarian/borrow/confirm-loan", "/librarian/borrow/confirm-return"
+    "/admin/borrow/list", "/admin/borrow/confirm-pickup", "/admin/borrow/confirm-return",
+    "/librarian/borrow/list", "/librarian/borrow/confirm-pickup", "/librarian/borrow/confirm-return"
 })
 public class BorrowManagementServlet extends HttpServlet {
 
     private final BorrowRecordDAO borrowRecordDAO = new BorrowRecordDAO();
     private final BookCopyDAO bookCopyDAO = new BookCopyDAO();
+    private final BorrowService borrowService = new BorrowService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -60,6 +62,7 @@ public class BorrowManagementServlet extends HttpServlet {
 
         int pageSize = 15;
         try {
+            borrowService.expirePendingBorrowRequests();
             List<BorrowRecord> list = borrowRecordDAO.searchBorrowRecords(status, keyword, page, pageSize);
             int totalRecords = borrowRecordDAO.countBorrowRecords(status, keyword);
             int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
@@ -74,6 +77,8 @@ public class BorrowManagementServlet extends HttpServlet {
             request.setAttribute("isManagePageAttr", true);
             request.setAttribute("activePage", "borrow");
             request.setAttribute("pageTitle", "Quản lý mượn trả – FPT Library");
+            User loggedUser = (User) request.getSession(false).getAttribute("loggedUser");
+            request.setAttribute("borrowActionPrefix", loggedUser.isAdmin() ? "/admin" : "/librarian");
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "Lỗi tải danh sách mượn sách: " + e.getMessage());
@@ -101,8 +106,8 @@ public class BorrowManagementServlet extends HttpServlet {
         String path = request.getServletPath();
         String prefix = loggedUser.isAdmin() ? "/admin" : "/librarian";
         try {
-            if (path.endsWith("/borrow/confirm-loan")) {
-                confirmLoan(request, response, loggedUser.getUsername(), prefix);
+            if (path.endsWith("/borrow/confirm-pickup")) {
+                confirmPickup(request, response, loggedUser.getUsername(), prefix);
             } else if (path.endsWith("/borrow/confirm-return")) {
                 confirmReturn(request, response, loggedUser.getUsername(), prefix);
             } else {
@@ -115,21 +120,32 @@ public class BorrowManagementServlet extends HttpServlet {
         }
     }
 
+    /** Xác nhận độc giả đã nhận bản sao được giữ, mọi thời hạn do service quyết định. */
+    private void confirmPickup(HttpServletRequest request, HttpServletResponse response,
+            String operator, String prefix) throws Exception {
+        int borrowId = Integer.parseInt(request.getParameter("id"));
+        boolean success = borrowService.confirmPickup(borrowId, operator);
+        request.getSession().setAttribute(success ? "successMsg" : "errorMsg",
+                success ? "Đã xác nhận giao sách thành công."
+                        : "Không thể xác nhận giao sách. Yêu cầu có thể đã hết hạn hoặc không hợp lệ.");
+        response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
+    }
+
     private void confirmLoan(HttpServletRequest request, HttpServletResponse response, String operator, String prefix) throws Exception {
         int id = Integer.parseInt(request.getParameter("id"));
         String barcode = request.getParameter("barcode");
         HttpSession session = request.getSession();
 
         if (barcode == null || barcode.trim().isEmpty()) {
-            session.setAttribute("errorMsg", "Vui lòng nhập hoặc quét mã Barcode của bản sao sách!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING");
+            session.setAttribute("errorMsg", "Vui lòng nhập hoặc quét mã vạch của bản sao sách!");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
         }
 
         BorrowRecord record = borrowRecordDAO.findById(id);
         if (record == null) {
             session.setAttribute("errorMsg", "Không tìm thấy yêu cầu mượn sách này!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
         }
 
@@ -143,14 +159,14 @@ public class BorrowManagementServlet extends HttpServlet {
         }
 
         if (targetCopy == null) {
-            session.setAttribute("errorMsg", "Không tìm thấy bản sao sách có mã Barcode '" + barcode + "' của đầu sách này!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING");
+            session.setAttribute("errorMsg", "Không tìm thấy bản sao sách có mã vạch '" + barcode + "' của đầu sách này!");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
         }
 
         if (!"AVAILABLE".equalsIgnoreCase(targetCopy.getStatus())) {
             session.setAttribute("errorMsg", "Bản sao sách này hiện đang có trạng thái '" + targetCopy.getStatus() + "' và không khả dụng cho mượn!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
         }
 
