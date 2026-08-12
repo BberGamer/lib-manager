@@ -14,7 +14,7 @@ import java.io.IOException;
  * Controller xử lý các trang Dashboard thống kê vận hành (Library & Admin).
  */
 @WebServlet(name = "DashboardServlet", urlPatterns = {
-    "/dashboard/library", "/dashboard/admin"
+    "/dashboard/library", "/admin/dashboard/library", "/dashboard/admin", "/admin"
 })
 public class DashboardServlet extends HttpServlet {
 
@@ -34,7 +34,7 @@ public class DashboardServlet extends HttpServlet {
         String path = request.getServletPath();
 
         try {
-            if ("/dashboard/library".equals(path)) {
+            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path)) {
                 // Librarian & Admin
                 if (!loggedUser.isAdminOrLibrarian()) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập chức năng này.");
@@ -50,9 +50,10 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("currentPage", "dashboard-library");
                 request.setAttribute("pageTitle", "Thống kê Thư viện – FPT Library");
+                request.setAttribute("isManagePageAttr", true);
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/library_statistics.jsp").forward(request, response);
                 
-            } else if ("/dashboard/admin".equals(path)) {
+            } else if ("/dashboard/admin".equals(path) || "/admin".equals(path)) {
                 // Admin only
                 if (!loggedUser.isAdmin()) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ tài khoản Admin mới có quyền truy cập.");
@@ -65,12 +66,22 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("currentPage", "dashboard-admin");
                 request.setAttribute("pageTitle", "Thống kê hệ thống Admin – FPT Library");
+                request.setAttribute("isManagePageAttr", true);
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/admin_statistics.jsp").forward(request, response);
             }
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "Lỗi tải dữ liệu thống kê: " + e.getMessage());
-            request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
+            request.setAttribute("isManagePageAttr", true);
+            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path)) {
+                request.setAttribute("currentPage", "dashboard-library");
+                request.setAttribute("pageTitle", "Thống kê Thư viện – FPT Library");
+                request.getRequestDispatcher("/WEB-INF/views/dashboard/library_statistics.jsp").forward(request, response);
+            } else {
+                request.setAttribute("currentPage", "dashboard-admin");
+                request.setAttribute("pageTitle", "Thống kê hệ thống Admin – FPT Library");
+                request.getRequestDispatcher("/WEB-INF/views/dashboard/admin_statistics.jsp").forward(request, response);
+            }
         }
     }
 }

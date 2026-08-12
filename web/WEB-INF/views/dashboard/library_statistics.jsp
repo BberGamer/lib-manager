@@ -1,5 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List, java.util.Map" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="isManagePageAttr" value="true" scope="request" />
+<c:set var="activePage" value="dashboard-library" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 <%
     Integer totalBooks = (Integer) request.getAttribute("totalBooks");
@@ -8,6 +11,9 @@
     Map<String, Integer> conditionCount = (Map<String, Integer>) request.getAttribute("conditionCount");
     List<Map<String, Object>> topBooks = (List<Map<String, Object>>) request.getAttribute("topBooks");
     List<Map<String, Object>> topOverdue = (List<Map<String, Object>>) request.getAttribute("topOverdue");
+
+    int booksVal = totalBooks != null ? totalBooks : 0;
+    int copiesVal = totalCopies != null ? totalCopies : 0;
 
     int available = statusCount != null && statusCount.containsKey("AVAILABLE") ? statusCount.get("AVAILABLE") : 0;
     int borrowed = statusCount != null && statusCount.containsKey("BORROWED") ? statusCount.get("BORROWED") : 0;
@@ -27,6 +33,12 @@
             </div>
         </div>
 
+        <c:if test="${not empty error}">
+            <div class="alert alert-error" style="background: #fde8e7; border-left: 5px solid #e74c3c; color: #e74c3c; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
+                <i class="fa-solid fa-circle-exclamation"></i> <c:out value="${error}" />
+            </div>
+        </c:if>
+
         <!-- Metric Cards -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 40px;">
             <!-- Card 1 -->
@@ -36,7 +48,7 @@
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Tổng đầu sách</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary);"><%= totalBooks %></div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary);"><%= booksVal %></div>
                 </div>
             </div>
             <!-- Card 2 -->
@@ -46,7 +58,7 @@
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Tổng bản sao</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary);"><%= totalCopies %></div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary);"><%= copiesVal %></div>
                 </div>
             </div>
             <!-- Card 3 -->
