@@ -119,6 +119,15 @@ public class Fine {
         return createdAt;
     }
 
+    /**
+     * Cung cấp riêng phần ngày tạo để JSP hiển thị mà không gọi hàm chuyển đổi trong EL.
+     *
+     * @return ngày tạo khoản phạt hoặc {@code null} nếu chưa có thời điểm tạo
+     */
+    public LocalDate getCreatedDate() {
+        return createdAt == null ? null : createdAt.toLocalDate();
+    }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }

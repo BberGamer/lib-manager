@@ -15,6 +15,15 @@ import java.util.List;
 
 public class FineDAO {
 
+    private static final String FINE_DETAIL_SELECT =
+            "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, "
+            + "f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, "
+            + "u.username, u.full_name, u.email, u.phone, b.title, "
+            + "br.borrow_date, br.due_date, br.return_date "
+            + "FROM fines f INNER JOIN users u ON f.user_id = u.id "
+            + "INNER JOIN borrow_records br ON f.borrow_record_id = br.id "
+            + "INNER JOIN books b ON br.book_id = b.id ";
+
     private Fine mapRow(ResultSet rs) throws SQLException {
         Fine fine = new Fine();
         fine.setId(rs.getInt("id"));
@@ -49,6 +58,12 @@ public class FineDAO {
         try {
             BorrowRecord record = new BorrowRecord();
             record.setId(rs.getInt("borrow_record_id"));
+            Date borrowDate = rs.getDate("borrow_date");
+            Date dueDate = rs.getDate("due_date");
+            Date returnDate = rs.getDate("return_date");
+            if (borrowDate != null) record.setBorrowDate(borrowDate.toLocalDate());
+            if (dueDate != null) record.setDueDate(dueDate.toLocalDate());
+            if (returnDate != null) record.setReturnDate(returnDate.toLocalDate());
             
             Book book = new Book();
             book.setTitle(rs.getString("title"));
@@ -65,7 +80,7 @@ public class FineDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, ")
           .append("u.username, u.full_name, u.email, u.phone, ")
-          .append("b.title ")
+          .append("b.title, br.borrow_date, br.due_date, br.return_date ")
           .append("FROM fines f ")
           .append("INNER JOIN users u ON f.user_id = u.id ")
           .append("INNER JOIN borrow_records br ON f.borrow_record_id = br.id ")
@@ -145,7 +160,10 @@ public class FineDAO {
     }
 
     public boolean createFine(Fine fine) throws Exception {
-        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'UNPAID', NOW(), NOW())";
+        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, reason, "
+                + "status, created_at, updated_at) "
+                + "SELECT ?, ?, ?, ?, ?, 'UNPAID', NOW(), NOW() "
+                + "WHERE NOT EXISTS (SELECT 1 FROM fines WHERE borrow_record_id = ?)";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, fine.getBorrowRecordId());
@@ -153,6 +171,7 @@ public class FineDAO {
             ps.setBigDecimal(3, fine.getAmount());
             ps.setInt(4, fine.getOverdueDays());
             ps.setString(5, fine.getReason());
+            ps.setInt(6, fine.getBorrowRecordId());
             return ps.executeUpdate() > 0;
         }
     }
@@ -172,7 +191,7 @@ public class FineDAO {
     public Fine findById(int id) throws Exception {
         String sql = "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, " +
                      "u.username, u.full_name, u.email, u.phone, " +
-                     "b.title " +
+                     "b.title, br.borrow_date, br.due_date, br.return_date " +
                      "FROM fines f " +
                      "INNER JOIN users u ON f.user_id = u.id " +
                      "INNER JOIN borrow_records br ON f.borrow_record_id = br.id " +
@@ -188,5 +207,65 @@ public class FineDAO {
             }
         }
         return null;
+    }
+
+    /**
+     * Tìm các khoản phạt thuộc một người dùng theo trạng thái và từ khóa.
+     *
+     * @param userId mã người dùng sở hữu khoản phạt
+     * @param status trạng thái hợp lệ hoặc {@code null} để lấy tất cả
+     * @param keyword từ khóa tên sách hoặc mã khoản phạt
+     * @return danh sách khoản phạt mới nhất trước
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
+    public List<Fine> searchByUser(int userId, String status, String keyword) throws Exception {
+        StringBuilder sql = new StringBuilder(FINE_DETAIL_SELECT).append("WHERE f.user_id = ? ");
+        if (status != null) {
+            sql.append("AND f.status = ? ");
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append("AND (b.title LIKE ? OR CAST(f.id AS CHAR) LIKE ?) ");
+        }
+        sql.append("ORDER BY f.created_at DESC");
+        List<Fine> fines = new ArrayList<>();
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            statement.setInt(index++, userId);
+            if (status != null) {
+                statement.setString(index++, status);
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                String searchPattern = "%" + keyword + "%";
+                statement.setString(index++, searchPattern);
+                statement.setString(index, searchPattern.replace("#F", "").replace("#f", ""));
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    fines.add(mapRow(resultSet));
+                }
+            }
+        }
+        return fines;
+    }
+
+    /**
+     * Tìm chi tiết khoản phạt theo cả mã khoản phạt và chủ sở hữu.
+     *
+     * @param fineId mã khoản phạt
+     * @param userId mã người dùng đang đăng nhập
+     * @return khoản phạt thuộc người dùng hoặc {@code null}
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
+    public Fine findByIdAndUserId(int fineId, int userId) throws Exception {
+        String sql = FINE_DETAIL_SELECT + "WHERE f.id = ? AND f.user_id = ?";
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, fineId);
+            statement.setInt(2, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapRow(resultSet) : null;
+            }
+        }
     }
 }
