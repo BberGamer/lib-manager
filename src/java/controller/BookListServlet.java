@@ -22,7 +22,7 @@ import java.util.List;
  *   page     – trang hiện tại (mặc định 1)
  *   view     – "grid" | "table" (mặc định "grid")
  */
-@WebServlet(name = "BookListServlet", urlPatterns = {"/books"})
+@WebServlet(name = "BookListServlet", urlPatterns = {"/books", "/admin/books"})
 public class BookListServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 12;
@@ -32,6 +32,12 @@ public class BookListServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
+        
+        String path = request.getServletPath();
+        if ("/admin/books".equals(path)) {
+            request.setAttribute("isManagePageAttr", true);
+        }
+        
         request.setAttribute("activePage", "books");
         request.setAttribute("pageTitle", "Danh sách sách – FPT Library");
         request.setAttribute("pageDesc",

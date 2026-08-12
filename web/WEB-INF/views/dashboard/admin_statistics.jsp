@@ -1,5 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List, java.util.Map, java.math.BigDecimal, java.text.NumberFormat, java.util.Locale" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="isManagePageAttr" value="true" scope="request" />
+<c:set var="activePage" value="dashboard-admin" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 <%
     Map<String, Integer> roleCount = (Map<String, Integer>) request.getAttribute("roleCount");
@@ -26,6 +29,12 @@
                 <p class="section-subtitle">Chỉ số tài chính phạt, lượng tài khoản người dùng và nhật ký audit log ngoại lệ</p>
             </div>
         </div>
+
+        <c:if test="${not empty error}">
+            <div class="alert alert-error" style="background: #fde8e7; border-left: 5px solid #e74c3c; color: #e74c3c; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
+                <i class="fa-solid fa-circle-exclamation"></i> <c:out value="${error}" />
+            </div>
+        </c:if>
 
         <!-- Metric Cards Grid -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px;">

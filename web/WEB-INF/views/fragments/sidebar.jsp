@@ -12,20 +12,20 @@
 
 <c:url var="sidebarHomeUrl" value="/home" />
 <c:url var="sidebarProfileUrl" value="/user/profile" />
-<c:url var="sidebarBorrowUrl" value="/borrow/list" />
-<c:url var="sidebarReservationUrl" value="/reservation/list" />
-<c:url var="sidebarFineUrl" value="/fine/list" />
-<c:url var="sidebarNotificationUrl" value="/notification/manage" />
-<c:url var="sidebarShelfUrl" value="/shelf" />
-<c:url var="sidebarBooksUrl" value="/books" />
-<c:url var="sidebarAuthorsUrl" value="/authors" />
+<c:url var="sidebarBorrowUrl" value="/admin/borrow/list" />
+<c:url var="sidebarReservationUrl" value="/admin/reservation/list" />
+<c:url var="sidebarFineUrl" value="/admin/fine/list" />
+<c:url var="sidebarNotificationUrl" value="/admin/notification/manage" />
+<c:url var="sidebarShelfUrl" value="/admin/shelf" />
+<c:url var="sidebarBooksUrl" value="/admin/books" />
+<c:url var="sidebarAuthorsUrl" value="/admin/authors" />
 <c:url var="sidebarCategoriesUrl" value="/admin/categories" />
-<c:url var="sidebarUsersUrl" value="/users" />
+<c:url var="sidebarUsersUrl" value="/admin/users" />
 <c:url var="sidebarLogoutUrl" value="/logout" />
-<c:url var="sidebarLibraryStatsUrl" value="/dashboard/library" />
-<c:url var="sidebarAdminStatsUrl" value="/dashboard/admin" />
+<c:url var="sidebarLibraryStatsUrl" value="/admin/dashboard/library" />
+<c:url var="sidebarAdminStatsUrl" value="/admin" />
 
-<a href="${sidebarHomeUrl}" class="admin-sidebar-brand">
+<a href="${sidebarUser.admin ? sidebarAdminStatsUrl : (sidebarUser.librarian ? sidebarLibraryStatsUrl : sidebarHomeUrl)}" class="admin-sidebar-brand">
     <span class="brand-icon">
         <i class="fa-solid fa-graduation-cap"></i>
     </span>
@@ -141,10 +141,6 @@
 </div>
 
 <div class="admin-sidebar-footer">
-    <a href="${sidebarHomeUrl}" class="admin-sidebar-footer-btn">
-        <i class="fa-solid fa-globe"></i>
-        <span>Vào Trang chủ</span>
-    </a>
     <form class="admin-sidebar-logout-form" action="${sidebarLogoutUrl}" method="post">
         <button class="admin-sidebar-footer-btn logout-btn" type="submit">
             <i class="fa-solid fa-right-from-bracket"></i>
