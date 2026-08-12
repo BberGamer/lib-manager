@@ -24,7 +24,7 @@
         <div class="hero-grid-bg"></div>
         <div class="container" style="position:relative; z-index:1;">
             <div class="hero-content">
-                <div class="hero-greeting">
+                <div class="hero-greeting" style="max-width:620px;">
                     <c:choose>
                         <c:when test="${not empty sessionScope.loggedUser}">
                             <span class="greeting-badge">
@@ -36,7 +36,7 @@
                                     : sessionScope.loggedUser.username}" />!
                             </h1>
                             <p class="hero-sub">
-                                Chào mừng bạn đến với Hệ thống Thư viện FPT University.
+                                Chào mừng bạn đến với <strong class="brand-gradient">Thư viện FPT University</strong>.
                                 <c:choose>
                                     <c:when test="${sessionScope.loggedUser.admin}">
                                         Bạn đang đăng nhập với quyền <strong>Quản trị viên</strong>.
@@ -52,26 +52,43 @@
                         </c:when>
                         <c:otherwise>
                             <span class="greeting-badge">
-                                <i class="fa-solid fa-book"></i> Thư viện FPT University
+                                <i class="fa-solid fa-graduation-cap"></i> FPT UNIVERSITY LIBRARY SYSTEM
                             </span>
-                            <h1 class="hero-title">Chào mừng đến với FPT Library!</h1>
+                            <h1 class="hero-title">Kho tri thức<br><span class="brand-gradient">dành cho bạn</span></h1>
                             <p class="hero-sub">
-                                Khám phá kho tàng tri thức với hàng nghìn đầu sách học thuật.
-                                Đăng nhập để mượn sách, đặt trước và theo dõi lịch sử mượn trả.
+                                Khám phá hàng nghìn đầu sách học thuật, tài liệu chuyên ngành và
+                                tạp chí khoa học. Đặt mượn trực tuyến, tra cứu nhanh chóng – mọi lúc, mọi nơi.
                             </p>
-                            <div class="hero-cta">
-                                <a href="${pageContext.request.contextPath}/login"
-                                   class="btn-hero-primary">
-                                    <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập ngay
-                                </a>
-                                <a href="${pageContext.request.contextPath}/books"
-                                   class="btn-hero-secondary">
-                                    <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm sách
-                                </a>
-                            </div>
                         </c:otherwise>
                     </c:choose>
+
+                    <%-- Thanh tìm kiếm trực tiếp tại Hero --%>
+                    <form action="${pageContext.request.contextPath}/books" method="GET" class="hero-search-form">
+                        <div class="hero-search-input-wrap">
+                            <input type="text" name="keyword" placeholder="Tìm theo tên sách, ISBN, tác giả, nhà xuất bản..." class="hero-search-input" />
+                            <button type="submit" class="btn-hero-search">
+                                <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                            </button>
+                        </div>
+                    </form>
+
+                    <%-- Dải chỉ số thống kê --%>
+                    <div class="hero-stats">
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-num">${not empty totalBooks && totalBooks > 0 ? totalBooks : '450'}+</span>
+                            <span class="hero-stat-label">ĐẦU SÁCH</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-num">${not empty totalCategories && totalCategories > 0 ? totalCategories : '5'}</span>
+                            <span class="hero-stat-label">DANH MỤC</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-num">24/7</span>
+                            <span class="hero-stat-label">TRA CỨU ONLINE</span>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="hero-illustration">
                     <i class="fa-solid fa-book-open-reader hero-icon"></i>
                 </div>
@@ -164,6 +181,83 @@
         </section>
     </c:if>
 
+    <%-- ===== LATEST BOOKS (Danh sách sách mới nhất) ===== --%>
+    <c:if test="${not empty latestBooks}">
+        <section class="home-latest-books">
+            <div class="container">
+                <div class="section-header-flex">
+                    <div>
+                        <span class="section-eyebrow"><i class="fa-solid fa-sparkles"></i> Mới cập nhật</span>
+                        <h2 class="section-title" style="margin-bottom:0;">Danh sách sách mới nhất</h2>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/books" class="btn-view-all">
+                        Xem tất cả sách <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="latest-books-grid">
+                        <c:forEach var="book" items="${latestBooks}">
+                            <%-- Xử lý đường dẫn ảnh bìa chuẩn --%>
+                            <c:set var="coverSrc" value="${book.coverImage}" />
+                            <c:if test="${not empty coverSrc && !fn:startsWith(coverSrc, 'http://') && !fn:startsWith(coverSrc, 'https://')}">
+                                <c:choose>
+                                    <c:when test="${fn:startsWith(coverSrc, '/')}">
+                                        <c:set var="coverSrc" value="${pageContext.request.contextPath}${coverSrc}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="coverSrc" value="${pageContext.request.contextPath}/${coverSrc}" />
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:if>
+
+                            <div class="home-book-card">
+                                <div class="hbc-cover-wrap">
+                                    <c:choose>
+                                        <c:when test="${not empty book.coverImage}">
+                                            <img src="${coverSrc}"
+                                                 alt=""
+                                                 class="hbc-cover"
+                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                            <div class="hbc-cover-placeholder" style="display:none;">
+                                                <i class="fa-solid fa-book-open"></i>
+                                                <span><c:out value="${book.title}" /></span>
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="hbc-cover-placeholder">
+                                                <i class="fa-solid fa-book-open"></i>
+                                                <span><c:out value="${book.title}" /></span>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    <span class="hbc-badge"><c:out value="${not empty book.category ? book.category : 'Sách'}" /></span>
+                                </div>
+                            <div class="hbc-body">
+                                <h3 class="hbc-title">
+                                    <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}">
+                                        <c:out value="${book.title}" />
+                                    </a>
+                                </h3>
+                                <p class="hbc-meta">
+                                    <i class="fa-solid fa-building"></i> <c:out value="${not empty book.publisher ? book.publisher : 'NXB FPT'}" />
+                                    <c:if test="${book.publishYear > 0}"> · ${book.publishYear}</c:if>
+                                </p>
+                                <div class="hbc-footer">
+                                    <span class="hbc-status ${book.available > 0 ? 'status-available' : 'status-unavailable'}">
+                                        <i class="fa-solid ${book.available > 0 ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                                        ${book.available > 0 ? 'Sẵn sàng' : 'Hết sách'} (${book.available}/${book.quantity})
+                                    </span>
+                                    <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="hbc-btn">
+                                        Chi tiết <i class="fa-solid fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
+            </div>
+        </section>
+    </c:if>
+
     <%-- ===== FEATURES (hiện khi chưa đăng nhập) ===== --%>
     <c:if test="${empty sessionScope.loggedUser}">
         <section class="home-features">
@@ -198,54 +292,6 @@
                         <h3>Thông báo tự động</h3>
                         <p>Nhắc nhở hạn trả, thông báo sách mới và phiếu phạt</p>
                     </div>
-                </div>
-            </div>
-        </section>
-    </c:if>
-
-    <%-- ===== LATEST BOOKS ===== --%>
-    <c:if test="${not empty latestBooks}">
-        <section class="home-latest-books" style="padding: 56px 0; background: var(--bg-dark); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
-            <div class="container">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
-                    <h2 class="section-title" style="margin:0;">Sách mới nhất</h2>
-                    <a href="${pageContext.request.contextPath}/books" class="btn btn-outline" style="font-size:0.9rem; padding: 8px 16px; display:inline-flex; align-items:center; gap:6px;">
-                        Xem tất cả <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </div>
-                
-                <div class="books-grid">
-                    <c:forEach var="book" items="${latestBooks}">
-                        <div class="book-card">
-                            <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="book-cover">
-                                <c:choose>
-                                    <c:when test="${not empty book.coverImage}">
-                                        <img src="${pageContext.request.contextPath}/uploads/${book.coverImage}" 
-                                             alt="${book.title}" 
-                                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                    </c:when>
-                                    <c:otherwise>
-                                        <img src="" style="display:none;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                    </c:otherwise>
-                                </c:choose>
-                                <div class="book-cover-placeholder" style="display:none;">
-                                    <i class="fa-solid fa-book"></i>
-                                    <span><c:out value="${book.title}" /></span>
-                                </div>
-                                <span class="book-status-tag ${book.available > 0 ? 'status-available' : 'status-unavailable'}">
-                                    ${book.available > 0 ? 'Còn sách' : 'Hết sách'}
-                                </span>
-                            </a>
-                            <div class="book-body">
-                                <span class="book-category"><c:out value="${book.category}" /></span>
-                                <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="book-title" title="${book.title}">
-                                    <c:out value="${book.title}" />
-                                </a>
-                                <div class="book-publisher">Năm XB: ${book.publishYear}</div>
-                                <div class="book-price">Giá: ${book.price} VNĐ</div>
-                            </div>
-                        </div>
-                    </c:forEach>
                 </div>
             </div>
         </section>

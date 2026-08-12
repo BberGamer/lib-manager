@@ -5,30 +5,49 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import dao.BookDAO;
 import dao.BookDAOImpl;
 import model.Book;
 
 /**
  * HomeServlet — hiển thị trang chủ của hệ thống thư viện.
+ * Tầng: Controller (HttpServlet request/response orchestration)
+ * Phụ trách: Khởi tạo dữ liệu trang chủ bao gồm các chỉ số thống kê và danh sách sách mới nhất.
  */
 @WebServlet(name = "HomeServlet", urlPatterns = {"/home"})
 public class HomeServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(HomeServlet.class.getName());
     private final BookDAO bookDAO = new BookDAOImpl();
 
+    /**
+     * Xử lý yêu cầu GET hiển thị trang chủ.
+     * 
+     * @param request  đối tượng HttpServletRequest từ client
+     * @param response đối tượng HttpServletResponse trả về client
+     * @throws ServletException nếu có lỗi điều hướng Servlet
+     * @throws IOException      nếu có lỗi I/O
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
-        
+
         try {
-            // Lấy 4 cuốn sách mới nhất
-            List<Book> latestBooks = bookDAO.searchBooks("", "", "created_at", "DESC", 1, 4);
+            // Truy vấn 6 đầu sách mới nhất hiển thị trên trang chủ
+            List<Book> latestBooks = bookDAO.searchBooks(null, null, "id", "DESC", 1, 6);
+            int totalBooks = bookDAO.countBooks(null, null);
+            List<String> categories = bookDAO.getAllCategories();
+            int totalCategories = (categories != null) ? categories.size() : 0;
+
             request.setAttribute("latestBooks", latestBooks);
+            request.setAttribute("totalBooks", totalBooks);
+            request.setAttribute("totalCategories", totalCategories);
         } catch (Exception e) {
-            System.err.println("Lỗi khi tải sách mới nhất trên trang chủ: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy dữ liệu cho trang chủ trong HomeServlet", e);
         }
 
         request.setAttribute("activePage", "home");
