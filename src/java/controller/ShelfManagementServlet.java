@@ -34,6 +34,10 @@ public class ShelfManagementServlet extends HttpServlet {
             return;
         }
 
+        String servletPath = request.getServletPath();
+        String rolePath = servletPath.startsWith("/admin") ? "/admin" : "/librarian";
+        request.setAttribute("rolePath", rolePath);
+
         String area = request.getParameter("area");
         String keyword = request.getParameter("keyword");
         
@@ -87,7 +91,7 @@ public class ShelfManagementServlet extends HttpServlet {
         }
 
         String path = request.getServletPath();
-        String prefix = loggedUser.isAdmin() ? "/admin" : "/librarian";
+        String prefix = path.startsWith("/admin") ? "/admin" : "/librarian";
         
         try {
             if (path.endsWith("/shelf/update")) {

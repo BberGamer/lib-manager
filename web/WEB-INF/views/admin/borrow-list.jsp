@@ -57,9 +57,6 @@
                     <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
                         <i class="fa-solid fa-magnifying-glass"></i> Lọc kết quả
                     </button>
-                    <a href="${pageContext.request.contextPath}/admin/borrow/list" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-left: 8px; display: inline-block;">
-                        Đặt lại
-                    </a>
                 </div>
             </form>
         </div>
@@ -160,17 +157,74 @@
         </div>
 
         <!-- Pagination -->
-        <c:if test="${totalPages > 1}">
-            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
-                <c:forEach begin="1" end="${totalPages}" var="i">
-                    <a href="${pageContext.request.contextPath}/admin/borrow/list?status=${selectedStatus}&keyword=${keyword}&page=${i}" 
-                       class="btn ${currentPageNum == i ? 'btn-primary' : 'btn-secondary'}" 
-                       style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; text-decoration: none; padding: 0;">
-                        ${i}
-                    </a>
-                </c:forEach>
-            </div>
-        </c:if>
+        <%
+            Integer totalPgB = (Integer) request.getAttribute("totalPages");
+            Integer curPgB   = (Integer) request.getAttribute("currentPageNum");
+            String kwB       = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
+            String stB       = request.getAttribute("selectedStatus") != null ? (String) request.getAttribute("selectedStatus") : "";
+            if (totalPgB == null) totalPgB = 1;
+            if (curPgB   == null) curPgB   = 1;
+            String baseUrlB  = request.getContextPath() + "/librarian/borrow/list?status="
+                             + java.net.URLEncoder.encode(stB, "UTF-8")
+                             + "&keyword=" + java.net.URLEncoder.encode(kwB, "UTF-8")
+                             + "&page=";
+            if (totalPgB > 1) {
+        %>
+        <nav aria-label="Phân trang mượn sách" style="margin-top: 30px;">
+            <ul class="pagination">
+                <li class="page-item <%= curPgB <= 1 ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrlB %><%= curPgB - 1 %>"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
+                </li>
+                <%
+                   if (totalPgB <= 7) {
+                       for (int pg = 1; pg <= totalPgB; pg++) { %>
+                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   } else {
+                       for (int pg = 1; pg <= 2; pg++) { %>
+                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                       if (curPgB <= 4) {
+                           for (int pg = 3; pg <= 5; pg++) { %>
+                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% } else if (curPgB >= totalPgB - 3) { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = totalPgB - 4; pg <= totalPgB - 2; pg++) { %>
+                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = curPgB - 1; pg <= curPgB + 1; pg++) { %>
+                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% }
+                       for (int pg = totalPgB - 1; pg <= totalPgB; pg++) { %>
+                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   }
+                %>
+                <li class="page-item <%= curPgB >= totalPgB ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrlB %><%= curPgB + 1 %>"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
+                </li>
+            </ul>
+        </nav>
+        <% } %>
+
     </div>
 </main>
 

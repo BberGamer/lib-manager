@@ -13,7 +13,7 @@ import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "BookCopyListServlet", urlPatterns = {"/book/copies"})
+@WebServlet(name = "BookCopyListServlet", urlPatterns = {"/book/copies", "/librarian/book/copies", "/admin/book/copies"})
 public class BookCopyListServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 20;
@@ -36,6 +36,20 @@ public class BookCopyListServlet extends HttpServlet {
             return;
         }
 
+        String path = request.getServletPath();
+        boolean isManageView = path.startsWith("/admin") || path.startsWith("/librarian");
+        String rolePath = "";
+        if (isManageView) {
+            request.setAttribute("isManagePageAttr", true);
+            request.setAttribute("activePage", "books");
+            if (path.startsWith("/admin")) {
+                rolePath = "/admin";
+            } else {
+                rolePath = "/librarian";
+            }
+            request.setAttribute("rolePath", rolePath);
+        }
+
         // 2. Parse required bookId parameter
         String bookIdStr = request.getParameter("bookId");
         int bookId = -1;
@@ -48,7 +62,7 @@ public class BookCopyListServlet extends HttpServlet {
         }
 
         if (bookId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/books");
+            response.sendRedirect(request.getContextPath() + (isManageView ? rolePath + "/books" : "/books"));
             return;
         }
 
@@ -62,7 +76,7 @@ public class BookCopyListServlet extends HttpServlet {
         }
 
         if (book == null) {
-            response.sendRedirect(request.getContextPath() + "/books");
+            response.sendRedirect(request.getContextPath() + (isManageView ? rolePath + "/books" : "/books"));
             return;
         }
 

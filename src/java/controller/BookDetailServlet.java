@@ -25,7 +25,10 @@ import java.util.List;
  *   /book/delete?id=X  – Xóa sách (Admin only)
  */
 @WebServlet(name = "BookDetailServlet", urlPatterns = {
-    "/book/detail", "/book/add", "/book/edit", "/book/delete"
+    "/book/detail", "/librarian/book/detail", "/admin/book/detail",
+    "/book/add", "/admin/book/add",
+    "/book/edit", "/admin/book/edit",
+    "/book/delete", "/admin/book/delete"
 })
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024 * 2, // 2MB
@@ -33,6 +36,25 @@ import java.util.List;
     maxRequestSize = 1024 * 1024 * 50    // 50MB
 )
 public class BookDetailServlet extends HttpServlet {
+
+    private String getRedirectBase(HttpServletRequest request) {
+        String path = request.getServletPath();
+        boolean isManageView = path.startsWith("/admin") || path.startsWith("/librarian");
+        if (isManageView) {
+            return request.getContextPath() + (path.startsWith("/admin") ? "/admin" : "/librarian");
+        }
+        return request.getContextPath();
+    }
+
+    private void setSidebarAttributes(HttpServletRequest request) {
+        String path = request.getServletPath();
+        boolean isManageView = path.startsWith("/admin") || path.startsWith("/librarian");
+        if (isManageView) {
+            request.setAttribute("isManagePageAttr", true);
+            request.setAttribute("activePage", "books");
+            request.setAttribute("rolePath", path.startsWith("/admin") ? "/admin" : "/librarian");
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -44,15 +66,20 @@ public class BookDetailServlet extends HttpServlet {
 
         switch (path) {
             case "/book/detail":
+            case "/librarian/book/detail":
+            case "/admin/book/detail":
                 showDetail(request, response);
                 break;
             case "/book/add":
+            case "/admin/book/add":
                 showAddForm(request, response);
                 break;
             case "/book/edit":
+            case "/admin/book/edit":
                 showEditForm(request, response);
                 break;
             case "/book/delete":
+            case "/admin/book/delete":
                 processDelete(request, response);
                 break;
             default:
@@ -71,7 +98,7 @@ public class BookDetailServlet extends HttpServlet {
         } else if ("update".equals(action)) {
             processUpdate(request, response);
         } else {
-            response.sendRedirect(request.getContextPath() + "/books");
+            response.sendRedirect(getRedirectBase(request) + "/books");
         }
     }
 
@@ -82,9 +109,23 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setAttribute("currentPage", "books");
 
+        // Detect management view context (admin or librarian) → show sidebar
+        String servletPath = request.getServletPath();
+        boolean isManageView = servletPath.startsWith("/admin") || servletPath.startsWith("/librarian");
+        if (isManageView) {
+            request.setAttribute("isManagePageAttr", true);
+            request.setAttribute("activePage", "books");
+            if (servletPath.startsWith("/admin")) {
+                request.setAttribute("rolePath", "/admin");
+            } else {
+                request.setAttribute("rolePath", "/librarian");
+            }
+        }
+
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(request.getContextPath() + "/books");
+            String rolePath = (String) request.getAttribute("rolePath");
+            response.sendRedirect(request.getContextPath() + (rolePath != null ? rolePath + "/books" : "/books"));
             return;
         }
 
@@ -141,6 +182,7 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!requireAdmin(request, response)) return;
 
+        setSidebarAttributes(request);
         request.setAttribute("currentPage", "books");
         request.setAttribute("pageTitle", "Thêm sách mới – FPT Library");
         request.setAttribute("formMode", "add");
@@ -161,12 +203,14 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!requireAdmin(request, response)) return;
 
+        setSidebarAttributes(request);
         request.setAttribute("currentPage", "books");
         request.setAttribute("formMode", "edit");
 
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(request.getContextPath() + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -174,7 +218,7 @@ public class BookDetailServlet extends HttpServlet {
             BookDAO bookDao = new BookDAOImpl();
             Book book = bookDao.findById(id);
             if (book == null) {
-                response.sendRedirect(request.getContextPath() + "/books");
+                response.sendRedirect(redirectBase + "/books");
                 return;
             }
 
@@ -202,7 +246,7 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!requireAdmin(request, response)) return;
 
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
 
         try {
             BookDAO dao = new BookDAOImpl();
@@ -220,6 +264,7 @@ public class BookDetailServlet extends HttpServlet {
                 errors.add("Vui lòng chọn ít nhất một tác giả.");
             }
             if (!errors.isEmpty()) {
+                setSidebarAttributes(request);
                 request.setAttribute("formMode", "add");
                 request.setAttribute("book", book);
                 request.setAttribute("errors", errors);
@@ -237,8 +282,9 @@ public class BookDetailServlet extends HttpServlet {
                 if (!authorIds.isEmpty()) {
                     dao.setBookAuthors(newId, authorIds);
                 }
-                response.sendRedirect(ctx + "/book/detail?id=" + newId + "&success=created");
+                response.sendRedirect(redirectBase + "/book/detail?id=" + newId + "&success=created");
             } else {
+                setSidebarAttributes(request);
                 request.setAttribute("formMode", "add");
                 request.setAttribute("book", book);
                 request.setAttribute("errorMsg", "Thêm sách thất bại.");
@@ -249,6 +295,7 @@ public class BookDetailServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
+            setSidebarAttributes(request);
             request.setAttribute("errorMsg", "Lỗi: " + e.getMessage());
             request.setAttribute("formMode", "add");
             request.setAttribute("currentPage", "books");
@@ -265,10 +312,10 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!requireAdmin(request, response)) return;
 
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -282,12 +329,14 @@ public class BookDetailServlet extends HttpServlet {
                 book.setUpdatedBy(loggedUser.getUsername());
             }
 
-            // If has physical copies, keep original ISBN
+            // If has physical copies, keep original ISBN, quantity and available counts
             boolean hasCopies = dao.hasPhysicalCopies(id);
             if (hasCopies) {
                 Book original = dao.findById(id);
                 if (original != null) {
                     book.setIsbn(original.getIsbn());
+                    book.setQuantity(original.getQuantity());
+                    book.setAvailable(original.getAvailable());
                 }
             }
 
@@ -298,6 +347,7 @@ public class BookDetailServlet extends HttpServlet {
                 errors.add("Vui lòng chọn ít nhất một tác giả.");
             }
             if (!errors.isEmpty()) {
+                setSidebarAttributes(request);
                 request.setAttribute("formMode", "edit");
                 request.setAttribute("book", book);
                 request.setAttribute("errors", errors);
@@ -314,8 +364,9 @@ public class BookDetailServlet extends HttpServlet {
             if (updated) {
                 // Update authors
                 dao.setBookAuthors(id, authorIds);
-                response.sendRedirect(ctx + "/book/detail?id=" + id + "&success=updated");
+                response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&success=updated");
             } else {
+                setSidebarAttributes(request);
                 request.setAttribute("errorMsg", "Cập nhật thất bại.");
                 request.setAttribute("formMode", "edit");
                 request.setAttribute("book", book);
@@ -326,6 +377,7 @@ public class BookDetailServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
+            setSidebarAttributes(request);
             request.setAttribute("errorMsg", "Lỗi: " + e.getMessage());
             request.setAttribute("formMode", "edit");
             request.setAttribute("currentPage", "books");
@@ -342,10 +394,10 @@ public class BookDetailServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!requireAdmin(request, response)) return;
 
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -358,7 +410,7 @@ public class BookDetailServlet extends HttpServlet {
 
             // Kiểm tra có lượt mượn/đặt chỗ đang hoạt động không
             if (dao.hasActiveBorrowsOrReservations(id)) {
-                response.sendRedirect(ctx + "/book/detail?id=" + id + "&error=has_active");
+                response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&error=has_active");
                 return;
             }
 
@@ -369,16 +421,16 @@ public class BookDetailServlet extends HttpServlet {
             boolean deleted = dao.deleteBook(id, operator);
 
             if (deleted) {
-                response.sendRedirect(ctx + "/books?success=deleted");
+                response.sendRedirect(redirectBase + "/books?success=deleted");
             } else {
-                response.sendRedirect(ctx + "/book/detail?id=" + id + "&error=delete_failed");
+                response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&error=delete_failed");
             }
 
         } catch (IllegalStateException e) {
             // Còn bản sao vật lý active
-            response.sendRedirect(ctx + "/book/detail?id=" + id + "&error=has_copies");
+            response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&error=has_copies");
         } catch (Exception e) {
-            response.sendRedirect(ctx + "/book/detail?id=" + id + "&error=exception");
+            response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&error=exception");
         }
     }
 

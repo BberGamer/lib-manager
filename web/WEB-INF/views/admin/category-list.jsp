@@ -56,10 +56,6 @@
                 <button class="category-button category-button-primary" type="submit">
                     <i class="fa-solid fa-magnifying-glass"></i> Tìm
                 </button>
-                <a class="category-button category-button-reset" href="${categoryListUrl}"
-                   title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc">
-                    <i class="fa-solid fa-rotate-right"></i>
-                </a>
             </form>
         </section>
 
@@ -150,17 +146,78 @@
             </div>
         </section>
 
-        <c:if test="${totalPages > 1}">
-            <nav class="category-pagination" aria-label="Phân trang danh mục">
-                <c:forEach var="pageNumber" begin="1" end="${totalPages}">
-                    <c:url var="pageUrl" value="/admin/categories">
-                        <c:param name="keyword" value="${keyword}" /><c:param name="sort" value="${sortField}" />
-                        <c:param name="order" value="${sortOrder}" /><c:param name="page" value="${pageNumber}" />
-                    </c:url>
-                    <a href="${pageUrl}" class="category-page-link ${pageNumber == currentPage ? 'is-current' : ''}"><c:out value="${pageNumber}" /></a>
-                </c:forEach>
-            </nav>
-        </c:if>
+        <%
+            Integer totalPgC = (Integer) request.getAttribute("totalPages");
+            Integer curPgC   = (Integer) request.getAttribute("currentPage");
+            String ctx4      = request.getContextPath();
+            if (totalPgC == null) totalPgC = 1;
+            if (curPgC   == null) curPgC   = 1;
+            String baseUrlC  = ctx4 + "/admin/categories?page=";
+            if (totalPgC > 1) {
+        %>
+        <nav aria-label="Phân trang danh mục" style="margin-top: 24px;">
+            <ul class="pagination">
+                <!-- Prev -->
+                <li class="page-item <%= curPgC <= 1 ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrlC %><%= curPgC - 1 %>">
+                        <i class="fa-solid fa-chevron-left fa-xs"></i>
+                    </a>
+                </li>
+
+                <%
+                   if (totalPgC <= 7) {
+                       for (int pg = 1; pg <= totalPgC; pg++) { %>
+                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   } else {
+                       for (int pg = 1; pg <= 2; pg++) { %>
+                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                       if (curPgC <= 4) {
+                           for (int pg = 3; pg <= 5; pg++) { %>
+                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% } else if (curPgC >= totalPgC - 3) { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = totalPgC - 4; pg <= totalPgC - 2; pg++) { %>
+                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = curPgC - 1; pg <= curPgC + 1; pg++) { %>
+                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% }
+                       for (int pg = totalPgC - 1; pg <= totalPgC; pg++) { %>
+                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   }
+                %>
+
+                <!-- Next -->
+                <li class="page-item <%= curPgC >= totalPgC ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrlC %><%= curPgC + 1 %>">
+                        <i class="fa-solid fa-chevron-right fa-xs"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <% } %>
+
     </div>
 </main>
 <script src="${categoryScriptUrl}" defer></script>

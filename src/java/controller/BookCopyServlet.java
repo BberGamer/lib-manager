@@ -15,9 +15,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet(name = "BookCopyServlet", urlPatterns = {
-    "/book/copy/add", "/book/copy/edit", "/book/copy/delete"
+    "/book/copy/add", "/librarian/book/copy/add", "/admin/book/copy/add",
+    "/book/copy/edit", "/librarian/book/copy/edit", "/admin/book/copy/edit",
+    "/book/copy/delete", "/librarian/book/copy/delete", "/admin/book/copy/delete"
 })
 public class BookCopyServlet extends HttpServlet {
+
+    private String getRedirectBase(HttpServletRequest request) {
+        String path = request.getServletPath();
+        boolean isManageView = path.startsWith("/admin") || path.startsWith("/librarian");
+        if (isManageView) {
+            return request.getContextPath() + (path.startsWith("/admin") ? "/admin" : "/librarian");
+        }
+        return request.getContextPath();
+    }
+
+    private void setSidebarAttributes(HttpServletRequest request) {
+        String path = request.getServletPath();
+        boolean isManageView = path.startsWith("/admin") || path.startsWith("/librarian");
+        if (isManageView) {
+            request.setAttribute("isManagePageAttr", true);
+            request.setAttribute("activePage", "books");
+            request.setAttribute("rolePath", path.startsWith("/admin") ? "/admin" : "/librarian");
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -37,7 +58,7 @@ public class BookCopyServlet extends HttpServlet {
 
         // Add and Edit require Admin or Librarian
         // Delete requires Admin only
-        if ("/book/copy/delete".equals(path)) {
+        if (path.endsWith("/book/copy/delete")) {
             if (!loggedUser.isAdmin()) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác này.");
                 return;
@@ -48,9 +69,9 @@ public class BookCopyServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác này.");
                 return;
             }
-            if ("/book/copy/add".equals(path)) {
+            if (path.endsWith("/book/copy/add")) {
                 showAddForm(request, response);
-            } else if ("/book/copy/edit".equals(path)) {
+            } else if (path.endsWith("/book/copy/edit")) {
                 showEditForm(request, response);
             }
         }
@@ -76,19 +97,19 @@ public class BookCopyServlet extends HttpServlet {
             return;
         }
 
-        if ("/book/copy/add".equals(path)) {
+        if (path.endsWith("/book/copy/add")) {
             processAdd(request, response, loggedUser.getUsername());
-        } else if ("/book/copy/edit".equals(path)) {
+        } else if (path.endsWith("/book/copy/edit")) {
             processEdit(request, response, loggedUser.getUsername());
         }
     }
 
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int bookId = parseId(request.getParameter("bookId"));
         if (bookId <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -101,10 +122,11 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         if (book == null) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
+        setSidebarAttributes(request);
         request.setAttribute("formMode", "add");
         request.setAttribute("book", book);
         request.setAttribute("pageTitle", "Thêm bản sao mới – FPT Library");
@@ -113,10 +135,10 @@ public class BookCopyServlet extends HttpServlet {
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -128,10 +150,11 @@ public class BookCopyServlet extends HttpServlet {
             e.printStackTrace();
         }
         if (copy == null) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
+        setSidebarAttributes(request);
         request.setAttribute("formMode", "edit");
         request.setAttribute("copy", copy);
         request.setAttribute("book", copy.getBook());
@@ -141,10 +164,10 @@ public class BookCopyServlet extends HttpServlet {
 
     private void processAdd(HttpServletRequest request, HttpServletResponse response, String operator)
             throws ServletException, IOException {
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int bookId = parseId(request.getParameter("bookId"));
         if (bookId <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -156,7 +179,7 @@ public class BookCopyServlet extends HttpServlet {
             e.printStackTrace();
         }
         if (book == null) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -213,6 +236,7 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         if (!errors.isEmpty()) {
+            setSidebarAttributes(request);
             request.setAttribute("formMode", "add");
             request.setAttribute("book", book);
             request.setAttribute("errors", errors);
@@ -243,9 +267,10 @@ public class BookCopyServlet extends HttpServlet {
         boolean success = copyDao.addCopy(copy);
         if (success) {
             copyDao.addAuditLog(copy.getId(), "ADD", operator, null, copy.getStatus(), null, copy.getBookCondition(), "Thêm bản sao mới");
-            response.sendRedirect(ctx + "/book/copies?bookId=" + bookId + "&success=added");
+            response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=added");
         } else {
             errors.add("Thêm bản sao thất bại do lỗi hệ thống.");
+            setSidebarAttributes(request);
             request.setAttribute("formMode", "add");
             request.setAttribute("book", book);
             request.setAttribute("errors", errors);
@@ -256,10 +281,10 @@ public class BookCopyServlet extends HttpServlet {
 
     private void processEdit(HttpServletRequest request, HttpServletResponse response, String operator)
             throws ServletException, IOException {
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -271,7 +296,7 @@ public class BookCopyServlet extends HttpServlet {
             e.printStackTrace();
         }
         if (existingCopy == null) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -327,6 +352,7 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         if (!errors.isEmpty()) {
+            setSidebarAttributes(request);
             request.setAttribute("formMode", "edit");
             request.setAttribute("copy", existingCopy);
             request.setAttribute("book", existingCopy.getBook());
@@ -358,9 +384,10 @@ public class BookCopyServlet extends HttpServlet {
         boolean success = copyDao.updateCopy(existingCopy);
         if (success) {
             copyDao.addAuditLog(id, "UPDATE", operator, oldStatus, status, oldCondition, condition, "Cập nhật bản sao");
-            response.sendRedirect(ctx + "/book/copies?bookId=" + existingCopy.getBookId() + "&success=updated");
+            response.sendRedirect(redirectBase + "/book/copies?bookId=" + existingCopy.getBookId() + "&success=updated");
         } else {
             errors.add("Cập nhật bản sao thất bại do lỗi hệ thống.");
+            setSidebarAttributes(request);
             request.setAttribute("formMode", "edit");
             request.setAttribute("copy", existingCopy);
             request.setAttribute("book", existingCopy.getBook());
@@ -372,10 +399,10 @@ public class BookCopyServlet extends HttpServlet {
 
     private void processDelete(HttpServletRequest request, HttpServletResponse response, String operator)
             throws ServletException, IOException {
-        String ctx = request.getContextPath();
+        String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -387,7 +414,7 @@ public class BookCopyServlet extends HttpServlet {
             e.printStackTrace();
         }
         if (copy == null) {
-            response.sendRedirect(ctx + "/books");
+            response.sendRedirect(redirectBase + "/books");
             return;
         }
 
@@ -395,16 +422,16 @@ public class BookCopyServlet extends HttpServlet {
 
         // Constraint check: Cannot delete BORROWED or RESERVED copy
         if ("BORROWED".equals(copy.getStatus()) || "RESERVED".equals(copy.getStatus())) {
-            response.sendRedirect(ctx + "/book/copies?bookId=" + bookId + "&error=cannot_delete");
+            response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&error=cannot_delete");
             return;
         }
 
         boolean success = copyDao.deleteCopy(id, operator);
         if (success) {
             copyDao.addAuditLog(id, "DELETE", operator, copy.getStatus(), null, copy.getBookCondition(), null, "Xóa bản sao");
-            response.sendRedirect(ctx + "/book/copies?bookId=" + bookId + "&success=deleted");
+            response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=deleted");
         } else {
-            response.sendRedirect(ctx + "/book/copies?bookId=" + bookId + "&error=delete_failed");
+            response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&error=delete_failed");
         }
     }
 
