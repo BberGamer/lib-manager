@@ -21,7 +21,8 @@
 
     <%-- ===== HERO ===== --%>
     <section class="home-hero">
-        <div class="container">
+        <div class="hero-grid-bg"></div>
+        <div class="container" style="position:relative; z-index:1;">
             <div class="hero-content">
                 <div class="hero-greeting">
                     <c:choose>
@@ -197,6 +198,54 @@
                         <h3>Thông báo tự động</h3>
                         <p>Nhắc nhở hạn trả, thông báo sách mới và phiếu phạt</p>
                     </div>
+                </div>
+            </div>
+        </section>
+    </c:if>
+
+    <%-- ===== LATEST BOOKS ===== --%>
+    <c:if test="${not empty latestBooks}">
+        <section class="home-latest-books" style="padding: 56px 0; background: var(--bg-dark); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
+                    <h2 class="section-title" style="margin:0;">Sách mới nhất</h2>
+                    <a href="${pageContext.request.contextPath}/books" class="btn btn-outline" style="font-size:0.9rem; padding: 8px 16px; display:inline-flex; align-items:center; gap:6px;">
+                        Xem tất cả <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                
+                <div class="books-grid">
+                    <c:forEach var="book" items="${latestBooks}">
+                        <div class="book-card">
+                            <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="book-cover">
+                                <c:choose>
+                                    <c:when test="${not empty book.coverImage}">
+                                        <img src="${pageContext.request.contextPath}/uploads/${book.coverImage}" 
+                                             alt="${book.title}" 
+                                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="" style="display:none;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                    </c:otherwise>
+                                </c:choose>
+                                <div class="book-cover-placeholder" style="display:none;">
+                                    <i class="fa-solid fa-book"></i>
+                                    <span><c:out value="${book.title}" /></span>
+                                </div>
+                                <span class="book-status-tag ${book.available > 0 ? 'status-available' : 'status-unavailable'}">
+                                    ${book.available > 0 ? 'Còn sách' : 'Hết sách'}
+                                </span>
+                            </a>
+                            <div class="book-body">
+                                <span class="book-category"><c:out value="${book.category}" /></span>
+                                <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="book-title" title="${book.title}">
+                                    <c:out value="${book.title}" />
+                                </a>
+                                <div class="book-publisher">Năm XB: ${book.publishYear}</div>
+                                <div class="book-price">Giá: ${book.price} VNĐ</div>
+                            </div>
+                        </div>
+                    </c:forEach>
                 </div>
             </div>
         </section>
