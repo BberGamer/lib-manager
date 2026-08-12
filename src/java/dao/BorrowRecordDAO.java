@@ -14,6 +14,16 @@ import java.util.List;
 
 public class BorrowRecordDAO {
 
+    private static final String BORROW_RECORD_SELECT =
+            "SELECT br.id, br.user_id, br.book_id, br.copy_id, br.borrow_date, br.due_date, "
+            + "br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
+            + "u.username, u.full_name, u.email, u.phone, b.title, b.isbn, "
+            + "bc.barcode, bc.book_condition, bc.status AS copy_status "
+            + "FROM borrow_records br "
+            + "INNER JOIN users u ON br.user_id = u.id "
+            + "INNER JOIN books b ON br.book_id = b.id "
+            + "LEFT JOIN book_copies bc ON br.copy_id = bc.id ";
+
     private BorrowRecord mapRow(ResultSet rs) throws SQLException {
         BorrowRecord record = new BorrowRecord();
         record.setId(rs.getInt("id"));
@@ -187,9 +197,64 @@ public class BorrowRecordDAO {
         return null;
     }
 
+    /**
+     * Lấy toàn bộ lượt mượn của một độc giả để hiển thị trang cá nhân.
+     *
+     * @param userId mã người dùng đã được controller xác thực
+     * @return danh sách lượt mượn mới nhất trước, không bao giờ trả về {@code null}
+     * @throws Exception khi không thể truy vấn cơ sở dữ liệu
+     */
+    public List<BorrowRecord> findByUserId(int userId) throws Exception {
+        String sql = BORROW_RECORD_SELECT
+                + "WHERE br.user_id = ? "
+                + "ORDER BY CASE WHEN br.status IN ('BORROWING', 'OVERDUE') THEN 0 ELSE 1 END, "
+                + "br.created_at DESC";
+        List<BorrowRecord> records = new ArrayList<>();
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    records.add(mapRow(resultSet));
+                }
+            }
+        }
+        return records;
+    }
+
+    /**
+     * Gia hạn một lượt mượn thuộc đúng độc giả và vẫn còn ở trạng thái đang mượn.
+     * Điều kiện số lần gia hạn được kiểm tra nguyên tử trong câu lệnh cập nhật.
+     *
+     * @param borrowRecordId mã lượt mượn
+     * @param userId mã độc giả sở hữu lượt mượn
+     * @param maximumRenewals số lần gia hạn tối đa
+     * @param extensionDays số ngày cộng thêm vào hạn trả
+     * @return {@code true} nếu có đúng một lượt mượn được gia hạn
+     * @throws Exception khi không thể cập nhật cơ sở dữ liệu
+     */
+    public boolean renewForUser(int borrowRecordId, int userId, int maximumRenewals,
+            int extensionDays) throws Exception {
+        String sql = "UPDATE borrow_records "
+                + "SET due_date = DATE_ADD(due_date, INTERVAL ? DAY), "
+                + "renewal_count = renewal_count + 1, updated_at = NOW() "
+                + "WHERE id = ? AND user_id = ? AND status = 'BORROWING' "
+                + "AND due_date >= CURDATE() AND renewal_count < ?";
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, extensionDays);
+            statement.setInt(2, borrowRecordId);
+            statement.setInt(3, userId);
+            statement.setInt(4, maximumRenewals);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
     public boolean confirmLoan(int id, int copyId, String operator) throws Exception {
         String selectRecord = "SELECT book_id FROM borrow_records WHERE id = ?";
-        String updateRecord = "UPDATE borrow_records SET copy_id = ?, status = 'BORROWING', borrow_date = CURDATE(), due_date = DATE_ADD(CURDATE(), INTERVAL 14 DAY), updated_at = NOW() WHERE id = ?";
+        String updateRecord = "UPDATE borrow_records SET copy_id = ?, status = 'BORROWING', "
+                + "borrow_date = CURDATE(), due_date = DATE_ADD(CURDATE(), INTERVAL 14 DAY), "
+                + "updated_at = NOW() WHERE id = ?";
         String updateCopy = "UPDATE book_copies SET status = 'BORROWED', updated_by = ?, updated_at = NOW() WHERE id = ?";
         String updateBook = "UPDATE books SET available = GREATEST(0, available - 1) WHERE id = ?";
 

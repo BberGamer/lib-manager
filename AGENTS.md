@@ -420,7 +420,12 @@ session.setAttribute("authenticatedUser", userSession);
 - Use `PreparedStatement` against SQL injection.
 - Escape untrusted output according to HTML, attribute, URL, or JavaScript
   context to prevent XSS.
-- Add CSRF protection to state-changing forms and verify the token server-side.
+- CSRF protection is not required for this project. Do not add CSRF tokens,
+  CSRF session attributes, or CSRF validation unless the user explicitly asks
+  for them in a future task.
+- Log failures of state-changing operations with the project's configured
+  logging framework. If none exists, use `java.util.logging.Logger`; never log
+  passwords, tokens, session IDs, or other sensitive values.
 - Validate content type, size, generated filename, and destination for uploads.
 - Never trust a client-supplied filesystem path.
 - Do not commit secrets, connection passwords, API keys, or machine-specific
@@ -612,8 +617,8 @@ Before considering a change complete, verify all applicable items:
 6. All runtime SQL values use `PreparedStatement` parameters.
 7. Required, missing, malformed, boundary, and unauthorized inputs are handled.
 8. Create/Update/Delete operations use Post/Redirect/Get after success.
-9. Output derived from users is escaped and state-changing forms have CSRF
-   protection when the application supports it.
+9. Output derived from users is escaped, and failures of state-changing
+   operations are recorded with the configured logger without sensitive data.
 10. JDBC resources and transactions close, commit, and roll back correctly.
 11. No secrets, sensitive logs, debug output, dead code, or unrelated formatting
     changes were introduced.
