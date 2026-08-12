@@ -10,11 +10,14 @@ public class BorrowRecord {
     private int userId;
     private int bookId;
     private Integer copyId; // nullable copy_id
+    private LocalDateTime requestDate;
+    private LocalDateTime pickupDeadline;
+    private LocalDateTime pickupDate;
     private LocalDate borrowDate;
     private LocalDate dueDate;
     private LocalDate returnDate;
     private int renewalCount;
-    private String status; // BORROWING, RETURNED, OVERDUE, LOST
+    private String status; // PENDING_PICKUP, BORROWED, RETURNED, EXPIRED, CANCELLED, OVERDUE
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -66,6 +69,19 @@ public class BorrowRecord {
     public Integer getCopyId() {
         return copyId;
     }
+
+    /** @return thời điểm user gửi yêu cầu mượn */
+    public LocalDateTime getRequestDate() { return requestDate; }
+    /** @param requestDate thời điểm user gửi yêu cầu mượn */
+    public void setRequestDate(LocalDateTime requestDate) { this.requestDate = requestDate; }
+    /** @return hạn cuối user phải đến nhận sách */
+    public LocalDateTime getPickupDeadline() { return pickupDeadline; }
+    /** @param pickupDeadline hạn cuối user phải đến nhận sách */
+    public void setPickupDeadline(LocalDateTime pickupDeadline) { this.pickupDeadline = pickupDeadline; }
+    /** @return thời điểm thủ thư xác nhận giao sách */
+    public LocalDateTime getPickupDate() { return pickupDate; }
+    /** @param pickupDate thời điểm thủ thư xác nhận giao sách */
+    public void setPickupDate(LocalDateTime pickupDate) { this.pickupDate = pickupDate; }
 
     public void setCopyId(Integer copyId) {
         this.copyId = copyId;

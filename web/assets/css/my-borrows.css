@@ -41,6 +41,7 @@
 .borrow-date-overdue strong, .borrow-date-overdue small { color: #ee3857 !important; }
 .borrow-status { display: inline-block; border-radius: 99px; padding: 4px 10px; font-size: .72rem; white-space: nowrap; }
 .borrow-status.borrowing { color: #1767c6; background: #e6f2ff; }
+.borrow-status.pending { color: #a76000; background: #fff3d8; }
 .borrow-status.overdue { color: #df304f; background: #ffebee; }
 .borrow-status.returned { color: #267a4b; background: #e8f7ee; }
 .renew-form { margin: 0; }

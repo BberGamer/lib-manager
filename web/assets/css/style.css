@@ -1336,6 +1336,8 @@ a.book-title-link:hover {
   justify-content: space-between;
   gap: 8px;
 }
+.book-borrow-form { display: inline-flex; margin: 0; }
+.book-borrow-form button:disabled { cursor: not-allowed; opacity: .55; }
 
 /* ===================== SEARCH BAR (Books Page) ===================== */
 .search-bar-wrapper {

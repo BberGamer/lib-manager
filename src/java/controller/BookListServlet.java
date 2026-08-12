@@ -10,6 +10,7 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
+import service.BorrowService;
 import java.util.List;
 
 /**
@@ -19,12 +20,19 @@ import java.util.List;
 @WebServlet(name = "BookListServlet", urlPatterns = {"/books", "/admin/books", "/librarian/books"})
 public class BookListServlet extends HttpServlet {
 
+    private final BorrowService borrowService = new BorrowService();
+
     private static final int PAGE_SIZE = 12;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        try {
+            borrowService.expirePendingBorrowRequests();
+        } catch (Exception exception) {
+            getServletContext().log("Không thể xử lý yêu cầu mượn đã hết hạn.", exception);
+        }
         response.setContentType("text/html;charset=UTF-8");
         
         String path = request.getServletPath();

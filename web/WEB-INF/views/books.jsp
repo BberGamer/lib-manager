@@ -288,10 +288,10 @@
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
-                                    <form method="post" action="<%= ctx %>/reservation/create" style="display:inline;margin:0;">
+                                    <form method="post" action="<%= ctx %>/borrow/create" class="book-borrow-form">
                                         <input type="hidden" name="bookId" value="<%= b.getId() %>">
-                                        <button type="submit" class="btn btn-sm" title="Đặt trước">
-                                            <i class="fa-solid fa-bookmark"></i> Đặt trước
+                                        <button type="submit" class="btn btn-sm" title="Gửi yêu cầu mượn sách" <%= b.getAvailable() <= 0 ? "disabled" : "" %>>
+                                            <i class="fa-solid fa-book-open"></i> <%= b.getAvailable() > 0 ? "Mượn sách" : "Không khả dụng" %>
                                         </button>
                                     </form>
                                     <% } %>
@@ -373,12 +373,12 @@
                             </button>
                             <% } %>
                             <% if (loggedUser != null && !isAdminLib) { %>
-                            <form method="post" action="<%= ctx %>/reservation/create" style="display:inline;margin:0;">
+                            <form method="post" action="<%= ctx %>/borrow/create" class="book-borrow-form">
                                 <input type="hidden" name="bookId" value="<%= b.getId() %>">
                                 <button type="submit" class="btn btn-sm"
-                                        title="Đặt trước sách này"
+                                        title="Gửi yêu cầu mượn sách" <%= b.getAvailable() <= 0 ? "disabled" : "" %>
                                         style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:0.78rem;cursor:pointer;font-weight:600;white-space:nowrap;">
-                                    <i class="fa-solid fa-bookmark"></i> Đặt trước
+                                    <i class="fa-solid fa-book-open"></i> <%= b.getAvailable() > 0 ? "Mượn sách" : "Không khả dụng" %>
                                 </button>
                             </form>
                             <% } %>
