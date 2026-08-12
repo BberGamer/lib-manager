@@ -1,5 +1,6 @@
 package dao;
 
+import utils.DBContext;
 import model.User;
 import java.sql.*;
 import java.util.ArrayList;
@@ -159,6 +160,31 @@ public class UserDAO {
         u.setRole(rs.getString("role"));
         u.setActive(rs.getInt("active"));
         return u;
+    }
+    //
+    
+    // Check email tồn tại và lấy thông tin User
+    public User getUserByEmail(String email) throws Exception {
+        String sql = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
+        return null;
+    }
+
+    // Cập nhật mật khẩu theo email
+    public boolean updatePasswordByEmail(String email, String hashedPassword) throws Exception {
+        String sql = "UPDATE users SET password = ? WHERE email = ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, hashedPassword);
+            ps.setString(2, email);
+            return ps.executeUpdate() > 0;
+        }
     }
 }
 
