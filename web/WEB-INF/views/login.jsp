@@ -1,4 +1,9 @@
-
+<%--
+  Mục đích: Trang đăng nhập hệ thống thư viện.
+  Tầng: Presentation Layer (JSP View - WEB-INF/views/login.jsp)
+  Phụ trách bởi: LoginServlet (/login)
+  Thuộc tính nhận: request.error, request.success
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>

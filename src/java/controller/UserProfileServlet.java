@@ -8,7 +8,7 @@ import model.User;
 import service.UserProfileService;
 
 @WebServlet(name = "UserProfileController", urlPatterns = {"/user/profile"})
-public class UserProfileController extends HttpServlet {
+public class UserProfileServlet extends HttpServlet {
 
     private final UserProfileService userProfileService = new UserProfileService();
 
@@ -38,7 +38,7 @@ public class UserProfileController extends HttpServlet {
         } catch (Exception e) {
             request.setAttribute("error", "Không thể tải thông tin người dùng: " + e.getMessage());
         }
-        request.getRequestDispatcher("/user_profile.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/user_profile.jsp").forward(request, response);
     }
 
     @Override
