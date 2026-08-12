@@ -56,16 +56,16 @@ public class User {
     public String getAvatar()                      { return avatar; }
     public void setAvatar(String avatar)           { this.avatar = avatar; }
 
-    public String getRole()                        { return role; }
-    public void setRole(String role)               { this.role = role; }
+    public String getRole()                        { return role != null ? role.trim() : null; }
+    public void setRole(String role)               { this.role = role != null ? role.trim() : null; }
 
     public int getActive()                         { return active; }
     public void setActive(int active)              { this.active = active; }
 
     /** Tiện ích kiểm tra quyền */
-    public boolean isAdmin()      { return "ADMIN".equalsIgnoreCase(role); }
-    public boolean isLibrarian()  { return "LIBRARIAN".equalsIgnoreCase(role); }
-    public boolean isReader()     { return "READER".equalsIgnoreCase(role); }
+    public boolean isAdmin()      { return role != null && "ADMIN".equalsIgnoreCase(role.trim()); }
+    public boolean isLibrarian()  { return role != null && "LIBRARIAN".equalsIgnoreCase(role.trim()); }
+    public boolean isReader()     { return role != null && "READER".equalsIgnoreCase(role.trim()); }
     public boolean isAdminOrLibrarian() { return isAdmin() || isLibrarian(); }
 
     @Override

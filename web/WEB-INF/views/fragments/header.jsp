@@ -26,17 +26,19 @@
 <c:url var="myReservationsUrl" value="/reservation/my" />
 <c:url var="myFinesUrl" value="/fine/my" />
 <c:url var="myNotificationsUrl" value="/notification/my" />
-<c:url var="borrowManagementUrl" value="/borrow/list" />
-<c:url var="reservationManagementUrl" value="/reservation/list" />
-<c:url var="fineManagementUrl" value="/fine/list" />
-<c:url var="notificationManagementUrl" value="/notification/manage" />
-<c:url var="shelfManagementUrl" value="/shelf" />
-<c:url var="authorsUrl" value="/authors" />
+<c:url var="borrowManagementUrl" value="/admin/borrow/list" />
+<c:url var="reservationManagementUrl" value="/admin/reservation/list" />
+<c:url var="fineManagementUrl" value="/admin/fine/list" />
+<c:url var="notificationManagementUrl" value="/admin/notification/manage" />
+<c:url var="shelfManagementUrl" value="/admin/shelf" />
+<c:url var="authorsUrl" value="/admin/authors" />
 <c:url var="categoriesUrl" value="/admin/categories" />
-<c:url var="usersUrl" value="/users" />
+<c:url var="usersUrl" value="/admin/users" />
 <c:url var="profileUrl" value="/user/profile" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
+<c:url var="libraryStatsUrl" value="/admin/dashboard/library" />
+<c:url var="adminStatsUrl" value="/admin" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -67,7 +69,7 @@
                     aria-label="Mở menu quản trị" aria-expanded="false">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <a href="${homeUrl}" class="admin-mobile-brand">
+            <a href="${navUser.admin ? adminStatsUrl : (navUser.librarian ? libraryStatsUrl : homeUrl)}" class="admin-mobile-brand">
                 <img src="${logoUrl}" alt="FPT Logo">
                 <span>FPT Library</span>
             </a>
@@ -153,7 +155,9 @@
                                        or navCurrentPage eq 'shelf'
                                        or navCurrentPage eq 'authors'
                                        or navCurrentPage eq 'categories'
-                                       or navCurrentPage eq 'users'}" />
+                                       or navCurrentPage eq 'users'
+                                       or navCurrentPage eq 'dashboard-library'
+                                       or navCurrentPage eq 'dashboard-admin'}" />
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link ${isManageActive ? 'active' : ''}">
                                     <i class="fa-solid fa-briefcase"></i> Quản lý
@@ -194,6 +198,17 @@
                                         <li><a href="${usersUrl}"
                                                class="dropdown-item ${navCurrentPage eq 'users' ? 'active' : ''}">
                                                 <i class="fa-solid fa-user-gear"></i> Tài khoản
+                                            </a></li>
+                                    </c:if>
+                                    <li class="dropdown-divider"></li>
+                                    <li><a href="${libraryStatsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'dashboard-library' ? 'active' : ''}">
+                                            <i class="fa-solid fa-chart-pie"></i> Thống kê Thư viện
+                                        </a></li>
+                                    <c:if test="${navUser.admin}">
+                                        <li><a href="${adminStatsUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'dashboard-admin' ? 'active' : ''}">
+                                                <i class="fa-solid fa-chart-line"></i> Thống kê Admin
                                             </a></li>
                                     </c:if>
                                 </ul>

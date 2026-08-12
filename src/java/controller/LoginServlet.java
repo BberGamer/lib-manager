@@ -30,7 +30,13 @@ public class LoginServlet extends HttpServlet {
             if (user != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("loggedUser", user);
-                response.sendRedirect(request.getContextPath() + "/home");
+                if (user.isAdmin()) {
+                    response.sendRedirect(request.getContextPath() + "/admin");
+                } else if (user.isLibrarian()) {
+                    response.sendRedirect(request.getContextPath() + "/dashboard/library");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/home");
+                }
                 return;
             } else {
                 request.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng.");
