@@ -161,11 +161,14 @@
     color: #64748b;
 }
 
-/* Stylize Mật khẩu hiện tại input */
-.profile-grid>.profile-card:nth-child(2) .form-group:first-of-type .form-control {
-    background: #edf2f9;
-    color: #1e293b;
-    border-color: #e2e8f0;
+/* Ghi đè màu nền xanh mặc định của Chrome/Edge khi trình duyệt autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+    -webkit-text-fill-color: #1e293b !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 

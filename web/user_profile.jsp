@@ -67,12 +67,14 @@
                                    pattern="0[0-9]{9,10}" maxlength="15" placeholder="0xxxxxxxxx" />
                         </div>
 
+                        <% if ("READER".equalsIgnoreCase(profile.getRole())) { %>
                         <div class="form-group">
                             <label for="studentId">Mã số sinh viên (MSSV)</label>
                             <input type="text" id="studentId" name="studentId" class="form-control"
                                    value="<%= profile.getStudentId() != null ? profile.getStudentId() : "" %>"
                                    pattern="[a-zA-Z0-9]*" maxlength="20" placeholder="Ví dụ: SS170001" />
                         </div>
+                        <% } %>
 
                         <% if (isAdmin) { %>
                             <div class="admin-controls-section">
@@ -104,7 +106,7 @@
                 <!-- Đổi mật khẩu -->
                 <div class="profile-card">
                     <h2>Đổi mật khẩu</h2>
-                    <p><%= isAdminEditingOther ? "Đặt mật khẩu mới cho người dùng này" : "Cập nhật mật khẩu để bảo vệ tài khoản" %></p>
+                    <p><%= isAdminEditingOther ? "Đặt mật khẩu mới cho người dùng này" : "Quản lý và cập nhật mật khẩu đăng nhập" %></p>
 
                     <% if (isAdminEditingOther) { %>
                         <div class="info-bubble">
@@ -112,14 +114,14 @@
                         </div>
                     <% } %>
 
-                    <form method="POST" action="<%= contextPath %>/user/profile">
+                    <form method="POST" action="<%= contextPath %>/user/profile" autocomplete="off">
                         <input type="hidden" name="action" value="changePassword" />
                         <input type="hidden" name="id" value="<%= profile.getId() %>" />
 
                         <% if (!isAdminEditingOther) { %>
                         <div class="form-group">
                             <label for="oldPassword">Mật khẩu hiện tại *</label>
-                            <input type="password" id="oldPassword" name="oldPassword" class="form-control" autocomplete="new-password" required />
+                            <input type="password" id="oldPassword" name="oldPassword" class="form-control" autocomplete="new-password" placeholder="Nhập mật khẩu hiện tại" required />
                         </div>
                         <% } %>
 
@@ -131,7 +133,7 @@
 
                         <div class="form-group">
                             <label for="confirmPassword">Xác nhận mật khẩu mới *</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" autocomplete="new-password" required />
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" autocomplete="new-password" placeholder="Nhập lại mật khẩu mới" required />
                         </div>
 
                         <div class="form-footer">
