@@ -1,11 +1,4 @@
-<%-- 
-  Tên file: login.jsp 
-  Mục đích: Trang hiển thị giao diện đăng nhập cho người dùng và thủ thư/quản trị viên. 
-  Tầng: Giao diện (Presentation Layer - JSP View) 
-  Controller: LoginServlet (/login)
-  Attributes:
-    - request: error (thông báo lỗi), success (thông báo thành công)
---%>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
