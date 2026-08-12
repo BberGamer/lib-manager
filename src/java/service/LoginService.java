@@ -2,7 +2,6 @@ package service;
 
 import dao.UserDAO;
 import model.User;
-import utils.BCrypt;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
@@ -20,9 +19,6 @@ public class LoginService {
 
     private boolean checkPassword(String raw, String hashed) {
         if (raw == null || hashed == null) return false;
-        if (hashed.startsWith("$2")) {
-            return BCrypt.checkpw(raw, hashed);
-        }
         return raw.equals(hashed) || hashPassword(raw).equals(hashed);
     }
 
