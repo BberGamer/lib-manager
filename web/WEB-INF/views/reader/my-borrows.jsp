@@ -11,6 +11,7 @@
 <c:set var="pageDesc" value="Theo dõi tình trạng mượn, hạn trả và lịch sử mượn sách." scope="request" />
 <c:set var="pageStylesheet" value="/assets/css/my-borrows.css" scope="request" />
 <c:url var="renewUrl" value="/borrow/my/renew" />
+<c:url var="cancelUrl" value="/borrow/cancel" />
 
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
@@ -23,7 +24,7 @@
                 <p>Theo dõi tình trạng mượn và gia hạn sách của bạn</p>
             </div>
             <div class="borrow-hero-counts" aria-label="Tổng quan mượn sách">
-                <div><strong><c:out value="${borrowPage.activeRecords.size()}" /></strong><span>Đang mượn</span></div>
+                <div><strong><c:out value="${borrowPage.activeRecords.size()}" /></strong><span>Đang hoạt động</span></div>
                 <div><strong><c:out value="${maximumActiveBorrows}" /></strong><span>Giới hạn</span></div>
             </div>
         </div>
@@ -47,7 +48,7 @@
 
         <section class="borrow-summary" aria-label="Chỉ số mượn sách">
             <article class="borrow-summary-card borrow-summary-limit">
-                <span>Đang mượn / Giới hạn</span>
+                <span>Đang hoạt động / Giới hạn</span>
                 <strong><c:out value="${borrowPage.activeRecords.size()}" /> /
                     <c:out value="${maximumActiveBorrows}" /></strong>
                 <c:choose>
@@ -75,7 +76,8 @@
                             <tr>
                                 <td data-label="Sách">
                                     <strong><c:out value="${record.book.title}" /></strong>
-                                    <small>Barcode: <c:out value="${record.bookCopy.barcode}" default="—" /></small>
+                                    <small>Mã vạch: <c:out value="${record.bookCopy.barcode}" default="—" /></small>
+                                    <c:if test="${record.status eq 'PENDING_PICKUP'}"><small>Nhận trước: <c:out value="${record.pickupDeadline}" /></small></c:if>
                                 </td>
                                 <td data-label="Ngày mượn"><c:out value="${record.borrowDate}" default="—" /></td>
                                 <td data-label="Hạn trả" class="${record.status eq 'OVERDUE' ? 'borrow-date-overdue' : ''}">
@@ -87,12 +89,16 @@
                                 <td data-label="Trạng thái">
                                     <c:choose>
                                         <c:when test="${record.status eq 'OVERDUE'}"><span class="borrow-status overdue">Quá hạn</span></c:when>
+                                        <c:when test="${record.status eq 'PENDING_PICKUP'}"><span class="borrow-status pending">Chờ nhận sách</span></c:when>
                                         <c:otherwise><span class="borrow-status borrowing">Đang mượn</span></c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td data-label="Thao tác">
                                     <c:choose>
-                                        <c:when test="${record.status eq 'BORROWING' and record.renewalCount lt maximumRenewals}">
+                                        <c:when test="${record.status eq 'PENDING_PICKUP'}">
+                                            <form action="${cancelUrl}" method="post" class="renew-form"><input type="hidden" name="borrowId" value="${record.id}"><button type="submit" class="renew-button">Hủy yêu cầu</button></form>
+                                        </c:when>
+                                        <c:when test="${record.status eq 'BORROWED' and record.renewalCount lt maximumRenewals}">
                                             <form action="${renewUrl}" method="post" class="renew-form">
                                                 <input type="hidden" name="borrowRecordId" value="${record.id}">
                                                 <button type="submit" class="renew-button"><i class="fa-solid fa-rotate"></i> Gia hạn</button>
@@ -119,10 +125,10 @@
                     <tbody>
                         <c:forEach var="record" items="${borrowPage.historyRecords}">
                             <tr>
-                                <td data-label="Sách"><strong><c:out value="${record.book.title}" /></strong><small>Barcode: <c:out value="${record.bookCopy.barcode}" default="—" /></small></td>
+                                <td data-label="Sách"><strong><c:out value="${record.book.title}" /></strong><small>Mã vạch: <c:out value="${record.bookCopy.barcode}" default="—" /></small></td>
                                 <td data-label="Ngày mượn"><c:out value="${record.borrowDate}" default="—" /></td>
                                 <td data-label="Ngày trả"><c:out value="${record.returnDate}" default="—" /></td>
-                                <td data-label="Trạng thái"><span class="borrow-status returned">Đã trả</span></td>
+                                <td data-label="Trạng thái"><span class="borrow-status returned"><c:choose><c:when test="${record.status eq 'RETURNED'}">Đã trả</c:when><c:when test="${record.status eq 'EXPIRED'}">Hết hạn nhận</c:when><c:otherwise>Đã hủy</c:otherwise></c:choose></span></td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty borrowPage.historyRecords}">

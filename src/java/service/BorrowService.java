@@ -4,6 +4,8 @@
 package service;
 
 import dao.BorrowRecordDAO;
+import dao.BookDAO;
+import dao.BookDAOImpl;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -19,14 +21,16 @@ public class BorrowService {
     public static final int MAXIMUM_RENEWALS = 4;
     public static final int RENEWAL_EXTENSION_DAYS = 7;
     public static final int UPCOMING_DUE_DAYS = 7;
+    public static final int PICKUP_HOLD_HOURS = 24;
 
     private final BorrowRecordDAO borrowRecordDao;
+    private final BookDAO bookDao;
 
     /**
      * Khởi tạo service với DAO mặc định của ứng dụng.
      */
     public BorrowService() {
-        this(new BorrowRecordDAO());
+        this(new BorrowRecordDAO(), new BookDAOImpl());
     }
 
     /**
@@ -35,7 +39,13 @@ public class BorrowService {
      * @param borrowRecordDao DAO quản lý dữ liệu lượt mượn
      */
     public BorrowService(BorrowRecordDAO borrowRecordDao) {
+        this(borrowRecordDao, new BookDAOImpl());
+    }
+
+    /** Khởi tạo service với các DAO sở hữu dữ liệu mượn và sách. */
+    public BorrowService(BorrowRecordDAO borrowRecordDao, BookDAO bookDao) {
         this.borrowRecordDao = borrowRecordDao;
+        this.bookDao = bookDao;
     }
 
     /**
@@ -46,6 +56,7 @@ public class BorrowService {
      * @throws Exception khi tầng lưu trữ không thể đọc dữ liệu
      */
     public BorrowPageData getBorrowPage(int userId) throws Exception {
+        borrowRecordDao.expirePendingRequests();
         List<BorrowRecord> activeRecords = new ArrayList<>();
         List<BorrowRecord> historyRecords = new ArrayList<>();
         int upcomingDueCount = 0;
@@ -80,6 +91,29 @@ public class BorrowService {
                 borrowRecordId, userId, MAXIMUM_RENEWALS, RENEWAL_EXTENSION_DAYS);
     }
 
+    /** Tạo yêu cầu giữ sách nếu sách tồn tại và còn bản sao khả dụng. */
+    public boolean createBorrowRequest(int userId, int bookId) throws Exception {
+        if (userId <= 0 || bookId <= 0 || bookDao.findById(bookId) == null) return false;
+        borrowRecordDao.expirePendingRequests();
+        return borrowRecordDao.createPickupRequest(userId, bookId, PICKUP_HOLD_HOURS);
+    }
+
+    /** Hủy yêu cầu chờ nhận thuộc chính độc giả. */
+    public boolean cancelBorrowRequest(int borrowId, int userId) throws Exception {
+        return borrowId > 0 && userId > 0 && borrowRecordDao.cancelPickupRequest(borrowId, userId);
+    }
+
+    /** Xác nhận giao sách cho yêu cầu còn hạn nhận. */
+    public boolean confirmPickup(int borrowId, String operator) throws Exception {
+        borrowRecordDao.expirePendingRequests();
+        return borrowId > 0 && borrowRecordDao.confirmPickup(borrowId, operator);
+    }
+
+    /** Giải phóng mọi yêu cầu đã quá hạn nhận sách. */
+    public int expirePendingBorrowRequests() throws Exception {
+        return borrowRecordDao.expirePendingRequests();
+    }
+
     /**
      * Xác định lượt mượn vẫn đang hoạt động theo trạng thái lưu trữ.
      *
@@ -87,7 +121,8 @@ public class BorrowService {
      * @return {@code true} với trạng thái BORROWING hoặc OVERDUE
      */
     private boolean isActive(BorrowRecord record) {
-        return "BORROWING".equalsIgnoreCase(record.getStatus())
+        return "PENDING_PICKUP".equalsIgnoreCase(record.getStatus())
+                || "BORROWED".equalsIgnoreCase(record.getStatus())
                 || "OVERDUE".equalsIgnoreCase(record.getStatus());
     }
 

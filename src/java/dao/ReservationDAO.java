@@ -17,23 +17,33 @@ public class ReservationDAO {
         record.setId(rs.getInt("id"));
         record.setBookId(rs.getInt("book_id"));
         record.setUserId(rs.getInt("user_id"));
-        
+
         Timestamp rDate = rs.getTimestamp("reserve_date");
-        if (rDate != null) record.setReserveDate(rDate.toLocalDateTime());
-        
+        if (rDate != null) {
+            record.setReserveDate(rDate.toLocalDateTime());
+        }
+
         Timestamp eDate = rs.getTimestamp("expiry_date");
-        if (eDate != null) record.setExpiryDate(eDate.toLocalDateTime());
-        
+        if (eDate != null) {
+            record.setExpiryDate(eDate.toLocalDateTime());
+        }
+
         record.setStatus(rs.getString("status"));
-        
+
         Timestamp nAt = rs.getTimestamp("notified_at");
-        if (nAt != null) record.setNotifiedAt(nAt.toLocalDateTime());
-        
+        if (nAt != null) {
+            record.setNotifiedAt(nAt.toLocalDateTime());
+        }
+
         Timestamp cAt = rs.getTimestamp("created_at");
-        if (cAt != null) record.setCreatedAt(cAt.toLocalDateTime());
-        
+        if (cAt != null) {
+            record.setCreatedAt(cAt.toLocalDateTime());
+        }
+
         Timestamp uAt = rs.getTimestamp("updated_at");
-        if (uAt != null) record.setUpdatedAt(uAt.toLocalDateTime());
+        if (uAt != null) {
+            record.setUpdatedAt(uAt.toLocalDateTime());
+        }
 
         try {
             User user = new User();
@@ -43,7 +53,8 @@ public class ReservationDAO {
             user.setEmail(rs.getString("email"));
             user.setPhone(rs.getString("phone"));
             record.setUser(user);
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
 
         try {
             Book book = new Book();
@@ -51,7 +62,8 @@ public class ReservationDAO {
             book.setTitle(rs.getString("title"));
             book.setIsbn(rs.getString("isbn"));
             record.setBook(book);
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
 
         return record;
     }
@@ -60,12 +72,12 @@ public class ReservationDAO {
         List<ReservationRecord> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.expiry_date, r.status, r.notified_at, r.created_at, r.updated_at, ")
-          .append("u.username, u.full_name, u.email, u.phone, ")
-          .append("b.title, b.isbn ")
-          .append("FROM book_reservations r ")
-          .append("INNER JOIN users u ON r.user_id = u.id ")
-          .append("INNER JOIN books b ON r.book_id = b.id ")
-          .append("WHERE 1=1 ");
+                .append("u.username, u.full_name, u.email, u.phone, ")
+                .append("b.title, b.isbn ")
+                .append("FROM book_reservations r ")
+                .append("INNER JOIN users u ON r.user_id = u.id ")
+                .append("INNER JOIN books b ON r.book_id = b.id ")
+                .append("WHERE 1=1 ");
 
         if (status != null && !status.trim().isEmpty()) {
             sb.append("AND r.status = ? ");
@@ -75,10 +87,9 @@ public class ReservationDAO {
         }
 
         sb.append("ORDER BY r.created_at DESC ")
-          .append("LIMIT ?, ?");
+                .append("LIMIT ?, ?");
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {
             int idx = 1;
             if (status != null && !status.trim().isEmpty()) {
                 ps.setString(idx++, status.trim());
@@ -105,10 +116,10 @@ public class ReservationDAO {
     public int countReservations(String status, String keyword) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT COUNT(*) ")
-          .append("FROM book_reservations r ")
-          .append("INNER JOIN users u ON r.user_id = u.id ")
-          .append("INNER JOIN books b ON r.book_id = b.id ")
-          .append("WHERE 1=1 ");
+                .append("FROM book_reservations r ")
+                .append("INNER JOIN users u ON r.user_id = u.id ")
+                .append("INNER JOIN books b ON r.book_id = b.id ")
+                .append("WHERE 1=1 ");
 
         if (status != null && !status.trim().isEmpty()) {
             sb.append("AND r.status = ? ");
@@ -117,8 +128,7 @@ public class ReservationDAO {
             sb.append("AND (u.full_name LIKE ? OR u.username LIKE ? OR b.title LIKE ?) ");
         }
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {
             int idx = 1;
             if (status != null && !status.trim().isEmpty()) {
                 ps.setString(idx++, status.trim());
@@ -130,7 +140,9 @@ public class ReservationDAO {
                 ps.setString(idx++, kw);
             }
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         }
         return 0;
@@ -138,8 +150,7 @@ public class ReservationDAO {
 
     public boolean updateStatus(int id, String status) throws Exception {
         String sql = "UPDATE book_reservations SET status = ?, updated_at = NOW() WHERE id = ?";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
@@ -147,15 +158,14 @@ public class ReservationDAO {
     }
 
     public ReservationRecord findById(int id) throws Exception {
-        String sql = "SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.expiry_date, r.status, r.notified_at, r.created_at, r.updated_at, " +
-                     "u.username, u.full_name, u.email, u.phone, " +
-                     "b.title, b.isbn " +
-                     "FROM book_reservations r " +
-                     "INNER JOIN users u ON r.user_id = u.id " +
-                     "INNER JOIN books b ON r.book_id = b.id " +
-                     "WHERE r.id = ?";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.expiry_date, r.status, r.notified_at, r.created_at, r.updated_at, "
+                + "u.username, u.full_name, u.email, u.phone, "
+                + "b.title, b.isbn "
+                + "FROM book_reservations r "
+                + "INNER JOIN users u ON r.user_id = u.id "
+                + "INNER JOIN books b ON r.book_id = b.id "
+                + "WHERE r.id = ?";
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -164,5 +174,155 @@ public class ReservationDAO {
             }
         }
         return null;
+    }
+
+    /**
+     * Lấy toàn bộ reservation của user và tính vị trí hàng chờ động.
+     */
+    public List<ReservationRecord> findByUserId(int userId) throws Exception {
+        String sql = "SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.expiry_date, r.status, "
+                + "r.notified_at, r.created_at, r.updated_at, u.username, u.full_name, u.email, "
+                + "u.phone, b.title, b.isbn, CASE WHEN r.status='WAITING' THEN "
+                + "(SELECT COUNT(*) FROM book_reservations earlier WHERE earlier.book_id=r.book_id "
+                + "AND earlier.status IN ('WAITING','READY_FOR_PICKUP') "
+                + "AND (earlier.created_at<r.created_at OR (earlier.created_at=r.created_at "
+                + "AND earlier.id<=r.id))) ELSE 0 END queue_position "
+                + "FROM book_reservations r INNER JOIN users u ON r.user_id=u.id "
+                + "INNER JOIN books b ON r.book_id=b.id WHERE r.user_id=? ORDER BY r.created_at DESC";
+        List<ReservationRecord> records = new ArrayList<>();
+        try (Connection connection = DBContext.getInstance().getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    ReservationRecord record = mapRow(resultSet);
+                    record.setQueuePosition(resultSet.getInt("queue_position"));
+                    records.add(record);
+                }
+            }
+        }
+        return records;
+    }
+
+    /**
+     * Trả về reservation active của user cho sách, hoặc null.
+     */
+    public ReservationRecord findActive(int userId, int bookId) throws Exception {
+        String sql = "SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.expiry_date, r.status, "
+                + "r.notified_at, r.created_at, r.updated_at, u.username,u.full_name,u.email,u.phone, "
+                + "b.title,b.isbn FROM book_reservations r INNER JOIN users u ON r.user_id=u.id "
+                + "INNER JOIN books b ON r.book_id=b.id WHERE r.user_id=? AND r.book_id=? "
+                + "AND r.status IN ('WAITING','READY_FOR_PICKUP') LIMIT 1";
+        try (Connection connection = DBContext.getInstance().getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            statement.setInt(2, bookId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? mapRow(result) : null;
+            }
+        }
+    }
+
+    /**
+     * Đếm số reservation đang hoạt động của đầu sách.
+     */
+    public int countActiveByBook(int bookId) throws Exception {
+        String sql = "SELECT COUNT(*) FROM book_reservations WHERE book_id=? "
+                + "AND status IN ('WAITING','READY_FOR_PICKUP')";
+        try (Connection connection = DBContext.getInstance().getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, bookId);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Tạo reservation WAITING sau khi khóa đầu sách và kiểm tra lại điều kiện.
+     */
+    public boolean createWaiting(int userId, int bookId) throws Exception {
+        String lockBook = "SELECT id FROM books WHERE id=? AND is_deleted=0 FOR UPDATE";
+        String available = "SELECT id FROM book_copies WHERE book_id=? AND status='AVAILABLE' "
+                + "AND is_deleted=0 LIMIT 1 FOR UPDATE";
+        String duplicate = "SELECT id FROM book_reservations WHERE user_id=? AND book_id=? "
+                + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
+        String activeBorrow = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? "
+                + "AND status IN ('PENDING_PICKUP','BORROWED','OVERDUE') FOR UPDATE";
+        String insert = "INSERT INTO book_reservations(user_id,book_id,reserve_date,status,created_at,updated_at) "
+                + "VALUES(?,?,NOW(),'WAITING',NOW(),NOW())";
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement s = connection.prepareStatement(lockBook)) {
+                    s.setInt(1, bookId);
+                    try (ResultSet r = s.executeQuery()) {
+                        if (!r.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                try (PreparedStatement s = connection.prepareStatement(available)) {
+                    s.setInt(1, bookId);
+                    try (ResultSet r = s.executeQuery()) {
+                        if (r.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                for (String sql : new String[]{duplicate, activeBorrow}) {
+                    try (PreparedStatement s = connection.prepareStatement(sql)) {
+                        s.setInt(1, userId);
+                        s.setInt(2, bookId);
+                        try (ResultSet r = s.executeQuery()) {
+                            if (r.next()) {
+                                connection.rollback();
+                                return false;
+                            }
+                        }
+                    }
+                }
+                try (PreparedStatement s = connection.prepareStatement(insert)) {
+                    s.setInt(1, userId);
+                    s.setInt(2, bookId);
+                    s.executeUpdate();
+                }
+                connection.commit();
+                return true;
+            } catch (Exception e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    /**
+     * Hủy reservation active thuộc user.
+     */
+    public boolean cancelOwned(int reservationId, int userId) throws Exception {
+        String sql = "UPDATE book_reservations SET status='CANCELLED',updated_at=NOW() WHERE id=? "
+                + "AND user_id=? AND status IN ('WAITING','READY_FOR_PICKUP')";
+        try (Connection c = DBContext.getInstance().getConnection(); PreparedStatement s = c.prepareStatement(sql)) {
+            s.setInt(1, reservationId);
+            s.setInt(2, userId);
+            return s.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Đưa reservation WAITING cũ nhất sang trạng thái sẵn sàng trong 24 giờ.
+     */
+    public boolean activateNext(int bookId, int readyHours) throws Exception {
+        String sql = "UPDATE book_reservations SET status='READY_FOR_PICKUP',notified_at=NOW(),"
+                + "expiry_date=DATE_ADD(NOW(),INTERVAL ? HOUR),updated_at=NOW() WHERE id=(SELECT id FROM "
+                + "(SELECT id FROM book_reservations WHERE book_id=? AND status='WAITING' "
+                + "ORDER BY created_at,id LIMIT 1) next_reservation)";
+        try (Connection c = DBContext.getInstance().getConnection(); PreparedStatement s = c.prepareStatement(sql)) {
+            s.setInt(1, readyHours);
+            s.setInt(2, bookId);
+            return s.executeUpdate() == 1;
+        }
     }
 }

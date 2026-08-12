@@ -72,11 +72,11 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>BorrowManagementServlet</servlet-name>
-        <url-pattern>/admin/borrow/confirm-loan</url-pattern>
+        <url-pattern>/admin/borrow/confirm-pickup</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>BorrowManagementServlet</servlet-name>
-        <url-pattern>/librarian/borrow/confirm-loan</url-pattern>
+        <url-pattern>/librarian/borrow/confirm-pickup</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>BorrowManagementServlet</servlet-name>

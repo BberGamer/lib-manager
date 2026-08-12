@@ -943,6 +943,34 @@ img { max-width: 100%; display: block; }
   justify-content: center;
 }
 
+.book-detail-reader-actions {
+  margin-top: 14px;
+}
+
+.book-detail-reader-form {
+  width: 100%;
+  margin: 0;
+}
+
+.book-detail-reader-button {
+  width: 100%;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: opacity 0.2s;
+}
+
+.book-detail-reader-button:hover {
+  color: #fff;
+  opacity: 0.88;
+}
+
 .book-detail-info-section {
   display: flex;
   flex-direction: column;
@@ -1289,6 +1317,8 @@ a.book-title-link:hover {
   justify-content: space-between;
   gap: 8px;
 }
+.book-borrow-form { display: inline-flex; margin: 0; }
+.book-borrow-form button:disabled { cursor: not-allowed; opacity: .55; }
 
 /* ===================== SEARCH BAR (Books Page) ===================== */
 .search-bar-wrapper {

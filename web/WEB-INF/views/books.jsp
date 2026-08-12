@@ -284,11 +284,13 @@
                                     </button>
                                     <% } %>
                                     <% if (loggedUser != null && !isAdminLib) { %>
+                                    <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
+                                       class="btn btn-outline btn-sm" title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
                                     <form method="post" action="<%= ctx %>/reservation/create" style="display:inline;margin:0;">
                                         <input type="hidden" name="bookId" value="<%= b.getId() %>">
-                                        <button type="submit" class="btn btn-sm"
-                                                title="Đặt trước sách này"
-                                                style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:0.78rem;cursor:pointer;font-weight:600;white-space:nowrap;">
+                                        <button type="submit" class="btn btn-sm" title="Đặt trước">
                                             <i class="fa-solid fa-bookmark"></i> Đặt trước
                                         </button>
                                     </form>
@@ -357,14 +359,14 @@
                                 <i class="fa-solid fa-eye"></i>
                             </a>
                             <% if (loggedUser != null && !isAdminLib) { %>
-                            <form method="post" action="<%= ctx %>/reservation/create" style="display:inline;margin:0;">
+                            <% if (b.getAvailable() > 0) { %><form method="post" action="<%= ctx %>/borrow/create" class="book-borrow-form">
                                 <input type="hidden" name="bookId" value="<%= b.getId() %>">
                                 <button type="submit" class="btn btn-sm"
-                                        title="Đặt trước sách này"
+                                        title="Gửi yêu cầu mượn sách"
                                         style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:0.78rem;cursor:pointer;font-weight:600;white-space:nowrap;">
-                                    <i class="fa-solid fa-bookmark"></i> Đặt trước
+                                    <i class="fa-solid fa-book-open"></i> Mượn sách
                                 </button>
-                            </form>
+                            </form><% } else { %><a class="btn btn-sm" href="<%= ctx %>/reservation/create?bookId=<%= b.getId() %>"><i class="fa-solid fa-bookmark"></i> Đặt trước</a><% } %>
                             <% } %>
                             <% if (isAdmin) { %>
                             <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/edit?id=<%= b.getId() %>" class="btn btn-outline btn-sm" title="Chỉnh sửa">
