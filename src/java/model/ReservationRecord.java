@@ -8,7 +8,8 @@ public class ReservationRecord {
     private int userId;
     private LocalDateTime reserveDate;
     private LocalDateTime expiryDate;
-    private String status; // PENDING, READY, COMPLETED, CANCELLED, EXPIRED
+    private String status; // WAITING, READY_FOR_PICKUP, COMPLETED, CANCELLED, EXPIRED
+    private int queuePosition;
     private LocalDateTime notifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -75,6 +76,11 @@ public class ReservationRecord {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    /** @return vị trí hiện tại trong hàng chờ, bằng 0 nếu không còn chờ */
+    public int getQueuePosition() { return queuePosition; }
+    /** @param queuePosition vị trí được DAO tính động */
+    public void setQueuePosition(int queuePosition) { this.queuePosition = queuePosition; }
 
     public LocalDateTime getNotifiedAt() {
         return notifiedAt;
