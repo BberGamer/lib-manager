@@ -22,7 +22,7 @@ import java.util.List;
  *   page     – trang hiện tại (mặc định 1)
  *   view     – "grid" | "table" (mặc định "grid")
  */
-@WebServlet(name = "BookListServlet", urlPatterns = {"/books", "/admin/books"})
+@WebServlet(name = "BookListServlet", urlPatterns = {"/books", "/admin/books", "/librarian/books"})
 public class BookListServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 12;
@@ -34,7 +34,7 @@ public class BookListServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         
         String path = request.getServletPath();
-        if ("/admin/books".equals(path)) {
+        if ("/admin/books".equals(path) || "/librarian/books".equals(path)) {
             request.setAttribute("isManagePageAttr", true);
         }
         

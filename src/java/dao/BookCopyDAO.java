@@ -278,6 +278,81 @@ public class BookCopyDAO {
         }
     }
 
+    public List<BookCopy> getAllCopies(String area, String keyword, int pageNum, int pageSize) throws Exception {
+        List<BookCopy> list = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT bc.id, bc.book_id, bc.barcode, bc.book_condition, bc.status, bc.note, bc.area, bc.shelf, bc.slot, ")
+          .append("b.title, b.isbn, b.category, b.publisher, b.publish_year, b.price, b.quantity, b.available ")
+          .append("FROM book_copies bc ")
+          .append("INNER JOIN books b ON bc.book_id = b.id ")
+          .append("WHERE bc.is_deleted = 0 ");
+
+        if (area != null && !area.trim().isEmpty()) {
+            sb.append("AND bc.area = ? ");
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sb.append("AND (bc.barcode LIKE ? OR b.title LIKE ?) ");
+        }
+
+        sb.append("ORDER BY bc.area ASC, bc.shelf ASC, bc.slot ASC, bc.barcode ASC ");
+        sb.append("LIMIT ?, ?");
+
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            int idx = 1;
+            if (area != null && !area.trim().isEmpty()) {
+                ps.setString(idx++, area.trim());
+            }
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = "%" + keyword.trim() + "%";
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+            }
+            int offset = (pageNum - 1) * pageSize;
+            ps.setInt(idx++, offset);
+            ps.setInt(idx++, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countAllCopies(String area, String keyword) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT COUNT(*) ")
+          .append("FROM book_copies bc ")
+          .append("INNER JOIN books b ON bc.book_id = b.id ")
+          .append("WHERE bc.is_deleted = 0 ");
+
+        if (area != null && !area.trim().isEmpty()) {
+            sb.append("AND bc.area = ? ");
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sb.append("AND (bc.barcode LIKE ? OR b.title LIKE ?) ");
+        }
+
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            int idx = 1;
+            if (area != null && !area.trim().isEmpty()) {
+                ps.setString(idx++, area.trim());
+            }
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = "%" + keyword.trim() + "%";
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
     private BookCopy mapRow(ResultSet rs) throws SQLException {
         BookCopy bc = new BookCopy();
         bc.setId(rs.getInt("id"));

@@ -14,7 +14,7 @@ import java.io.IOException;
  * Controller xử lý các trang Dashboard thống kê vận hành (Library & Admin).
  */
 @WebServlet(name = "DashboardServlet", urlPatterns = {
-    "/dashboard/library", "/admin/dashboard/library", "/dashboard/admin", "/admin"
+    "/dashboard/library", "/admin/dashboard/library", "/librarian/dashboard/library", "/dashboard/admin", "/admin"
 })
 public class DashboardServlet extends HttpServlet {
 
@@ -34,7 +34,7 @@ public class DashboardServlet extends HttpServlet {
         String path = request.getServletPath();
 
         try {
-            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path)) {
+            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path) || "/librarian/dashboard/library".equals(path)) {
                 // Librarian & Admin
                 if (!loggedUser.isAdminOrLibrarian()) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập chức năng này.");
@@ -73,7 +73,7 @@ public class DashboardServlet extends HttpServlet {
             e.printStackTrace();
             request.setAttribute("error", "Lỗi tải dữ liệu thống kê: " + e.getMessage());
             request.setAttribute("isManagePageAttr", true);
-            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path)) {
+            if ("/dashboard/library".equals(path) || "/admin/dashboard/library".equals(path) || "/librarian/dashboard/library".equals(path)) {
                 request.setAttribute("currentPage", "dashboard-library");
                 request.setAttribute("pageTitle", "Thống kê Thư viện – FPT Library");
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/library_statistics.jsp").forward(request, response);
