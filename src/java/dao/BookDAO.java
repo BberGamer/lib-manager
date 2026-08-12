@@ -32,4 +32,13 @@ public interface BookDAO {
     boolean hasPhysicalCopies(int bookId) throws Exception;
     
     boolean hasActiveBorrowsOrReservations(int bookId) throws Exception;
+
+    /**
+     * Lấy danh sách các đầu sách mới được tạo trong vòng số ngày chỉ định.
+     * @param days số ngày tính ngược từ hiện tại (ví dụ 15 ngày)
+     * @param limit số lượng sách tối đa cần lấy
+     * @return danh sách sách mới nhất
+     * @throws Exception khi có lỗi truy vấn dữ liệu
+     */
+    List<Book> getLatestBooks(int days, int limit) throws Exception;
 }

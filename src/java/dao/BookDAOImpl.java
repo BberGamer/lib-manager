@@ -11,7 +11,10 @@ public class BookDAOImpl implements BookDAO {
 
     @Override
     public Book findById(int id) throws Exception {
-        String sql = "SELECT id, isbn, title, category, category_id, publisher, publish_year, price, quantity, available, description, cover_image, subject, is_deleted FROM books WHERE id = ? AND is_deleted = 0";
+        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject, b.is_deleted "
+                   + "FROM books b "
+                   + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
+                   + "WHERE b.id = ? AND b.is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -28,8 +31,9 @@ public class BookDAOImpl implements BookDAO {
     public List<Book> searchBooks(String keyword, String category, String sort, String order, int page, int pageSize) throws Exception {
         List<Book> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject ")
+        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject ")
           .append("FROM books b ")
+          .append("LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 ")
           .append("LEFT JOIN book_authors ba ON b.id = ba.book_id ")
           .append("LEFT JOIN authors a ON ba.author_id = a.id AND a.is_deleted = 0 ")
           .append("WHERE b.is_deleted = 0 ");
@@ -38,7 +42,7 @@ public class BookDAOImpl implements BookDAO {
             sb.append("AND (b.title LIKE ? OR b.isbn LIKE ? OR a.name LIKE ?) ");
         }
         if (category != null && !category.trim().isEmpty()) {
-            sb.append("AND b.category = ? ");
+            sb.append("AND (b.category = ? OR c.name = ?) ");
         }
 
         // Sorting
@@ -66,10 +70,11 @@ public class BookDAOImpl implements BookDAO {
             }
             if (category != null && !category.trim().isEmpty()) {
                 ps.setString(idx++, category.trim());
+                ps.setString(idx++, category.trim());
             }
             int offset = (page - 1) * pageSize;
             ps.setInt(idx++, offset);
-            ps.setInt(idx++, pageSize);
+            ps.setInt(idx, pageSize);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -84,6 +89,7 @@ public class BookDAOImpl implements BookDAO {
     public int countBooks(String keyword, String category) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT COUNT(DISTINCT b.id) FROM books b ")
+          .append("LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 ")
           .append("LEFT JOIN book_authors ba ON b.id = ba.book_id ")
           .append("LEFT JOIN authors a ON ba.author_id = a.id AND a.is_deleted = 0 ")
           .append("WHERE b.is_deleted = 0 ");
@@ -92,7 +98,7 @@ public class BookDAOImpl implements BookDAO {
             sb.append("AND (b.title LIKE ? OR b.isbn LIKE ? OR a.name LIKE ?) ");
         }
         if (category != null && !category.trim().isEmpty()) {
-            sb.append("AND b.category = ? ");
+            sb.append("AND (b.category = ? OR c.name = ?) ");
         }
 
         try (Connection conn = DBContext.getInstance().getConnection();
@@ -106,6 +112,7 @@ public class BookDAOImpl implements BookDAO {
             }
             if (category != null && !category.trim().isEmpty()) {
                 ps.setString(idx++, category.trim());
+                ps.setString(idx++, category.trim());
             }
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
@@ -117,7 +124,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<String> getAllCategories() throws Exception {
         List<String> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT category FROM books WHERE is_deleted = 0 AND category IS NOT NULL AND category != '' ORDER BY category ASC";
+        String sql = "SELECT DISTINCT COALESCE(c.name, b.category) AS category FROM books b LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 WHERE b.is_deleted = 0 AND (c.name IS NOT NULL OR b.category IS NOT NULL) ORDER BY category ASC";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -334,8 +341,34 @@ public class BookDAOImpl implements BookDAO {
                     if (rs2.next() && rs2.getInt(1) > 0) return true;
                 }
             }
-        }
         return false;
+    }
+    }
+
+    @Override
+    public List<Book> getLatestBooks(int days, int limit) throws Exception {
+        List<Book> list = new ArrayList<>();
+        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject "
+                   + "FROM books b "
+                   + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
+                   + "WHERE b.is_deleted = 0 AND b.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) "
+                   + "ORDER BY b.created_at DESC, b.id DESC "
+                   + "LIMIT ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        // Nếu không có sách tạo trong 15 ngày qua, mặc định hiển thị danh sách các sách mới nhất gần đây
+        if (list.isEmpty()) {
+            return searchBooks(null, null, "id", "DESC", 1, limit);
+        }
+        return list;
     }
 
     private Book mapRow(ResultSet rs) throws SQLException {
