@@ -28,72 +28,7 @@
         selectedStatus = (isEdit && copy != null) ? copy.getStatus() : "AVAILABLE";
     }
 %>
-<style>
-/* Premium button styles */
-.back-btn-custom {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff !important;
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(244,121,32,0.25);
-    transition: all 0.2s ease;
-}
-.back-btn-custom:hover {
-    background: linear-gradient(135deg, var(--primary-light), var(--primary));
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(244,121,32,0.35);
-}
 
-.btn-cancel-custom {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 22px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    border-radius: var(--radius-md);
-    font-size: 0.92rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-.btn-cancel-custom:hover {
-    background: var(--bg-body);
-    border-color: var(--text-muted);
-    color: var(--text-primary);
-}
-
-.btn-submit-custom {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff !important;
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 0.92rem;
-    font-weight: 600;
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(244,121,32,0.25);
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-.btn-submit-custom:hover {
-    background: linear-gradient(135deg, var(--primary-light), var(--primary));
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(244,121,32,0.35);
-}
-</style>
 <%
 
     String area = (String) request.getAttribute("area");

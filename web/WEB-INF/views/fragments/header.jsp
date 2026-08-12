@@ -17,6 +17,7 @@
 <c:set var="navUser" value="${sessionScope.loggedUser}" />
 
 <c:url var="styleUrl" value="/assets/css/style.css" />
+<c:url var="customStyleUrl" value="/assets/css/custom.css" />
 <c:url var="headerScriptUrl" value="/assets/js/header.js" />
 <c:url var="logoUrl" value="/assets/images/logo.png" />
 <c:url var="homeUrl" value="/home" />
@@ -55,6 +56,7 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="${styleUrl}">
+    <link rel="stylesheet" href="${customStyleUrl}">
     <c:if test="${not empty pageStylesheet}">
         <c:url var="pageStylesheetUrl" value="${pageStylesheet}" />
         <link rel="stylesheet" href="${pageStylesheetUrl}">

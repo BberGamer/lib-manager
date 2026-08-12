@@ -176,7 +176,7 @@
 
             <!-- Admin add button -->
             <% if (isAdmin) { %>
-                <a href="<%= ctx %>/book/add" class="btn btn-primary btn-sm">
+                <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/add" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-plus"></i> Thêm sách
                 </a>
             <% } %>
@@ -272,7 +272,7 @@
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
-                                    <a href="<%= ctx %>/book/edit?id=<%= b.getId() %>"
+                                    <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/edit?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i> 
                                     </a>
@@ -367,7 +367,7 @@
                             </form>
                             <% } %>
                             <% if (isAdmin) { %>
-                            <a href="<%= ctx %>/book/edit?id=<%= b.getId() %>" class="btn btn-outline btn-sm" title="Chỉnh sửa">
+                            <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/edit?id=<%= b.getId() %>" class="btn btn-outline btn-sm" title="Chỉnh sửa">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                             <button type="button"
