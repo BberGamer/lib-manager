@@ -25,22 +25,32 @@ public class CategoryDao {
             + "is_deleted, created_by, updated_by";
 
     /**
-     * Lấy danh sách thể loại chưa xóa theo trang.
+     * Lấy danh sách thể loại chưa xóa theo từ khóa, thứ tự và trang.
      *
+     * @param keyword từ khóa đã chuẩn hóa để tìm trong tên danh mục
+     * @param sort trường sắp xếp đã được giới hạn bởi service/controller
+     * @param order chiều sắp xếp ASC hoặc DESC
      * @param offset vị trí bản ghi đầu tiên, không âm
      * @param limit số bản ghi tối đa
      * @return danh sách thể loại, rỗng nếu không có dữ liệu
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public List<Category> findAll(int offset, int limit) throws SQLException, ClassNotFoundException {
+    public List<Category> findAll(String keyword, String sort, String order, int offset, int limit)
+            throws SQLException, ClassNotFoundException {
+        String sortColumn = "created_at".equals(sort) ? "created_at" : "name";
+        String sortOrder = "DESC".equalsIgnoreCase(order) ? "DESC" : "ASC";
         String sql = "SELECT " + ACTIVE_COLUMNS + " FROM categories "
-                + "WHERE is_deleted = 0 ORDER BY name ASC LIMIT ? OFFSET ?";
+                + "WHERE is_deleted = 0 AND (? = '' OR LOWER(name) LIKE LOWER(?)) "
+                + "ORDER BY " + sortColumn + " " + sortOrder + ", id ASC LIMIT ? OFFSET ?";
         List<Category> categories = new ArrayList<>();
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, limit);
-            statement.setInt(2, offset);
+            String searchPattern = "%" + keyword + "%";
+            statement.setString(1, keyword);
+            statement.setString(2, searchPattern);
+            statement.setInt(3, limit);
+            statement.setInt(4, offset);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     categories.add(mapCategory(resultSet));
@@ -51,19 +61,25 @@ public class CategoryDao {
     }
 
     /**
-     * Đếm toàn bộ thể loại đang hoạt động để phục vụ phân trang.
+     * Đếm thể loại đang hoạt động phù hợp với từ khóa để phục vụ phân trang.
      *
+     * @param keyword từ khóa đã chuẩn hóa để tìm trong tên danh mục
      * @return tổng số thể loại chưa xóa
      * @throws SQLException khi truy vấn thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public int count() throws SQLException, ClassNotFoundException {
-        String sql = "SELECT COUNT(*) FROM categories WHERE is_deleted = 0";
+    public int count(String keyword) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) FROM categories WHERE is_deleted = 0 "
+                + "AND (? = '' OR LOWER(name) LIKE LOWER(?))";
         try (Connection connection = openConnection();
-                PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getInt(1);
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + keyword + "%";
+            statement.setString(1, keyword);
+            statement.setString(2, searchPattern);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt(1);
+            }
         }
     }
 
