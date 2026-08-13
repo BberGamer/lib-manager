@@ -67,7 +67,7 @@
                         <div class="hero-search-input-wrap">
                             <input type="text" name="keyword" placeholder="Tìm theo tên sách, ISBN, tác giả, nhà xuất bản..." class="hero-search-input" />
                             <button type="submit" class="btn-hero-search">
-                                <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                                <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
                         </div>
                     </form>
@@ -176,6 +176,87 @@
                         <i class="fa-solid fa-arrow-right quick-card-arrow"></i>
                     </a>
 
+                </div>
+            </div>
+        </section>
+    </c:if>
+
+    <%-- ===== POPULAR BOOKS (Sách được mượn nhiều nhất) ===== --%>
+    <c:if test="${not empty popularBooks}">
+        <section class="home-popular-books">
+            <div class="container">
+                <div class="section-header-flex">
+                    <div>
+                        <span class="section-eyebrow section-eyebrow--hot"></i> Xu hướng đọc</span>
+                        <h2 class="section-title" style="margin-bottom:0;">Sách được mượn nhiều nhất</h2>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/books" class="btn-view-all">
+                        Khám phá kho sách <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="latest-books-grid">
+                    <c:forEach var="book" items="${popularBooks}" varStatus="status">
+                        <c:set var="popCoverSrc" value="${book.coverImage}" />
+                        <c:if test="${not empty popCoverSrc && !fn:startsWith(popCoverSrc, 'http://') && !fn:startsWith(popCoverSrc, 'https://')}">
+                            <c:choose>
+                                <c:when test="${fn:startsWith(popCoverSrc, '/')}">
+                                    <c:set var="popCoverSrc" value="${pageContext.request.contextPath}${popCoverSrc}" />
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="popCoverSrc" value="${pageContext.request.contextPath}/${popCoverSrc}" />
+                                </c:otherwise>
+                            </c:choose>
+                        </c:if>
+
+                        <div class="home-book-card home-book-card--popular">
+                            <div class="pop-rank-badge pop-rank-badge--${status.index < 3 ? status.index + 1 : 'default'}">
+                                TOP ${status.index + 1}
+                            </div>
+                            <div class="hbc-cover-wrap">
+                                <c:choose>
+                                    <c:when test="${not empty book.coverImage}">
+                                        <img src="${popCoverSrc}"
+                                             alt=""
+                                             class="hbc-cover"
+                                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                        <div class="hbc-cover-placeholder" style="display:none;">
+                                            <i class="fa-solid fa-book-open"></i>
+                                            <span><c:out value="${book.title}" /></span>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="hbc-cover-placeholder">
+                                            <i class="fa-solid fa-book-open"></i>
+                                            <span><c:out value="${book.title}" /></span>
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
+                                <span class="hbc-badge hbc-badge--fire">
+                                    <i class="fa-solid fa-fire"></i> ${book.borrowCount > 0 ? book.borrowCount : 1} lượt mượn
+                                </span>
+                            </div>
+                            <div class="hbc-body">
+                                <h3 class="hbc-title">
+                                    <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}">
+                                        <c:out value="${book.title}" />
+                                    </a>
+                                </h3>
+                                <p class="hbc-meta">
+                                    <i class="fa-solid fa-layer-group"></i> <c:out value="${not empty book.category ? book.category : 'Sách'}" />
+                                    <c:if test="${book.publishYear > 0}"> · ${book.publishYear}</c:if>
+                                </p>
+                                <div class="hbc-footer">
+                                    <span class="hbc-status ${book.available > 0 ? 'status-available' : 'status-unavailable'}">
+                                        <i class="fa-solid ${book.available > 0 ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                                        ${book.available > 0 ? 'Sẵn sàng' : 'Hết sách'} (${book.available}/${book.quantity})
+                                    </span>
+                                    <a href="${pageContext.request.contextPath}/book/detail?id=${book.id}" class="hbc-btn">
+                                        Chi tiết <i class="fa-solid fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </c:forEach>
                 </div>
             </div>
         </section>
