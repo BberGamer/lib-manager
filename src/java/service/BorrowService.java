@@ -91,9 +91,18 @@ public class BorrowService {
                 borrowRecordId, userId, MAXIMUM_RENEWALS, RENEWAL_EXTENSION_DAYS);
     }
 
+    public int getActiveBorrowCount(int userId) throws Exception {
+        return borrowRecordDao.countActiveByUserId(userId);
+    }
+
     /** Tạo yêu cầu giữ sách nếu sách tồn tại và còn bản sao khả dụng. */
     public boolean createBorrowRequest(int userId, int bookId) throws Exception {
         if (userId <= 0 || bookId <= 0 || bookDao.findById(bookId) == null) return false;
+        
+        if (getActiveBorrowCount(userId) >= MAXIMUM_ACTIVE_BORROWS) {
+            return false;
+        }
+        
         borrowRecordDao.expirePendingRequests();
         return borrowRecordDao.createPickupRequest(userId, bookId, PICKUP_HOLD_HOURS);
     }

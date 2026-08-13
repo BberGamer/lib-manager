@@ -22,8 +22,10 @@
 .borrow-summary-card > span { color: #8a766a; font-size: .85rem; }
 .borrow-summary-card strong { font-size: 2rem; line-height: 1; }
 .borrow-summary-card small { color: #43506a; }
-.borrow-summary-limit { border-left-color: #f23c5d; }
-.borrow-summary-limit strong, .limit-reached { color: #ef3d5d !important; }
+.borrow-summary-limit.is-under-limit { border-left-color: #2ecc71; }
+.borrow-summary-limit.is-under-limit strong { color: #2ecc71 !important; }
+.borrow-summary-limit.is-limit-reached { border-left-color: #f23c5d; }
+.borrow-summary-limit.is-limit-reached strong, .limit-reached { color: #ef3d5d !important; }
 .borrow-summary-due { border-left-color: #00a7bd; }
 .borrow-section { margin-top: 26px; }
 .borrow-section h2 { font-size: 1.06rem; margin: 0 0 12px; }
