@@ -1,419 +1,376 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.List, model.BorrowRecord, java.time.format.DateTimeFormatter" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="isManagePageAttr" value="true" scope="request" />
-<c:set var="activePage" value="borrow" scope="request" />
-<%@ include file="/WEB-INF/views/fragments/header.jsp" %>
-<%
-    List<BorrowRecord> borrowList = (List<BorrowRecord>) request.getAttribute("borrowList");
-    String successMsg = (String) session.getAttribute("successMsg");
-    String errorMsg = (String) session.getAttribute("errorMsg");
-    if (successMsg != null) session.removeAttribute("successMsg");
-    if (errorMsg != null) session.removeAttribute("errorMsg");
-%>
+<%-- Trang quản lý mượn trả do BorrowManagementServlet hiển thị. Mong đợi request attributes borrowList,
+    borrowActionPrefix, totalPages, currentPageNum, selectedStatus và keyword; session attributes successMsg, errorMsg
+    và loggedUser. --%>
+    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+        <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+            <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<main class="page-wrapper">
-    <div class="container" style="padding-top: 30px; padding-bottom: 50px;">
-        <div class="section-header" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 class="section-title"><i class="fa-solid fa-handshake"></i> Quản lý Mượn trả sách</h1>
-                <p class="section-subtitle">Phê duyệt yêu cầu mượn, ghi nhận trả sách và xử lý sự cố quá hạn/mất mát</p>
-            </div>
-        </div>
+                <c:set var="isManagePageAttr" value="true" scope="request" />
+                <c:set var="activePage" value="borrow" scope="request" />
+                <c:set var="pageStylesheet" value="/assets/css/borrow-list.css" scope="request" />
+                <c:url var="borrowListUrl" value="${borrowActionPrefix}/borrow/list" />
+                <c:url var="confirmPickupUrl" value="${borrowActionPrefix}/borrow/confirm-pickup" />
+                <c:url var="confirmReturnUrl" value="${borrowActionPrefix}/borrow/confirm-return" />
+                <c:url var="createFineUrl" value="${borrowActionPrefix}/fine/create" />
+                <c:url var="borrowListScriptUrl" value="/assets/js/borrow-list.js" />
+                <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
-        <!-- Alert messages -->
-        <% if (successMsg != null) { %>
-            <div class="alert alert-success" style="background: #e8f8f5; border-left: 5px solid #2ecc71; color: #27ae60; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
-                <i class="fa-solid fa-circle-check"></i> <%= successMsg %>
-            </div>
-        <% } %>
-        <% if (errorMsg != null) { %>
-            <div class="alert alert-error" style="background: #fde8e7; border-left: 5px solid #e74c3c; color: #c0392b; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
-                <i class="fa-solid fa-circle-exclamation"></i> <%= errorMsg %>
-            </div>
-        <% } %>
+                    <main class="page-wrapper borrow-management-page">
+                        <div class="container borrow-management-container">
+                            <header class="borrow-page-header">
+                                <h1 class="section-title">
+                                    <i class="fa-solid fa-handshake"></i>
+                                    Quản lý mượn trả sách
+                                </h1>
+                                <p class="section-subtitle">
+                                    Phê duyệt yêu cầu mượn, ghi nhận trả sách và xử lý sự cố quá hạn hoặc mất sách.
+                                </p>
+                            </header>
 
-        <!-- Filter bar -->
-        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px;">
-            <form action="${pageContext.request.contextPath}/admin/borrow/list" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 1; min-width: 250px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tìm kiếm</label>
-                    <input type="text" name="keyword" value="${keyword}" placeholder="Tên độc giả, tên sách, ISBN, mã vạch..."
-                           style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
-                <div style="width: 200px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Trạng thái</label>
-                    <select name="status" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="PENDING_PICKUP" ${selectedStatus == 'PENDING_PICKUP' ? 'selected' : ''}>Chờ nhận sách</option>
-                        <option value="BORROWED" ${selectedStatus == 'BORROWED' ? 'selected' : ''}>Đang mượn</option>
-                        <option value="RETURNED" ${selectedStatus == 'RETURNED' ? 'selected' : ''}>Đã trả</option>
-                        <option value="OVERDUE" ${selectedStatus == 'OVERDUE' ? 'selected' : ''}>Quá hạn</option>
-                        <option value="EXPIRED" ${selectedStatus == 'EXPIRED' ? 'selected' : ''}>Hết hạn nhận</option>
-                        <option value="CANCELLED" ${selectedStatus == 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
-                        <i class="fa-solid fa-magnifying-glass"></i> Lọc kết quả
-                    </button>
-                </div>
-            </form>
-        </div>
+                            <c:if test="${not empty sessionScope.successMsg}">
+                                <div class="borrow-alert borrow-alert-success" role="status">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <c:out value="${sessionScope.successMsg}" />
+                                </div>
+                                <c:remove var="successMsg" scope="session" />
+                            </c:if>
+                            <c:if test="${not empty sessionScope.errorMsg}">
+                                <div class="borrow-alert borrow-alert-error" role="alert">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <c:out value="${sessionScope.errorMsg}" />
+                                </div>
+                                <c:remove var="errorMsg" scope="session" />
+                            </c:if>
 
-        <!-- Table list -->
-        <div style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="background: #f8f9fa; border-bottom: 1px solid #eee;">
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Mã</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Độc giả</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Thông tin sách</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Bản sao / Vị trí</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Ngày mượn / Hạn trả</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Trạng thái</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; text-align: right;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (borrowList == null || borrowList.isEmpty()) { %>
-                        <tr>
-                            <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
-                                <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 15px; display: block;"></i>
-                                Không tìm thấy lượt mượn trả sách nào
-                            </td>
-                        </tr>
-                    <% } else {
-                        for (BorrowRecord br : borrowList) {
-                            String badgeColor = "";
-                            String badgeText = "";
-                            if ("PENDING_PICKUP".equals(br.getStatus())) {
-                                badgeColor = "background: #fff9e6; color: #f39c12;";
-                                badgeText = "Chờ duyệt mượn";
-                            } else if ("BORROWED".equals(br.getStatus())) {
-                                badgeColor = "background: #ebf5fb; color: #2980b9;";
-                                badgeText = "Đang mượn";
-                            } else if ("RETURNED".equals(br.getStatus())) {
-                                badgeColor = "background: #e8f8f5; color: #27ae60;";
-                                badgeText = "Đã trả";
-                            } else if ("OVERDUE".equals(br.getStatus())) {
-                                badgeColor = "background: #fde8e7; color: #e74c3c;";
-                                badgeText = "Quá hạn";
-                            } else if ("EXPIRED".equals(br.getStatus())) {
-                                badgeColor = "background: #f2f4f4; color: #7f8c8d;";
-                                badgeText = "Hết hạn nhận";
-                            } else if ("CANCELLED".equals(br.getStatus())) {
-                                badgeColor = "background: #f2f4f4; color: #7f8c8d;";
-                                badgeText = "Đã hủy";
-                            }
-                    %>
-                        <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='none'">
-                            <td style="padding: 16px 20px; font-weight: 600;"><%= br.getId() %></td>
-                            <td style="padding: 16px 20px;">
-                                <div style="font-weight: 600; color: var(--text-primary);"><%= br.getUser().getFullName() %></div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">@<%= br.getUser().getUsername() %> | <%= br.getUser().getPhone() %></div>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <div style="font-weight: 600; color: var(--text-primary);"><%= br.getBook().getTitle() %></div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">ISBN: <%= br.getBook().getIsbn() %></div>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <% if (br.getBookCopy() != null) { %>
-                                    <span style="font-family: monospace; font-size: 0.9rem; font-weight: 600; background: #f0f0f0; padding: 3px 8px; border-radius: 4px;"><%= br.getBookCopy().getBarcode() %></span>
-                                <% } else { %>
-                                    <span style="color: var(--text-muted); font-style: italic;">Chưa gán bản sao</span>
-                                <% } %>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <div style="font-size: 0.9rem;"><%= br.getBorrowDate() != null ? br.getBorrowDate() : "-" %></div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Hạn: <%= br.getDueDate() != null ? br.getDueDate() : "-" %></div>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <span style="display: inline-block; white-space: nowrap; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
-                            </td>
-                            <td style="padding: 16px 20px; text-align: right;">
-                                <% if ("PENDING_PICKUP".equals(br.getStatus())) { %>
-                                    <button class="btn btn-sm btn-primary" onclick="openLoanModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getUser().getFullName() %>', '<%= br.getBookCopy() != null ? br.getBookCopy().getBarcode() : "-" %>', '<%= br.getRequestDate() != null ? br.getRequestDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-" %>', '<%= br.getPickupDeadline() != null ? br.getPickupDeadline().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-" %>')" style="font-size: 0.8rem; border-radius: 6px;">
-                                        <i class="fa-solid fa-check"></i> Xác nhận giao sách
+                            <section class="borrow-filter-card" aria-labelledby="borrow-filter-title">
+                                <h2 id="borrow-filter-title" class="visually-hidden">Bộ lọc lượt mượn</h2>
+                                <form class="borrow-filter-form" action="${borrowListUrl}" method="get">
+                                    <label class="borrow-filter-keyword">
+                                        <span>Tìm kiếm</span>
+                                        <input type="search" name="keyword" maxlength="200"
+                                            value="${fn:escapeXml(keyword)}"
+                                            placeholder="Tên độc giả, tên sách, ISBN, mã vạch...">
+                                    </label>
+                                    <label>
+                                        <span>Trạng thái</span>
+                                        <select name="status">
+                                            <option value="">Tất cả trạng thái</option>
+                                            <option value="PENDING_PICKUP" ${selectedStatus eq 'PENDING_PICKUP'
+                                                ? 'selected' : '' }>Chờ nhận sách</option>
+                                            <option value="BORROWED" ${selectedStatus eq 'BORROWED' ? 'selected' : '' }>
+                                                Đang mượn</option>
+                                            <option value="RETURNED" ${selectedStatus eq 'RETURNED' ? 'selected' : '' }>
+                                                Đã trả</option>
+                                            <option value="OVERDUE" ${selectedStatus eq 'OVERDUE' ? 'selected' : '' }>
+                                                Quá hạn</option>
+                                            <option value="EXPIRED" ${selectedStatus eq 'EXPIRED' ? 'selected' : '' }>
+                                                Hết hạn nhận</option>
+                                            <option value="CANCELLED" ${selectedStatus eq 'CANCELLED' ? 'selected' : ''
+                                                }>Đã hủy</option>
+                                        </select>
+                                    </label>
+                                    <button type="submit" class="btn btn-primary borrow-filter-button">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        Lọc kết quả
                                     </button>
-                                <% } else if ("BORROWED".equals(br.getStatus()) || "OVERDUE".equals(br.getStatus())) { %>
-                                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                        <button class="btn btn-sm btn-success" onclick="openReturnModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getBookCopy().getBarcode() %>')" style="font-size: 0.8rem; border-radius: 6px;">
-                                            <i class="fa-solid fa-rotate-left"></i> Nhận trả
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="openFineModal(<%= br.getId() %>, <%= br.getUserId() %>, '<%= br.getUser().getFullName() %>', '<%= br.getBook().getTitle() %>')" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #e74c3c; color: #e74c3c; background: transparent;">
-                                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Phạt
-                                        </button>
-                                    </div>
-                                <% } else { %>
-                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Hoàn tất</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                    <% }
-                    } %>
-                </tbody>
-            </table>
-        </div>
+                                </form>
+                            </section>
 
-        <!-- Pagination -->
-        <%
-            Integer totalPgB = (Integer) request.getAttribute("totalPages");
-            Integer curPgB   = (Integer) request.getAttribute("currentPageNum");
-            String kwB       = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
-            String stB       = request.getAttribute("selectedStatus") != null ? (String) request.getAttribute("selectedStatus") : "";
-            if (totalPgB == null) totalPgB = 1;
-            if (curPgB   == null) curPgB   = 1;
-            String baseUrlB  = request.getContextPath() + "/librarian/borrow/list?status="
-                             + java.net.URLEncoder.encode(stB, "UTF-8")
-                             + "&keyword=" + java.net.URLEncoder.encode(kwB, "UTF-8")
-                             + "&page=";
-            if (totalPgB > 1) {
-        %>
-        <nav aria-label="Phân trang mượn sách" style="margin-top: 30px;">
-            <ul class="pagination">
-                <li class="page-item <%= curPgB <= 1 ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlB %><%= curPgB - 1 %>"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
-                </li>
-                <%
-                   if (totalPgB <= 7) {
-                       for (int pg = 1; pg <= totalPgB; pg++) { %>
-                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   } else {
-                       for (int pg = 1; pg <= 2; pg++) { %>
-                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                       if (curPgB <= 4) {
-                           for (int pg = 3; pg <= 5; pg++) { %>
-                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% } else if (curPgB >= totalPgB - 3) { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = totalPgB - 4; pg <= totalPgB - 2; pg++) { %>
-                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% }
-                       } else { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = curPgB - 1; pg <= curPgB + 1; pg++) { %>
-                               <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% }
-                       for (int pg = totalPgB - 1; pg <= totalPgB; pg++) { %>
-                           <li class="page-item <%= pg == curPgB ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlB %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   }
-                %>
-                <li class="page-item <%= curPgB >= totalPgB ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlB %><%= curPgB + 1 %>"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
-                </li>
-            </ul>
-        </nav>
-        <% } %>
+                            <section class="borrow-table-card" aria-label="Danh sách lượt mượn trả">
+                                <div class="borrow-table-scroll">
+                                    <table class="borrow-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã</th>
+                                                <th>Độc giả</th>
+                                                <th>Thông tin sách</th>
+                                                <th>Bản sao</th>
+                                                <th>Ngày mượn / Hạn trả</th>
+                                                <th>Trạng thái</th>
+                                                <th class="borrow-table-actions-heading">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:choose>
+                                                <c:when test="${empty borrowList}">
+                                                    <tr>
+                                                        <td class="borrow-empty-state" colspan="7">
+                                                            <i class="fa-solid fa-folder-open"></i>
+                                                            <span>Không tìm thấy lượt mượn trả sách nào.</span>
+                                                        </td>
+                                                    </tr>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:forEach var="borrowRecord" items="${borrowList}">
+                                                        <tr>
+                                                            <td class="borrow-record-id">
+                                                                <c:out value="${borrowRecord.id}" />
+                                                            </td>
+                                                            <td>
+                                                                <strong>
+                                                                    <c:out value="${borrowRecord.user.fullName}" />
+                                                                </strong>
+                                                                <small>
+                                                                    @
+                                                                    <c:out value="${borrowRecord.user.username}" />
+                                                                    <c:if test="${not empty borrowRecord.user.phone}">
+                                                                        ·
+                                                                        <c:out value="${borrowRecord.user.phone}" />
+                                                                    </c:if>
+                                                                </small>
+                                                            </td>
+                                                            <td>
+                                                                <strong>
+                                                                    <c:out value="${borrowRecord.book.title}" />
+                                                                </strong>
+                                                                <small>ISBN:
+                                                                    <c:out value="${borrowRecord.book.isbn}" />
+                                                                </small>
+                                                            </td>
+                                                            <td>
+                                                                <c:choose>
+                                                                    <c:when test="${not empty borrowRecord.bookCopy}">
+                                                                        <span class="borrow-barcode">
+                                                                            <c:out
+                                                                                value="${borrowRecord.bookCopy.barcode}" />
+                                                                        </span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="borrow-muted">Chưa gán bản
+                                                                            sao</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                            <td>
+                                                                <span>
+                                                                    <c:out
+                                                                        value="${empty borrowRecord.borrowDate ? '-' : borrowRecord.borrowDate}" />
+                                                                </span>
+                                                                <small>Hạn:
+                                                                    <c:out
+                                                                        value="${empty borrowRecord.dueDate ? '-' : borrowRecord.dueDate}" />
+                                                                </small>
+                                                            </td>
+                                                            <td>
+                                                                <span
+                                                                    class="borrow-status borrow-status-${fn:toLowerCase(borrowRecord.status)}">
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'PENDING_PICKUP'}">
+                                                                            Chờ nhận sách</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'BORROWED'}">
+                                                                            Đang mượn</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'RETURNED'}">
+                                                                            Đã trả</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'OVERDUE'}">
+                                                                            Quá hạn</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'EXPIRED'}">
+                                                                            Hết hạn nhận</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'CANCELLED'}">
+                                                                            Đã hủy</c:when>
+                                                                        <c:otherwise>
+                                                                            <c:out value="${borrowRecord.status}" />
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </span>
+                                                            </td>
+                                                            <td class="borrow-table-actions">
+                                                                <c:choose>
+                                                                    <c:when
+                                                                        test="${borrowRecord.status eq 'PENDING_PICKUP'}">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-primary"
+                                                                            data-open-loan-modal
+                                                                            data-record-id="${borrowRecord.id}"
+                                                                            data-book-title="${fn:escapeXml(borrowRecord.book.title)}"
+                                                                            data-reader-name="${fn:escapeXml(borrowRecord.user.fullName)}"
+                                                                            data-barcode="${empty borrowRecord.bookCopy ? '-' : fn:escapeXml(borrowRecord.bookCopy.barcode)}"
+                                                                            data-request-date="${borrowRecord.requestDate}"
+                                                                            data-pickup-deadline="${borrowRecord.pickupDeadline}">
+                                                                            <i class="fa-solid fa-check"></i> Xác nhận
+                                                                            giao sách
+                                                                        </button>
+                                                                    </c:when>
+                                                                    <c:when
+                                                                        test="${borrowRecord.status eq 'BORROWED' || borrowRecord.status eq 'OVERDUE'}">
+                                                                        <div class="borrow-action-group">
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-success"
+                                                                                data-open-return-modal
+                                                                                data-record-id="${borrowRecord.id}"
+                                                                                data-book-title="${fn:escapeXml(borrowRecord.book.title)}"
+                                                                                data-barcode="${fn:escapeXml(borrowRecord.bookCopy.barcode)}">
+                                                                                <i class="fa-solid fa-rotate-left"></i>
+                                                                                Nhận trả
+                                                                            </button>
+                                                                            <c:if test="${not borrowRecord.hasFine}">
+                                                                                <button type="button"
+                                                                                    class="btn btn-sm borrow-fine-button"
+                                                                                    data-open-fine-modal
+                                                                                    data-record-id="${borrowRecord.id}"
+                                                                                    data-user-id="${borrowRecord.userId}"
+                                                                                    data-reader-name="${fn:escapeXml(borrowRecord.user.fullName)}"
+                                                                                    data-book-title="${fn:escapeXml(borrowRecord.book.title)}"
+                                                                                    data-book-price="${empty borrowRecord.book.price ? 0 : borrowRecord.book.price}">
+                                                                                    <i
+                                                                                        class="fa-solid fa-circle-dollar-to-slot"></i>
+                                                                                    Phạt
+                                                                                </button>
+                                                                            </c:if>
+                                                                        </div>
+                                                                    </c:when>
+                                                                    <c:otherwise><span class="borrow-muted">Hoàn
+                                                                            tất</span></c:otherwise>
+                                                                </c:choose>
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
 
-    </div>
-</main>
+                            <c:if test="${totalPages gt 1}">
+                                <nav class="borrow-pagination" aria-label="Phân trang mượn sách">
+                                    <c:if test="${currentPageNum gt 1}">
+                                        <c:url var="previousPageUrl" value="${borrowActionPrefix}/borrow/list">
+                                            <c:param name="status" value="${selectedStatus}" />
+                                            <c:param name="keyword" value="${keyword}" />
+                                            <c:param name="page" value="${currentPageNum - 1}" />
+                                        </c:url>
+                                        <a href="${previousPageUrl}" aria-label="Trang trước"><i
+                                                class="fa-solid fa-chevron-left"></i></a>
+                                    </c:if>
+                                    <c:forEach begin="1" end="${totalPages}" var="pageNumber">
+                                        <c:url var="pageUrl" value="${borrowActionPrefix}/borrow/list">
+                                            <c:param name="status" value="${selectedStatus}" />
+                                            <c:param name="keyword" value="${keyword}" />
+                                            <c:param name="page" value="${pageNumber}" />
+                                        </c:url>
+                                        <a class="${pageNumber eq currentPageNum ? 'current' : ''}" href="${pageUrl}">
+                                            <c:out value="${pageNumber}" />
+                                        </a>
+                                    </c:forEach>
+                                    <c:if test="${currentPageNum lt totalPages}">
+                                        <c:url var="nextPageUrl" value="${borrowActionPrefix}/borrow/list">
+                                            <c:param name="status" value="${selectedStatus}" />
+                                            <c:param name="keyword" value="${keyword}" />
+                                            <c:param name="page" value="${currentPageNum + 1}" />
+                                        </c:url>
+                                        <a href="${nextPageUrl}" aria-label="Trang sau"><i
+                                                class="fa-solid fa-chevron-right"></i></a>
+                                    </c:if>
+                                </nav>
+                            </c:if>
+                        </div>
+                    </main>
 
-<!-- Modal Cho Mượn (Assign Barcode) -->
-<div id="loanModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); position: relative;">
-        <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-book-open" style="color: var(--text-brand);"></i> Xác nhận giao sách</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Xác nhận độc giả đã đến nhận đúng bản sao đang được thư viện giữ.</p>
-        
-        <form action="${pageContext.request.contextPath}${borrowActionPrefix}/borrow/confirm-pickup" method="post">
-            <input type="hidden" name="id" id="loanRecordId">
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Độc giả</label>
-                <input type="text" id="loanReaderName" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Đầu sách mượn</label>
-                <input type="text" id="loanBookTitle" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-            </div>
+                    <div class="borrow-modal" data-borrow-modal="loan" hidden>
+                        <section class="borrow-modal-dialog" role="dialog" aria-modal="true"
+                            aria-labelledby="loan-modal-title">
+                            <h2 id="loan-modal-title"><i class="fa-solid fa-book-open"></i> Xác nhận giao sách</h2>
+                            <p>Xác nhận độc giả đã đến nhận đúng bản sao đang được thư viện giữ.</p>
+                            <form action="${confirmPickupUrl}" method="post">
+                                <input type="hidden" name="id" data-loan-field="recordId">
+                                <label><span>Độc giả</span><input type="text" readonly
+                                        data-loan-field="readerName"></label>
+                                <label><span>Đầu sách mượn</span><input type="text" readonly
+                                        data-loan-field="bookTitle"></label>
+                                <div class="borrow-modal-grid">
+                                    <label><span>Mã yêu cầu</span><input type="text" readonly
+                                            data-loan-field="requestId"></label>
+                                    <label><span>Mã vạch bản sao</span><input class="borrow-monospace" type="text"
+                                            readonly data-loan-field="barcode"></label>
+                                    <label><span>Thời điểm yêu cầu</span><input type="text" readonly
+                                            data-loan-field="requestDate"></label>
+                                    <label><span>Hạn cuối nhận sách</span><input class="borrow-deadline" type="text"
+                                            readonly data-loan-field="pickupDeadline"></label>
+                                </div>
+                                <div class="borrow-modal-actions">
+                                    <button type="button" class="btn btn-secondary" data-close-borrow-modal>Hủy
+                                        bỏ</button>
+                                    <button type="submit" class="btn btn-primary">Xác nhận duyệt</button>
+                                </div>
+                            </form>
+                        </section>
+                    </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã yêu cầu</label>
-                    <input type="text" id="loanRequestId" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã vạch bản sao</label>
-                    <input type="text" id="loanCopyBarcode" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; font-family: monospace;">
-                </div>
-            </div>
+                    <div class="borrow-modal" data-borrow-modal="return" hidden>
+                        <section class="borrow-modal-dialog" role="dialog" aria-modal="true"
+                            aria-labelledby="return-modal-title">
+                            <h2 id="return-modal-title"><i class="fa-solid fa-rotate-left borrow-success-icon"></i> Nhận
+                                trả sách</h2>
+                            <p>Ghi nhận cuốn sách đã được hoàn trả về thư viện.</p>
+                            <form action="${confirmReturnUrl}" method="post">
+                                <input type="hidden" name="id" data-return-field="recordId">
+                                <label><span>Tên sách</span><input type="text" readonly
+                                        data-return-field="bookTitle"></label>
+                                <label><span>Mã vạch</span><input class="borrow-monospace" type="text" readonly
+                                        data-return-field="barcode"></label>
+                                <label>
+                                    <span>Tình trạng cuốn sách</span>
+                                    <select name="condition">
+                                        <option value="GOOD">Bình thường (GOOD)</option>
+                                        <option value="DAMAGED">Hỏng nhẹ (DAMAGED)</option>
+                                        <option value="LOST">Mất hoàn toàn (LOST)</option>
+                                    </select>
+                                </label>
+                                <label><span>Ghi chú bổ sung</span><textarea name="note" rows="3"
+                                        placeholder="Tình trạng trang sách, ghi chú hao mòn..."></textarea></label>
+                                <div class="borrow-modal-actions">
+                                    <button type="button" class="btn btn-secondary" data-close-borrow-modal>Hủy
+                                        bỏ</button>
+                                    <button type="submit" class="btn btn-success">Xác nhận trả</button>
+                                </div>
+                            </form>
+                        </section>
+                    </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Thời điểm yêu cầu</label>
-                    <input type="text" id="loanRequestDate" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Hạn cuối nhận sách</label>
-                    <input type="text" id="loanPickupDeadline" readonly style="width: 100%; padding: 10px; border: 1px solid #f2b8a0; border-radius: 8px; background: #fff8f4; color: #c65319; font-weight: 600;">
-                </div>
-            </div>
+                    <div class="borrow-modal" data-borrow-modal="fine" hidden>
+                        <section class="borrow-modal-dialog" role="dialog" aria-modal="true"
+                            aria-labelledby="fine-modal-title">
+                            <h2 id="fine-modal-title"><i
+                                    class="fa-solid fa-circle-dollar-to-slot borrow-danger-icon"></i> Lập phiếu phạt độc
+                                giả</h2>
+                            <p>Tạo khoản phạt do trả quá hạn hoặc làm hỏng, mất sách.</p>
+                            <form action="${createFineUrl}" method="post">
+                                <input type="hidden" name="borrowRecordId" data-fine-field="recordId">
+                                <input type="hidden" name="userId" data-fine-field="userId">
+                                <label><span>Độc giả bị phạt</span><input type="text" readonly
+                                        data-fine-field="readerName"></label>
+                                <label><span>Tên đầu sách</span><input type="text" readonly
+                                        data-fine-field="bookTitle"></label>
+                                <label>
+                                    <span>Tình trạng cuốn sách</span>
+                                    <select name="bookCondition" required data-fine-field="condition">
+                                        <option value="DAMAGED">Hỏng nhẹ</option>
+                                        <option value="LOST">Mất sách</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Số tiền phạt (đ)</span>
+                                    <input type="number" name="amount" required min="1" step="1"
+                                        data-fine-field="amount">
+                                    <small>Hệ thống tự điền theo tình trạng sách; thủ thư có thể điều chỉnh khi
+                                        cần.</small>
+                                </label>
+                                <label><span>Lý do phạt</span><input type="text" name="reason" required maxlength="255"
+                                        placeholder="Mô tả tình trạng hỏng hoặc mất sách..."></label>
+                                <div class="borrow-modal-actions">
+                                    <button type="button" class="btn btn-secondary" data-close-borrow-modal>Hủy
+                                        bỏ</button>
+                                    <button type="submit" class="btn btn-danger">Lập phiếu</button>
+                                </div>
+                            </form>
+                        </section>
+                    </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" onclick="closeLoanModal()" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px;">Hủy bỏ</button>
-                <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">Xác nhận duyệt</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Trả Sách (Confirm Return) -->
-<div id="returnModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-        <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-rotate-left" style="color: #27ae60;"></i> Nhận trả sách</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Ghi nhận cuốn sách đã được hoàn trả về thư viện thành công.</p>
-        
-        <form action="${pageContext.request.contextPath}${borrowActionPrefix}/borrow/confirm-return" method="post">
-            <input type="hidden" name="id" id="returnRecordId">
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Tên sách</label>
-                <input type="text" id="returnBookTitle" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Mã vạch</label>
-                <input type="text" id="returnBarcode" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; font-family: monospace;">
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tình trạng cuốn sách</label>
-                <select name="condition" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
-                    <option value="GOOD">Bình thường (GOOD)</option>
-                    <option value="DAMAGED">Hỏng nhẹ (DAMAGED)</option>
-                    <option value="LOST">Mất mát hoàn toàn (LOST)</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Ghi chú bổ sung</label>
-                <textarea name="note" placeholder="Tình trạng trang sách, ghi chú hao mòn..." rows="3" 
-                          style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; resize: vertical;"></textarea>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" onclick="closeReturnModal()" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px;">Hủy bỏ</button>
-                <button type="submit" class="btn btn-success" style="padding: 10px 24px; border-radius: 8px;">Xác nhận trả</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Phạt Tiền (Record Fine) -->
-<div id="fineModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-        <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-circle-dollar-to-slot" style="color: #e74c3c;"></i> Lập phiếu phạt độc giả</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Tạo khoản tiền phạt độc giả do trả quá hạn hoặc làm hỏng/mất sách.</p>
-        
-        <form action="${pageContext.request.contextPath}/admin/fine/create" method="post">
-            <input type="hidden" name="borrowRecordId" id="fineBorrowRecordId">
-            <input type="hidden" name="userId" id="fineUserId">
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Độc giả bị phạt</label>
-                <input type="text" id="fineReaderName" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Tên đầu sách</label>
-                <input type="text" id="fineBookTitle" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 16px;">
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Số tiền phạt (đ)</label>
-                    <input type="number" name="amount" required min="1000" step="500" value="10000"
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Số ngày quá hạn</label>
-                    <input type="number" name="overdueDays" required min="0" value="0"
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Lý do phạt</label>
-                <input type="text" name="reason" required placeholder="Trả muộn X ngày, hư hại bìa sách..."
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" onclick="closeFineModal()" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px;">Hủy bỏ</button>
-                <button type="submit" class="btn btn-danger" style="padding: 10px 24px; border-radius: 8px; background: #e74c3c; border-color: #e74c3c;">Lập phiếu</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    function openLoanModal(id, title, name, barcode, requestDate, pickupDeadline) {
-        document.getElementById('loanRecordId').value = id;
-        document.getElementById('loanBookTitle').value = title;
-        document.getElementById('loanReaderName').value = name;
-        document.getElementById('loanRequestId').value = '#' + id;
-        document.getElementById('loanCopyBarcode').value = barcode;
-        document.getElementById('loanRequestDate').value = requestDate;
-        document.getElementById('loanPickupDeadline').value = pickupDeadline;
-        document.getElementById('loanModal').style.display = 'flex';
-    }
-    
-    function closeLoanModal() {
-        document.getElementById('loanModal').style.display = 'none';
-    }
-
-    function openReturnModal(id, title, barcode) {
-        document.getElementById('returnRecordId').value = id;
-        document.getElementById('returnBookTitle').value = title;
-        document.getElementById('returnBarcode').value = barcode;
-        document.getElementById('returnModal').style.display = 'flex';
-    }
-    
-    function closeReturnModal() {
-        document.getElementById('returnModal').style.display = 'none';
-    }
-
-    function openFineModal(brId, userId, name, bookTitle) {
-        document.getElementById('fineBorrowRecordId').value = brId;
-        document.getElementById('fineUserId').value = userId;
-        document.getElementById('fineReaderName').value = name;
-        document.getElementById('fineBookTitle').value = bookTitle;
-        document.getElementById('fineModal').style.display = 'flex';
-    }
-    
-    function closeFineModal() {
-        document.getElementById('fineModal').style.display = 'none';
-    }
-
-    // Đóng modal khi nhấn ra ngoài
-    window.onclick = function(event) {
-        let lm = document.getElementById('loanModal');
-        let rm = document.getElementById('returnModal');
-        let fm = document.getElementById('fineModal');
-        if (event.target == lm) lm.style.display = 'none';
-        if (event.target == rm) rm.style.display = 'none';
-        if (event.target == fm) fm.style.display = 'none';
-    }
-</script>
-
-<%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
+                    <script src="${borrowListScriptUrl}" defer></script>
+                    <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
