@@ -81,9 +81,20 @@ public class MyBorrowServlet extends HttpServlet {
             String successMessage;
             String errorMessage;
             if (path.endsWith("/create")) {
-                success = borrowService.createBorrowRequest(reader.getId(), parsePositiveId(request, "bookId"));
-                successMessage = "Đã tạo yêu cầu mượn sách. Vui lòng đến thư viện nhận sách trong 24 giờ.";
-                errorMessage = "Không thể tạo yêu cầu. Sách có thể đã hết hoặc bạn đã có lượt mượn đang hoạt động.";
+                int userId = reader.getId();
+                if (new dao.FineDAO().searchByUser(userId, "UNPAID", null).size() > 0) {
+                    success = false;
+                    successMessage = "";
+                    errorMessage = "Bạn phải thanh toán hết các khoản phạt trước đó mới được mượn sách mới.";
+                } else if (borrowService.getActiveBorrowCount(userId) >= 3) {
+                    success = false;
+                    successMessage = "";
+                    errorMessage = "Không thể mượn thêm sách: Bạn đã đạt giới hạn tối đa 3 lượt mượn hoạt động.";
+                } else {
+                    success = borrowService.createBorrowRequest(userId, parsePositiveId(request, "bookId"));
+                    successMessage = "Đã tạo yêu cầu mượn sách. Vui lòng đến thư viện nhận sách trong 24 giờ.";
+                    errorMessage = "Không thể tạo yêu cầu. Sách có thể đã hết hoặc bạn đã có lượt mượn đang hoạt động.";
+                }
             } else if (path.endsWith("/cancel")) {
                 success = borrowService.cancelBorrowRequest(parsePositiveId(request, "borrowId"), reader.getId());
                 successMessage = "Đã hủy yêu cầu mượn sách và giải phóng bản sao.";

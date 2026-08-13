@@ -131,7 +131,10 @@ public class FineManagementServlet extends HttpServlet {
             paymentMethod = "CASH";
         }
 
-        boolean success = fineDAO.updateStatus(id, status, paymentMethod, paymentNote);
+        User loggedUser = (User) session.getAttribute("loggedUser");
+        String operator = loggedUser != null ? loggedUser.getUsername() : "System";
+
+        boolean success = fineDAO.updateStatus(id, status, paymentMethod, paymentNote, operator);
         if (success) {
             session.setAttribute("successMsg", "Cập nhật trạng thái khoản phạt thành công!");
         } else {
