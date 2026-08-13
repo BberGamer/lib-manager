@@ -34,7 +34,7 @@ public class UserProfileService {
             return "Họ và tên chỉ được chứa chữ cái và khoảng trắng.";
         }
         if (fullName.length() < 3) {
-            return "Họ và tên phải có ít nhất 2 ký tự.";
+            return "Họ và tên phải có ít nhất 3 ký tự.";
         }
 
         // ===== 2. VALIDATE email =====
