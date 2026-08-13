@@ -97,6 +97,43 @@ public class UploadUtility {
         return "uploads/" + uniqueFileName;
     }
 
+    /**
+     * Lưu tệp ảnh tải lên vào thư mục cấu hình với tên gốc của tệp (không thêm tiền tố thời gian).
+     * Phù hợp khi muốn lưu trữ ảnh khớp chính xác với đường dẫn trong DB (ví dụ: "uploads/tai-chinh-doanh-nghiep.png").
+     *
+     * @param filePart đối tượng Part chứa tệp tải lên từ request
+     * @param ctx ServletContext của ứng dụng
+     * @return đường dẫn tương đối lưu trong cơ sở dữ liệu dạng "uploads/fileName"
+     * @throws IOException nếu xảy ra lỗi ghi tệp hoặc tệp không phải định dạng ảnh hợp lệ
+     */
+    public static String saveFileWithOriginalName(Part filePart, ServletContext ctx) throws IOException {
+        if (filePart == null || filePart.getSize() == 0) {
+            return null;
+        }
+        String fileName = getFileName(filePart);
+        if (fileName == null || fileName.isEmpty()) {
+            return null;
+        }
+
+        // Kiểm tra định dạng ảnh
+        String contentType = filePart.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IOException("Tệp tải lên không phải là định dạng ảnh hợp lệ.");
+        }
+
+        String uploadDirPath = getUploadDir(ctx);
+        File uploadDir = new File(uploadDirPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        // Ghi tệp với tên gốc vào thư mục lưu trữ
+        filePart.write(uploadDirPath + File.separator + fileName);
+        
+        // Trả về đường dẫn lưu trong DB dạng "uploads/fileName"
+        return "uploads/" + fileName;
+    }
+
     public static String resolveUrl(String dbPath, String contextPath) {
         if (dbPath == null || dbPath.trim().isEmpty()) {
             return "";

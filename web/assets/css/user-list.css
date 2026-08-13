@@ -1,0 +1,438 @@
+/* 
+ * File CSS phục vụ giao diện danh sách người dùng (user_list.jsp).
+ * Giữ nguyên nền trắng sạch sẽ ban đầu, chỉ đổi màu Icon và Nút xác nhận sang màu cam.
+ */
+
+/* Layout & Spacing */
+.user-hero-eyebrow {
+    margin-bottom: 10px;
+}
+
+.user-list-container {
+    padding-top: 28px;
+}
+
+.user-search-keyword {
+    flex: 2;
+}
+
+.user-search-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+/* Topbar & Stats */
+.user-topbar {
+    margin-top: 20px;
+}
+
+.user-results-info {
+    margin-bottom: 0;
+}
+
+.user-icon-primary {
+    color: var(--primary);
+}
+
+.user-icon-primary-space {
+    color: var(--primary);
+    margin-right: 4px;
+}
+
+.user-topbar-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Admin Card & Table */
+.user-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.user-section-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.user-section-count {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.user-table-wrap {
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.user-table-head-row {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.user-th-id {
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4b5563;
+    width: 60px;
+}
+
+.user-th {
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.user-th-action {
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4b5563;
+    text-align: center;
+    min-width: 200px;
+}
+
+.user-tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s;
+}
+
+.user-td-id {
+    padding: 16px 24px;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.user-td-username {
+    padding: 16px 24px;
+    font-weight: 500;
+    color: #111827;
+}
+
+.user-username-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.user-td-fullname {
+    padding: 16px 24px;
+    color: #374151;
+}
+
+.user-td-email {
+    padding: 16px 24px;
+    color: #6b7280;
+    font-size: 13.5px;
+}
+
+.user-td-role,
+.user-td-status {
+    padding: 16px 24px;
+}
+
+.user-status-badge-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.user-status-badge-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.user-status-dot {
+    font-size: 7px;
+}
+
+.user-td-actions {
+    padding: 12px 16px;
+    text-align: center;
+}
+
+.user-row-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.user-action-view {
+    border: 1px solid #d1d5db;
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #6b7280;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.user-action-lock {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #fcd34d;
+    background: #fef9c3;
+    color: #92400e;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.user-action-unlock {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #6ee7b7;
+    background: #d1fae5;
+    color: #065f46;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.user-action-delete {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: #ef4444;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.user-action-form {
+    display: inline;
+    margin: 0;
+}
+
+/* Empty State */
+.user-empty-td {
+    padding: 40px;
+    text-align: center;
+}
+
+.user-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.user-empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0 0 6px 0;
+}
+
+.user-empty-desc {
+    margin: 0;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+/* Pagination */
+.user-pagination-wrap {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+    background: #f9fafb;
+}
+
+.user-pagination-ul {
+    margin-top: 0;
+}
+
+/* Modal Overlay & Base Card (Chuẩn nền trắng sạch như ảnh) */
+.user-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px 28px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.user-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 0;
+    border-bottom: none;
+    background: transparent;
+}
+
+.user-modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 1. CHỈ ĐỔI MÀU ICON TIÊU ĐỀ THÀNH MÀU CAM (Không khung bao) */
+.user-modal-title-icon,
+.user-modal-title i,
+.user-modal-title svg {
+    color: #f47920 !important;
+    background: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    font-size: 1.4rem;
+}
+
+.user-modal-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #9ca3af;
+    line-height: 1;
+    padding: 4px;
+}
+
+.user-modal-close-btn:hover {
+    color: #4b5563;
+}
+
+.user-modal-form-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.user-modal-label,
+.user-modal-label-dark {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.user-modal-select,
+.user-modal-content .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+    background-color: #f0f4f9;
+    color: #1f2937;
+}
+
+.user-modal-select:focus,
+.user-modal-content .form-control:focus {
+    border-color: #f47920;
+    outline: none;
+    background-color: #ffffff;
+}
+
+.user-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.user-modal-btn-cancel {
+    padding: 8px 18px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.user-modal-btn-cancel:hover {
+    background: #f9fafb;
+}
+
+/* 2. CHỈ ĐỔI MÀU NÚT XÁC NHẬN THÀNH MÀU CAM */
+.user-modal-btn-submit {
+    padding: 9px 22px;
+    border: none !important;
+    border-radius: 8px;
+    background: #f47920 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.user-modal-btn-submit:hover {
+    background: #ea580c !important;
+}

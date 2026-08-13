@@ -353,7 +353,7 @@
 
 .info-card-icon {
     font-size: 24px;
-    color: #f47920;
+    color: #fff;
     flex-shrink: 0;
 }
 
@@ -706,4 +706,161 @@
 
 .hbc-btn:hover {
     transform: translateX(3px);
+}
+
+/* =========================================================
+   Popular Books Section (Sách mượn nhiều nhất)
+   ========================================================= */
+.home-popular-books {
+    padding: 64px 0 74px;
+    background: linear-gradient(180deg, rgba(255, 107, 0, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+.section-eyebrow--hot {
+    color: #ff5722 !important;
+}
+
+.home-book-card--popular {
+    position: relative;
+    border: 1px solid rgba(255, 107, 0, 0.2);
+}
+
+.home-book-card--popular:hover {
+    border-color: #ff5722;
+    box-shadow: 0 12px 28px rgba(255, 87, 34, 0.15);
+}
+
+.pop-rank-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
+}
+
+.pop-rank-badge--1 {
+    background: linear-gradient(135deg, #ff4500, #ff8c00);
+}
+
+.pop-rank-badge--2 {
+    background: linear-gradient(135deg, #e65100, #f57c00);
+}
+
+.pop-rank-badge--3 {
+    background: linear-gradient(135deg, #f57f17, #ffb300);
+}
+
+.pop-rank-badge--default {
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(4px);
+}
+
+.hbc-badge--fire {
+    background: linear-gradient(135deg, #ff6b00, #ff3800) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(255, 56, 0, 0.3);
+}
+
+/* =========================================================
+   Book Carousel Slider Styles
+   ========================================================= */
+.book-carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.book-carousel-viewport {
+    overflow: hidden;
+    width: 100%;
+    padding: 12px 4px;
+    margin: -12px -4px;
+}
+
+.book-carousel-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 3 * 24px) / 4); /* Hiển thị chính xác 4 sách cùng lúc */
+    gap: 24px;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+}
+
+/* Nút bấm chuyển slide */
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(244, 121, 32, 0.4); /* Viền màu cam nhạt đồng bộ FPT */
+    color: var(--primary); /* Icon màu cam FPT */
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(244, 121, 32, 0.12); /* Bóng đổ ánh cam nhẹ */
+    z-index: 10;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.carousel-btn:hover {
+    background: linear-gradient(135deg, var(--primary), #ee6b0b); /* Nền gradient màu cam đậm chất FPT khi hover */
+    color: #ffffff; /* Icon chuyển sang màu trắng nổi bật */
+    border-color: var(--primary);
+    box-shadow: 0 6px 20px rgba(244, 121, 32, 0.35); /* Bóng đổ cam phát sáng */
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-btn.prev-btn {
+    left: -24px;
+}
+
+.carousel-btn.next-btn {
+    right: -24px;
+}
+
+/* Ẩn các nút điều hướng nếu tổng số sách nhỏ hơn số vị trí hiển thị */
+.book-carousel-container.hide-nav .carousel-btn {
+    display: none !important;
+}
+
+/* Cấu hình responsive cho các cột */
+@media (max-width: 1024px) {
+    .book-carousel-track {
+        grid-auto-columns: calc((100% - 2 * 20px) / 3); /* 3 sách trên tablet */
+        gap: 20px;
+    }
+    .carousel-btn.prev-btn { left: -10px; }
+    .carousel-btn.next-btn { right: -10px; }
+}
+
+@media (max-width: 768px) {
+    .book-carousel-track {
+        grid-auto-columns: calc((100% - 1 * 16px) / 2); /* 2 sách trên mobile */
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-carousel-track {
+        grid-auto-columns: 100%; /* 1 sách trên điện thoại dọc */
+        gap: 16px;
+    }
 }

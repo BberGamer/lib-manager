@@ -364,6 +364,7 @@ img { max-width: 100%; display: block; }
   font-size: 1.4rem;
   margin-bottom: 18px;
   box-shadow: 0 4px 12px rgba(244,121,32,0.3);
+  color: #fff;
 }
 .info-card h3 {
   font-size: 1rem;
