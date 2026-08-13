@@ -36,18 +36,37 @@ public class HomeServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
 
+        // 1. Sách mượn nhiều nhất
         try {
-            // Truy vấn 6 đầu sách mới nhất hiển thị trên trang chủ
-            List<Book> latestBooks = bookDAO.searchBooks(null, null, "id", "DESC", 1, 6);
+            List<Book> popularBooks = bookDAO.getTopBorrowedBooks(8);
+            request.setAttribute("popularBooks", popularBooks);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mượn nhiều nhất trong HomeServlet", e);
+        }
+
+        // 2. Sách mới nhất
+        try {
+            List<Book> latestBooks = bookDAO.getLatestBooks(30, 8);
+            request.setAttribute("latestBooks", latestBooks);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mới nhất trong HomeServlet", e);
+        }
+
+        // 3. Thống kê tổng số sách
+        try {
             int totalBooks = bookDAO.countBooks(null, null);
+            request.setAttribute("totalBooks", totalBooks);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm tổng số sách trong HomeServlet", e);
+        }
+
+        // 4. Thống kê số lượng danh mục
+        try {
             List<String> categories = bookDAO.getAllCategories();
             int totalCategories = (categories != null) ? categories.size() : 0;
-
-            request.setAttribute("latestBooks", latestBooks);
-            request.setAttribute("totalBooks", totalBooks);
             request.setAttribute("totalCategories", totalCategories);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Lỗi khi lấy dữ liệu cho trang chủ trong HomeServlet", e);
+            LOGGER.log(Level.SEVERE, "Lỗi khi đếm danh mục trong HomeServlet", e);
         }
 
         request.setAttribute("activePage", "home");

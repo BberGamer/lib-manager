@@ -23,6 +23,7 @@
 <c:url var="homeUrl" value="/home" />
 <c:url var="booksUrl" value="/books" />
 <c:url var="aboutUrl" value="/about" />
+<c:url var="policiesPublicUrl" value="/policies" />
 <c:url var="myBorrowsUrl" value="/borrow/my" />
 <c:url var="myReservationsUrl" value="/reservation/my" />
 <c:url var="myFinesUrl" value="/fine/my" />
@@ -35,6 +36,7 @@
 <c:url var="shelfManagementUrl" value="${rolePath}/shelf" />
 <c:url var="authorsUrl" value="${rolePath}/authors" />
 <c:url var="categoriesUrl" value="${rolePath}/categories" />
+<c:url var="policiesAdminUrl" value="/admin/policies" />
 <c:url var="usersUrl" value="${rolePath}/users" />
 <c:url var="profileUrl" value="/user/profile" />
 <c:url var="loginUrl" value="/login" />
@@ -82,6 +84,11 @@
         <div class="admin-sidebar-backdrop" data-sidebar-backdrop></div>
         <div class="admin-shell">
             <aside class="admin-sidebar" data-admin-sidebar>
+                <script>
+                    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+                        document.currentScript.parentElement.classList.add('collapsed');
+                    }
+                </script>
                 <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
             </aside>
             <div class="admin-main">
@@ -112,6 +119,12 @@
                             <a href="${aboutUrl}"
                                class="nav-link ${navCurrentPage eq 'about' ? 'active' : ''}">
                                 <i class="fa-solid fa-circle-info"></i> Giới thiệu
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${policiesPublicUrl}"
+                               class="nav-link ${navCurrentPage eq 'policies' ? 'active' : ''}">
+                                <i class="fa-solid fa-scale-balanced"></i> Điều lệ
                             </a>
                         </li>
 
@@ -158,6 +171,7 @@
                                        or navCurrentPage eq 'shelf'
                                        or navCurrentPage eq 'authors'
                                        or navCurrentPage eq 'categories'
+                                       or navCurrentPage eq 'policies'
                                        or navCurrentPage eq 'users'
                                        or navCurrentPage eq 'dashboard-library'
                                        or navCurrentPage eq 'dashboard-admin'}" />
@@ -196,6 +210,10 @@
                                         <li><a href="${categoriesUrl}"
                                                class="dropdown-item ${navCurrentPage eq 'categories' ? 'active' : ''}">
                                                 <i class="fa-solid fa-tags"></i> Danh mục
+                                            </a></li>
+                                        <li><a href="${policiesAdminUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'policies' ? 'active' : ''}">
+                                                <i class="fa-solid fa-scale-balanced"></i> Điều lệ
                                             </a></li>
                                         <li class="dropdown-divider"></li>
                                         <li><a href="${usersUrl}"

@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  transition: transform var(--transition) ease, left var(--transition) ease;
+  transition: transform var(--transition) ease, left var(--transition) ease, width var(--transition) ease, padding var(--transition) ease;
 }
 .admin-sidebar-brand {
   display: flex;
@@ -242,5 +242,78 @@
   }
   .admin-sidebar.show {
     left: 0;
+  }
+}
+
+/* Sidebar collapsed state (desktop only) & toggle button */
+.sidebar-desktop-toggle-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.sidebar-desktop-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+@media (max-width: 1024px) {
+  .sidebar-desktop-toggle-btn {
+    display: none;
+  }
+}
+
+@media (min-width: 1025px) {
+  .admin-sidebar.collapsed {
+    width: 80px;
+    padding: 24px 12px;
+  }
+  .admin-sidebar.collapsed .brand-text-wrapper {
+    display: none;
+  }
+  .admin-sidebar.collapsed .admin-sidebar-header-row {
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+  }
+  .admin-sidebar.collapsed .sidebar-desktop-toggle-btn i {
+    transform: rotate(180deg);
+  }
+  .admin-sidebar.collapsed .admin-sidebar-usercard-info {
+    display: none;
+  }
+  .admin-sidebar.collapsed .admin-sidebar-usercard {
+    justify-content: center;
+    padding: 8px;
+  }
+  .admin-sidebar.collapsed .admin-nav-header {
+    display: none;
+  }
+  .admin-sidebar.collapsed .admin-nav-item span {
+    display: none;
+  }
+  .admin-sidebar.collapsed .admin-nav-item {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .admin-sidebar.collapsed .admin-nav-item i {
+    margin-right: 0 !important;
+    font-size: 1.25rem;
+  }
+  .admin-sidebar.collapsed .admin-sidebar-footer-btn span {
+    display: none;
+  }
+  .admin-sidebar.collapsed .admin-sidebar-footer-btn {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .admin-sidebar.collapsed .admin-sidebar-logout-form {
+    display: block;
   }
 }

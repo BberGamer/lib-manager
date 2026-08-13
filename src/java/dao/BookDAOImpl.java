@@ -283,11 +283,13 @@ public class BookDAOImpl implements BookDAO {
                 
                 // Insert new ones
                 if (authorIds != null && !authorIds.isEmpty()) {
-                    String insertSql = "INSERT INTO book_authors (book_id, author_id, role) VALUES (?, ?, 'AUTHOR')";
+                    String insertSql = "INSERT INTO book_authors (book_id, author_id, role) VALUES (?, ?, ?)";
                     try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
-                        for (int aid : authorIds) {
+                        for (int i = 0; i < authorIds.size(); i++) {
                             insertPs.setInt(1, bookId);
-                            insertPs.setInt(2, aid);
+                            insertPs.setInt(2, authorIds.get(i));
+                            // Đảm bảo giá trị role nằm trong ENUM('PRIMARY', 'CO_AUTHOR') của bảng book_authors
+                            insertPs.setString(3, i == 0 ? "PRIMARY" : "CO_AUTHOR");
                             insertPs.addBatch();
                         }
                         insertPs.executeBatch();
@@ -314,7 +316,8 @@ public class BookDAOImpl implements BookDAO {
             }
         }
         return false;
-    }
+    }    
+        
 
     @Override
     public boolean hasActiveBorrowsOrReservations(int bookId) throws Exception {
@@ -336,6 +339,59 @@ public class BookDAOImpl implements BookDAO {
             }
         }
         return false;
+    }
+
+    @Override
+    public List<Book> getTopBorrowedBooks(int limit) throws Exception {
+        List<Book> list = new ArrayList<>();
+        // Truy vấn danh sách sách được mượn nhiều nhất dựa trên bảng borrow_records
+        String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
+                   + "b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject, "
+                   + "COUNT(br.id) AS borrow_count "
+                   + "FROM books b "
+                   + "LEFT JOIN borrow_records br ON b.id = br.book_id "
+                   + "WHERE b.is_deleted = 0 "
+                   + "GROUP BY b.id "
+                   + "ORDER BY borrow_count DESC, b.id DESC "
+                   + "LIMIT ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Book b = mapRow(rs);
+                    b.setBorrowCount(rs.getInt("borrow_count"));
+                    list.add(b);
+                }
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public List<Book> getLatestBooks(int days, int limit) throws Exception {
+        List<Book> list = new ArrayList<>();
+        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject "
+                   + "FROM books b "
+                   + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
+                   + "WHERE b.is_deleted = 0 AND b.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) "
+                   + "ORDER BY b.created_at DESC, b.id DESC "
+                   + "LIMIT ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        // Dự phòng nếu không có sách mới thêm trong N ngày gần đây thì lấy danh sách sách mới nhất theo ID
+        if (list.isEmpty()) {
+            return searchBooks(null, null, "id", "DESC", 1, limit);
+        }
+        return list;
     }
 
     private Book mapRow(ResultSet rs) throws SQLException {

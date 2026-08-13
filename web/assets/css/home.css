@@ -353,7 +353,7 @@
 
 .info-card-icon {
     font-size: 24px;
-    color: #f47920;
+    color: #fff;
     flex-shrink: 0;
 }
 
@@ -706,4 +706,65 @@
 
 .hbc-btn:hover {
     transform: translateX(3px);
+}
+
+/* =========================================================
+   Popular Books Section (Sách mượn nhiều nhất)
+   ========================================================= */
+.home-popular-books {
+    padding: 64px 0 74px;
+    background: linear-gradient(180deg, rgba(255, 107, 0, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+.section-eyebrow--hot {
+    color: #ff5722 !important;
+}
+
+.home-book-card--popular {
+    position: relative;
+    border: 1px solid rgba(255, 107, 0, 0.2);
+}
+
+.home-book-card--popular:hover {
+    border-color: #ff5722;
+    box-shadow: 0 12px 28px rgba(255, 87, 34, 0.15);
+}
+
+.pop-rank-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
+}
+
+.pop-rank-badge--1 {
+    background: linear-gradient(135deg, #ff4500, #ff8c00);
+}
+
+.pop-rank-badge--2 {
+    background: linear-gradient(135deg, #e65100, #f57c00);
+}
+
+.pop-rank-badge--3 {
+    background: linear-gradient(135deg, #f57f17, #ffb300);
+}
+
+.pop-rank-badge--default {
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(4px);
+}
+
+.hbc-badge--fire {
+    background: linear-gradient(135deg, #ff6b00, #ff3800) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(255, 56, 0, 0.3);
 }

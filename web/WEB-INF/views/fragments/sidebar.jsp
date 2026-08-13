@@ -21,20 +21,26 @@
 <c:url var="sidebarBooksUrl" value="${rolePath}/books" />
 <c:url var="sidebarAuthorsUrl" value="${rolePath}/authors" />
 <c:url var="sidebarCategoriesUrl" value="${rolePath}/categories" />
+<c:url var="sidebarPoliciesUrl" value="/admin/policies" />
 <c:url var="sidebarUsersUrl" value="${rolePath}/users" />
 <c:url var="sidebarLogoutUrl" value="/logout" />
 <c:url var="sidebarLibraryStatsUrl" value="${rolePath}/dashboard/library" />
 <c:url var="sidebarAdminStatsUrl" value="/admin" />
 
-<a href="${sidebarUser.admin ? sidebarAdminStatsUrl : (sidebarUser.librarian ? sidebarLibraryStatsUrl : sidebarHomeUrl)}" class="admin-sidebar-brand">
-    <span class="brand-icon">
-        <i class="fa-solid fa-graduation-cap"></i>
-    </span>
-    <span>
-        <span class="brand-title">FPT Library</span>
-        <span class="brand-subtitle">Hệ thống quản trị</span>
-    </span>
-</a>
+<div class="admin-sidebar-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; min-height: 40px;">
+    <a href="${sidebarUser.admin ? sidebarAdminStatsUrl : (sidebarUser.librarian ? sidebarLibraryStatsUrl : sidebarHomeUrl)}" class="admin-sidebar-brand" style="margin-bottom: 0;">
+        <span class="brand-icon">
+            <i class="fa-solid fa-graduation-cap"></i>
+        </span>
+        <span class="brand-text-wrapper">
+            <span class="brand-title">FPT Library</span>
+            <span class="brand-subtitle">Hệ thống quản trị</span>
+        </span>
+    </a>
+    <button type="button" class="sidebar-desktop-toggle-btn" id="sidebarDesktopToggle" title="Thu gọn / Mở rộng Sidebar">
+        <i class="fa-solid fa-angle-left"></i>
+    </button>
+</div>
 
 <c:if test="${not empty sidebarUser}">
     <a href="${sidebarProfileUrl}" class="admin-sidebar-usercard" title="Xem hồ sơ cá nhân">
@@ -151,6 +157,11 @@
                        class="admin-nav-item ${sidebarCurrentPage eq 'categories' ? 'active' : ''}">
                         <i class="fa-solid fa-tags"></i>
                         <span>Quản lý danh mục</span>
+                    </a>
+                    <a href="${sidebarPoliciesUrl}"
+                       class="admin-nav-item ${sidebarCurrentPage eq 'policies' ? 'active' : ''}">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>Quản lý điều lệ</span>
                     </a>
                 </nav>
             </div>

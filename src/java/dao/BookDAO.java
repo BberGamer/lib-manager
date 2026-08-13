@@ -32,4 +32,21 @@ public interface BookDAO {
     boolean hasPhysicalCopies(int bookId) throws Exception;
     
     boolean hasActiveBorrowsOrReservations(int bookId) throws Exception;
+
+    /**
+     * Lấy danh sách các đầu sách được mượn nhiều nhất.
+     * @param limit số lượng sách tối đa cần lấy
+     * @return danh sách sách được mượn nhiều nhất
+     * @throws Exception nếu có lỗi truy vấn CSDL
+     */
+    List<Book> getTopBorrowedBooks(int limit) throws Exception;
+
+    /**
+     * Lấy danh sách các đầu sách mới nhất được thêm trong N ngày.
+     * @param days số ngày gần đây
+     * @param limit số lượng sách tối đa cần lấy
+     * @return danh sách sách mới nhất
+     * @throws Exception nếu có lỗi truy vấn CSDL
+     */
+    List<Book> getLatestBooks(int days, int limit) throws Exception;
 }

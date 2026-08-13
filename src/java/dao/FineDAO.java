@@ -176,16 +176,56 @@ public class FineDAO {
         }
     }
 
-    public boolean updateStatus(int id, String status, String method, String note) throws Exception {
+    public boolean updateStatus(int id, String status, String method, String note, String operator) throws Exception {
         String sql = "UPDATE fines SET status = ?, payment_method = ?, payment_note = ?, paid_date = CURDATE(), updated_at = NOW() WHERE id = ?";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setString(2, method);
-            ps.setString(3, note);
-            ps.setInt(4, id);
-            return ps.executeUpdate() > 0;
+        int borrowRecordId = -1;
+        String borrowStatus = "";
+
+        try (Connection conn = DBContext.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // 1. Update the fine status
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, status);
+                    ps.setString(2, method);
+                    ps.setString(3, note);
+                    ps.setInt(4, id);
+                    if (ps.executeUpdate() <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                // 2. Retrieve borrow record ID and check status
+                String selectBorrowRecord = "SELECT f.borrow_record_id, br.status "
+                        + "FROM fines f INNER JOIN borrow_records br ON f.borrow_record_id = br.id "
+                        + "WHERE f.id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(selectBorrowRecord)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            borrowRecordId = rs.getInt("borrow_record_id");
+                            borrowStatus = rs.getString("status");
+                        }
+                    }
+                }
+
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
+
+        // 3. If borrow record status is OVERDUE and fine is paid/waived, trigger return
+        if (borrowRecordId != -1 && "OVERDUE".equalsIgnoreCase(borrowStatus)
+                && ("PAID".equalsIgnoreCase(status) || "WAIVED".equalsIgnoreCase(status))) {
+            new BorrowRecordDAO().confirmReturn(borrowRecordId, operator, "GOOD", "Trả tự động khi thanh toán phạt");
+        }
+
+        return true;
     }
 
     public Fine findById(int id) throws Exception {

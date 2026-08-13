@@ -133,6 +133,7 @@
                 let item = document.getElementById('notif-item-' + id);
                 item.style.background = 'white';
                 item.style.borderLeft = '1px solid #eee';
+                item.setAttribute('onclick', 'markAsRead(' + id + ', true)');
                 
                 let badge = document.getElementById('badge-' + id);
                 if (badge) badge.remove();
@@ -140,8 +141,21 @@
                 // Decrement header unread badge if present
                 let headerBadge = document.querySelector('.notification-unread-dot');
                 if (headerBadge) {
-                    // Quick refresh badge or decrement count text inside header
-                    // We can just reload to be safe, or leave it to the next page load.
+                    let visuallyHidden = headerBadge.querySelector('.visually-hidden');
+                    if (visuallyHidden) {
+                        let text = visuallyHidden.textContent;
+                        let match = text.match(/\d+/);
+                        if (match) {
+                            let count = parseInt(match[0]) - 1;
+                            if (count <= 0) {
+                                headerBadge.remove();
+                            } else {
+                                visuallyHidden.textContent = count + " thông báo chưa đọc";
+                            }
+                        }
+                    } else {
+                        headerBadge.remove();
+                    }
                 }
             }
         };
