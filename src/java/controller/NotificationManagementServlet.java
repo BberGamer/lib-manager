@@ -201,9 +201,11 @@ public class NotificationManagementServlet extends HttpServlet {
                     session.setAttribute("errorMsg", "Không tìm thấy người nhận hợp lệ theo danh sách cung cấp!");
                 } else {
                     int successCount = 0;
+                    boolean isSystemWide = (recipientInput == null || recipientInput.trim().isEmpty());
                     for (User u : recipients) {
+                        String emailTo = isSystemWide ? null : u.getEmail();
                         boolean ok = notificationService.createAndSendNotification(
-                                u.getId(), title, message, type, null, null, u.getEmail());
+                                u.getId(), title, message, type, null, null, emailTo);
                         if (ok) successCount++;
                     }
                     session.setAttribute("successMsg", "Đã gửi thông báo thành công tới " + successCount + " người nhận!");

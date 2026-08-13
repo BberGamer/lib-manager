@@ -32,6 +32,14 @@ public class MyReservationServlet extends HttpServlet {
         try {
             if (request.getServletPath().endsWith("/create")) {
                 int bookId = parseId(request, "bookId");
+                
+                // Check if user has unpaid fines
+                if (new dao.FineDAO().searchByUser(user.getId(), "UNPAID", null).size() > 0) {
+                    request.getSession().setAttribute("reservationErrorMessage", "Bạn phải thanh toán hết các khoản phạt trước đó mới được đặt trước sách.");
+                    response.sendRedirect(request.getContextPath() + "/books");
+                    return;
+                }
+                
                 var info = service.getCreationInfo(user.getId(), bookId);
                 if (info == null) {
                     request.getSession().setAttribute("reservationErrorMessage", "Không thể đặt trước: sách có thể đang khả dụng hoặc bạn đã có yêu cầu đang hoạt động.");
@@ -71,8 +79,14 @@ public class MyReservationServlet extends HttpServlet {
                 success = service.cancelReservation(parseId(request, "reservationId"), user.getId());
                 session.setAttribute(success ? "reservationSuccessMessage" : "reservationErrorMessage", success ? "Hủy đặt trước thành công." : "Không thể hủy yêu cầu đặt trước này.");
             } else {
-                success = service.createReservation(user.getId(), parseId(request, "bookId"));
-                session.setAttribute(success ? "reservationSuccessMessage" : "reservationErrorMessage", success ? "Đặt trước sách thành công." : "Không thể đặt trước. Sách có thể đã khả dụng hoặc bạn đã có yêu cầu đang hoạt động.");
+                int bookId = parseId(request, "bookId");
+                if (new dao.FineDAO().searchByUser(user.getId(), "UNPAID", null).size() > 0) {
+                    session.setAttribute("reservationErrorMessage", "Bạn phải thanh toán hết các khoản phạt trước đó mới được đặt trước sách.");
+                    success = false;
+                } else {
+                    success = service.createReservation(user.getId(), bookId);
+                    session.setAttribute(success ? "reservationSuccessMessage" : "reservationErrorMessage", success ? "Đặt trước sách thành công." : "Không thể đặt trước. Sách có thể đã khả dụng hoặc bạn đã có yêu cầu đang hoạt động.");
+                }
             }
         } catch (NumberFormatException e) {
             session.setAttribute("reservationErrorMessage", "Mã dữ liệu không hợp lệ.");

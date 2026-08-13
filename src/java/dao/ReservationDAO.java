@@ -325,4 +325,118 @@ public class ReservationDAO {
             return s.executeUpdate() == 1;
         }
     }
+
+    public ReservationRecord manuallyReadyReservation(int reservationId, String operator) throws Exception {
+        String selectRes = "SELECT r.book_id, r.user_id, r.status, b.title, u.email, u.full_name "
+                + "FROM book_reservations r "
+                + "INNER JOIN books b ON r.book_id = b.id "
+                + "INNER JOIN users u ON r.user_id = u.id "
+                + "WHERE r.id = ? FOR UPDATE";
+        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND status = 'AVAILABLE' "
+                + "ORDER BY id LIMIT 1 FOR UPDATE";
+        String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
+        String updateCopy = "UPDATE book_copies SET status = 'RESERVED', updated_by = ?, updated_at = NOW() WHERE id = ?";
+        String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
+                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, 0, 'PENDING_PICKUP', NOW(), NOW())";
+        String updateBook = "UPDATE books SET available = GREATEST(0, available - 1) WHERE id = ?";
+
+        try (Connection conn = DBContext.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int bookId = -1;
+                int userId = -1;
+                String bookTitle = "";
+                String email = "";
+                String fullName = "";
+                String resStatus = "";
+
+                try (PreparedStatement ps = conn.prepareStatement(selectRes)) {
+                    ps.setInt(1, reservationId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            bookId = rs.getInt("book_id");
+                            userId = rs.getInt("user_id");
+                            resStatus = rs.getString("status");
+                            bookTitle = rs.getString("title");
+                            email = rs.getString("email");
+                            fullName = rs.getString("full_name");
+                        }
+                    }
+                }
+
+                if (bookId == -1 || !"WAITING".equals(resStatus)) {
+                    conn.rollback();
+                    return null;
+                }
+
+                // Check for available copy
+                int copyId = -1;
+                try (PreparedStatement ps = conn.prepareStatement(copySql)) {
+                    ps.setInt(1, bookId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            copyId = rs.getInt(1);
+                        }
+                    }
+                }
+
+                if (copyId == -1) {
+                    conn.rollback();
+                    return null;
+                }
+
+                // 1. Update reservation
+                try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
+                    ps.setInt(1, reservationId);
+                    ps.executeUpdate();
+                }
+
+                // 2. Update copy to RESERVED
+                try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
+                    ps.setString(1, operator);
+                    ps.setInt(2, copyId);
+                    ps.executeUpdate();
+                }
+
+                // 3. Insert borrow record
+                try (PreparedStatement ps = conn.prepareStatement(insertBorrow)) {
+                    ps.setInt(1, userId);
+                    ps.setInt(2, bookId);
+                    ps.setInt(3, copyId);
+                    ps.executeUpdate();
+                }
+
+                // 4. Update book available count
+                try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
+                    ps.setInt(1, bookId);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+
+                // Create a record object to return data for notification
+                ReservationRecord record = new ReservationRecord();
+                record.setId(reservationId);
+                record.setBookId(bookId);
+                record.setUserId(userId);
+                
+                model.Book book = new model.Book();
+                book.setTitle(bookTitle);
+                record.setBook(book);
+                
+                User user = new User();
+                user.setId(userId);
+                user.setEmail(email);
+                user.setFullName(fullName);
+                record.setUser(user);
+
+                return record;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
 }
