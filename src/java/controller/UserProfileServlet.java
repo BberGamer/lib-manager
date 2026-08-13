@@ -26,7 +26,7 @@ public class UserProfileServlet extends HttpServlet {
         int id = logged.getId();
 
         // Chỉ admin mới được xem hồ sơ người khác qua ?id=...
-        if (idParam != null && isAdmin(logged)) {
+        if (idParam != null && logged.isAdmin()) {
             try {
                 id = Integer.parseInt(idParam);
             } catch (NumberFormatException e) { /* giữ nguyên id = chính họ nếu tham số sai */ }
@@ -55,7 +55,7 @@ public class UserProfileServlet extends HttpServlet {
         int id = logged.getId();
         boolean isAdminEditingOther = false;
 
-        if (idParam != null && isAdmin(logged)) {
+        if (idParam != null && logged.isAdmin()) {
             try {
                 id = Integer.parseInt(idParam);
                 isAdminEditingOther = (id != logged.getId());
@@ -78,7 +78,6 @@ public class UserProfileServlet extends HttpServlet {
                 String email = request.getParameter("email");
                 String phone = request.getParameter("phone");
                 String studentId = request.getParameter("studentId");
-                String avatar = request.getParameter("avatar");
                 String role = request.getParameter("role");
                 String activeParam = request.getParameter("active");
                 Integer active = null;
@@ -87,7 +86,7 @@ public class UserProfileServlet extends HttpServlet {
                 }
 
                 error = userProfileService.updateProfile(targetUser, fullName, email, phone,
-                        studentId, role, active, isAdmin(logged));
+                        studentId, role, active, logged.isAdmin());
                 request.setAttribute(error == null ? "success" : "error",
                         error == null ? "Cập nhật thông tin cá nhân thành công." : error);
 
@@ -110,10 +109,5 @@ public class UserProfileServlet extends HttpServlet {
         }
 
         doGet(request, response);
-    }
-
-    // Kiểm tra quyền admin dựa trên field role của User
-    private boolean isAdmin(User user) {
-        return "admin".equalsIgnoreCase(user.getRole());
     }
 }

@@ -8,6 +8,7 @@
 <c:url var="homeUrl" value="/home" />
 <c:url var="booksUrl" value="/books" />
 <c:url var="aboutUrl" value="/about" />
+<c:url var="policiesUrl" value="/policies" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
 <c:url var="footerLogoUrl" value="/assets/images/logo.png" />
@@ -40,6 +41,7 @@
                             <li><a href="${homeUrl}"><i class="fa-solid fa-house fa-xs"></i> Trang chủ</a></li>
                             <li><a href="${booksUrl}"><i class="fa-solid fa-book fa-xs"></i> Danh sách sách</a></li>
                             <li><a href="${aboutUrl}"><i class="fa-solid fa-circle-info fa-xs"></i> Giới thiệu</a></li>
+                            <li><a href="${policiesUrl}"><i class="fa-solid fa-scale-balanced fa-xs"></i> Điều lệ</a></li>
                             <c:choose>
                                 <c:when test="${empty sessionScope.loggedUser}">
                                     <li><a href="${loginUrl}"><i class="fa-solid fa-right-to-bracket fa-xs"></i> Đăng nhập</a></li>

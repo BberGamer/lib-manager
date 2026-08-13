@@ -186,5 +186,17 @@ public class UserDAO {
             return ps.executeUpdate() > 0;
         }
     }
+    // Check studentId đã tồn tại chưa, lấy thông tin User đang sở hữu studentId đó (nếu có)
+public User getUserByStudentId(String studentId) throws Exception {
+    String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE student_id = ?";
+    try (Connection conn = DBContext.getInstance().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, studentId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return mapRow(rs);
+        }
+    }
+    return null;
+}
 }
 
