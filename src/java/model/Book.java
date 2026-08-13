@@ -31,6 +31,7 @@ public class Book {
     private String  description;
     private String  coverImage;
     private String  subject;        // môn học liên quan
+    private int     borrowCount;    // số lượt mượn (dùng cho thống kê xu hướng)
 
     private Timestamp createdAt;
     private Timestamp updatedAt;
@@ -79,6 +80,11 @@ public class Book {
 
     public String getSubject()              { return subject; }
     public void setSubject(String v)        { this.subject = v; }
+
+    /** Trả về số lượt mượn của cuốn sách. */
+    public int getBorrowCount()             { return borrowCount; }
+    /** Thiết lập số lượt mượn của cuốn sách. */
+    public void setBorrowCount(int v)       { this.borrowCount = v; }
 
 
 
