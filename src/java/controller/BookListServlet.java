@@ -3,8 +3,6 @@ package controller;
 import dao.BookDAO;
 import dao.BookDAOImpl;
 import model.Book;
-import model.User;
-import utils.RoleGuard;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -15,7 +13,15 @@ import java.util.List;
 
 /**
  * BookListServlet – xử lý danh sách sách với search, filter, sort, phân trang.
- * URL patterns: /books (công khai), /admin/books (chỉ Admin)
+ * URL: /books
+ *
+ * Query params:
+ *   keyword  – từ khóa tìm kiếm
+ *   category – lọc danh mục
+ *   sort     – cột sắp xếp (title | publish_year | available | price)
+ *   order    – ASC | DESC
+ *   page     – trang hiện tại (mặc định 1)
+ *   view     – "grid" | "table" (mặc định "grid")
  */
 @WebServlet(name = "BookListServlet", urlPatterns = {"/books", "/admin/books", "/librarian/books"})
 public class BookListServlet extends HttpServlet {
@@ -37,15 +43,12 @@ public class BookListServlet extends HttpServlet {
         
         String path = request.getServletPath();
         if ("/admin/books".equals(path) || "/librarian/books".equals(path)) {
-            User loggedUser = RoleGuard.getLoggedUser(request);
-            if (loggedUser == null) {
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
-            if (!RoleGuard.requireAdmin(request, response, loggedUser)) {
-                return;
-            }
             request.setAttribute("isManagePageAttr", true);
+        }
+        if ("/librarian/books".equals(path)) {
+            request.setAttribute("rolePath", "/librarian");
+        } else if ("/admin/books".equals(path)) {
+            request.setAttribute("rolePath", "/admin");
         }
         
         request.setAttribute("activePage", "books");

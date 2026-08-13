@@ -30,7 +30,6 @@
                     <input type="search" name="keyword" maxlength="150" value="${fn:escapeXml(keyword)}" placeholder="Tìm theo tên tác giả...">
                 </label>
                 <button class="author-button primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm</button>
-                <a class="author-button reset" href="${authorListUrl}" aria-label="Đặt lại bộ lọc"><i class="fa-solid fa-rotate-right"></i></a>
             </form>
         </section>
 
@@ -61,8 +60,84 @@
                         <form method="post" action="${pageContext.request.contextPath}/admin/authors/delete" data-delete-author data-author-name="${fn:escapeXml(author.name)}"><input type="hidden" name="id" value="${author.id}"><button class="author-action delete" type="submit"><i class="fa-solid fa-trash"></i> Xóa</button></form></div></td>
                 </tr></c:forEach></c:otherwise></c:choose>
             </tbody></table></div>
-            <c:if test="${totalPages > 1}"><nav class="author-pagination" aria-label="Phân trang tác giả"><c:forEach var="pageNumber" begin="1" end="${totalPages}"><c:url var="pageUrl" value="/admin/authors"><c:param name="keyword" value="${keyword}" /><c:param name="sort" value="${sortField}" /><c:param name="order" value="${sortOrder}" /><c:param name="page" value="${pageNumber}" /></c:url><a class="${pageNumber == currentPage ? 'current' : ''}" href="${pageUrl}"><c:out value="${pageNumber}" /></a></c:forEach></nav></c:if>
         </section>
+        <%
+                Integer totalPgA = (Integer) request.getAttribute("totalPages");
+                Integer curPgA   = (Integer) request.getAttribute("currentPage");
+                String kwA       = request.getAttribute("keyword")  != null ? (String) request.getAttribute("keyword")  : "";
+                String sfA       = request.getAttribute("sortField") != null ? (String) request.getAttribute("sortField") : "name";
+                String soA       = request.getAttribute("sortOrder") != null ? (String) request.getAttribute("sortOrder") : "ASC";
+                String ctx3      = request.getContextPath();
+                if (totalPgA == null) totalPgA = 1;
+                if (curPgA   == null) curPgA   = 1;
+                String baseUrlA = ctx3 + "/admin/authors?keyword=" + java.net.URLEncoder.encode(kwA,"UTF-8")
+                                + "&sort=" + java.net.URLEncoder.encode(sfA,"UTF-8")
+                                + "&order=" + java.net.URLEncoder.encode(soA,"UTF-8")
+                                + "&page=";
+                if (totalPgA > 1) {
+            %>
+            <nav aria-label="Phân trang tác giả" style="margin-top: 24px;">
+                <ul class="pagination">
+                    <!-- Prev -->
+                    <li class="page-item <%= curPgA <= 1 ? "disabled" : "" %>">
+                        <a class="page-link" href="<%= baseUrlA %><%= curPgA - 1 %>">
+                            <i class="fa-solid fa-chevron-left fa-xs"></i>
+                        </a>
+                    </li>
+
+                    <%
+                       if (totalPgA <= 7) {
+                           for (int pg = 1; pg <= totalPgA; pg++) { %>
+                               <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else {
+                           for (int pg = 1; pg <= 2; pg++) { %>
+                               <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                           if (curPgA <= 4) {
+                               for (int pg = 3; pg <= 5; pg++) { %>
+                                   <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% } %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% } else if (curPgA >= totalPgA - 3) { %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                               <% for (int pg = totalPgA - 4; pg <= totalPgA - 2; pg++) { %>
+                                   <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% }
+                           } else { %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                               <% for (int pg = curPgA - 1; pg <= curPgA + 1; pg++) { %>
+                                   <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                       <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                                   </li>
+                               <% } %>
+                               <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% }
+                           for (int pg = totalPgA - 1; pg <= totalPgA; pg++) { %>
+                               <li class="page-item <%= pg == curPgA ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrlA %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       }
+                    %>
+
+                    <!-- Next -->
+                    <li class="page-item <%= curPgA >= totalPgA ? "disabled" : "" %>">
+                        <a class="page-link" href="<%= baseUrlA %><%= curPgA + 1 %>">
+                            <i class="fa-solid fa-chevron-right fa-xs"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <% } %>
     </div>
 </main>
 <script src="${authorScriptUrl}" defer></script>

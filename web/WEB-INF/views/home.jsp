@@ -188,7 +188,7 @@
                 <div class="section-header-flex">
                     <div>
                         <span class="section-eyebrow"><i class="fa-solid fa-sparkles"></i> Mới cập nhật</span>
-                        <h2 class="section-title" style="margin-bottom:0;">Sách mới nhất</h2>
+                        <h2 class="section-title" style="margin-bottom:0;">Danh sách sách mới nhất</h2>
                     </div>
                     <a href="${pageContext.request.contextPath}/books" class="btn-view-all">
                         Xem tất cả sách <i class="fa-solid fa-arrow-right"></i>

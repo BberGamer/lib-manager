@@ -11,6 +11,10 @@
     String errorMsg = (String) session.getAttribute("errorMsg");
     if (successMsg != null) session.removeAttribute("successMsg");
     if (errorMsg != null) session.removeAttribute("errorMsg");
+
+    String ctx = request.getContextPath();
+    String rolePath = (String) request.getAttribute("rolePath");
+    if (rolePath == null) rolePath = "";
 %>
 
 <main class="page-wrapper">
@@ -36,7 +40,7 @@
 
         <!-- Filter bar -->
         <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px;">
-            <form action="${pageContext.request.contextPath}/admin/shelf" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <form action="<%= ctx %><%= rolePath %>/shelf" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div style="flex: 1; min-width: 250px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tìm kiếm bản sao</label>
                     <input type="text" name="keyword" value="${keyword}" placeholder="Nhập mã Barcode hoặc tiêu đề sách..." 
@@ -58,9 +62,6 @@
                     <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
                         <i class="fa-solid fa-magnifying-glass"></i> Định vị
                     </button>
-                    <a href="${pageContext.request.contextPath}/admin/shelf" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-left: 8px; display: inline-block;">
-                        Đặt lại
-                    </a>
                 </div>
             </form>
         </div>
@@ -129,17 +130,84 @@
         </div>
 
         <!-- Pagination -->
-        <c:if test="${totalPages > 1}">
-            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
-                <c:forEach begin="1" end="${totalPages}" var="i">
-                    <a href="${pageContext.request.contextPath}/admin/shelf?area=${selectedArea}&keyword=${keyword}&page=${i}" 
-                       class="btn ${currentPageNum == i ? 'btn-primary' : 'btn-secondary'}" 
-                       style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; text-decoration: none; padding: 0;">
-                        ${i}
+        <% if (((Integer)request.getAttribute("totalPages")) != null && (Integer)request.getAttribute("totalPages") > 1) {
+            int totalPg = (Integer) request.getAttribute("totalPages");
+            int curPg   = (Integer) request.getAttribute("currentPageNum");
+            String kw   = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
+            String ar   = request.getAttribute("selectedArea") != null ? (String) request.getAttribute("selectedArea") : "";
+            String ctx2 = request.getContextPath();
+            String baseUrl = ctx2 + rolePath + "/shelf?area=" + java.net.URLEncoder.encode(ar,"UTF-8")
+                           + "&keyword=" + java.net.URLEncoder.encode(kw,"UTF-8") + "&page=";
+        %>
+        <nav aria-label="Phân trang" style="margin-top: 30px;">
+            <ul class="pagination">
+                <!-- Prev -->
+                <li class="page-item <%= curPg <= 1 ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrl %><%= curPg - 1 %>">
+                        <i class="fa-solid fa-chevron-left fa-xs"></i>
                     </a>
-                </c:forEach>
-            </div>
-        </c:if>
+                </li>
+
+                <%
+                   if (totalPg <= 7) {
+                       for (int pg = 1; pg <= totalPg; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   } else {
+                       // Show first 2 pages
+                       for (int pg = 1; pg <= 2; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+
+                       if (curPg <= 4) {
+                           // Near start
+                           for (int pg = 3; pg <= 5; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% } else if (curPg >= totalPg - 3) { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = totalPg - 4; pg <= totalPg - 2; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% }
+                       } else { %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                           <% for (int pg = curPg - 1; pg <= curPg + 1; pg++) { %>
+                               <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                                   <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                               </li>
+                           <% } %>
+                           <li class="page-item disabled"><span class="page-link">…</span></li>
+                       <% }
+
+                       // Show last 2 pages
+                       for (int pg = totalPg - 1; pg <= totalPg; pg++) { %>
+                           <li class="page-item <%= pg == curPg ? "active" : "" %>">
+                               <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+                           </li>
+                       <% }
+                   }
+                %>
+
+                <!-- Next -->
+                <li class="page-item <%= curPg >= totalPg ? "disabled" : "" %>">
+                    <a class="page-link" href="<%= baseUrl %><%= curPg + 1 %>">
+                        <i class="fa-solid fa-chevron-right fa-xs"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <% } %>
+
+
     </div>
 </main>
 
@@ -149,7 +217,7 @@
         <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-map-location-dot" style="color: var(--text-brand);"></i> Định vị bản sao sách</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Điều chỉnh vị trí lưu trữ vật lý của cuốn sách để thuận tiện tìm kiếm.</p>
         
-        <form action="${pageContext.request.contextPath}/admin/shelf/update" method="post">
+        <form action="<%= ctx %><%= rolePath %>/shelf/update" method="post">
             <input type="hidden" name="id" id="locCopyId">
             
             <div style="margin-bottom: 16px;">

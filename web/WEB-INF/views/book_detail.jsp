@@ -16,6 +16,9 @@
     if (canReview == null) canReview = false;
 
     String ctx       = request.getContextPath();
+    // Detect librarian context for back link
+    String rolePath  = (String) request.getAttribute("rolePath");
+    String backUrl   = ctx + (rolePath != null ? rolePath + "/books" : "/books");
 
     // Success/error messages from redirect
     String success = request.getParameter("success");
@@ -34,7 +37,7 @@
                 </div>
                 <h1 class="books-page-title"><%= book != null ? book.getTitle() : "Sách không tồn tại" %></h1>
                 <p class="books-page-subtitle">
-                    <a href="<%= ctx %>/books" style="color:var(--primary);"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+                    <a href="<%= backUrl %>" style="color:var(--primary);"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
                 </p>
             </div>
             <% if (book != null) { %>
@@ -73,7 +76,7 @@
             <div class="empty-icon"><i class="fa-solid fa-book"></i></div>
             <h3>Không tìm thấy sách</h3>
             <p>Sách bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
-            <a href="<%= ctx %>/books" class="btn btn-outline" style="margin-top:16px;">
+            <a href="<%= backUrl %>" class="btn btn-outline" style="margin-top:16px;">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
             </a>
         </div>
@@ -130,7 +133,7 @@
             <!-- Admin Actions -->
             <% if (isAdmin ) { %>
             <div class="book-detail-actions">
-                <a href="<%= ctx %>/book/edit?id=<%= book.getId() %>" class="btn btn-primary" style="flex:1;">
+                <a href="<%= ctx %><%= rolePath != null ? rolePath : "" %>/book/edit?id=<%= book.getId() %>" class="btn btn-primary" style="flex:1;">
                     <i class="fa-solid fa-pen"></i> Chỉnh sửa
                 </a>
                 <button type="button" class="btn btn-danger" style="flex:1;" onclick="confirmDeleteBook()">
@@ -206,7 +209,7 @@
                 <div class="detail-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <span><i class="fa-solid fa-boxes-stacked"></i> Thông tin tồn kho</span>
                     <% if (loggedUser != null && loggedUser.isAdminOrLibrarian()) { %>
-                        <a href="<%= ctx %>/book/copies?bookId=<%= book.getId() %>" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px; font-weight: 500;">
+                        <a href="<%= ctx %><%= rolePath != null ? rolePath : "" %>/book/copies?bookId=<%= book.getId() %>" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px; font-weight: 500;">
                             <i class="fa-solid fa-list"></i> Quản lý bản sao
                         </a>
                     <% } %>
@@ -242,7 +245,9 @@
         </div>
     </div>
 
-    <!-- ===== REVIEWS SECTION ===== -->
+    <!-- ===== REVIEWS SECTION (Reader only) ===== -->
+    <% boolean isAdminOrLib = loggedUser != null && (loggedUser.isAdmin() || "LIBRARIAN".equals(loggedUser.getRole())); %>
+    <% if (!isAdminOrLib) { %>
     <div class="book-detail-reviews" style="margin-top: 40px; border-top: 1px solid var(--border-light); padding-top: 30px;">
         <h3 style="margin-bottom: 25px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
             <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đánh giá sách
@@ -410,6 +415,7 @@
         <% } %>
     </div>
     <!-- ===== END REVIEWS SECTION ===== -->
+    <% } %>
 
     <% } %> <!-- end if book != null -->
 
@@ -422,7 +428,6 @@
 <!-- ===== DELETE CONFIRMATION MODAL ===== -->
 <div id="deleteBookModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:36px; max-width:440px; width:90%; box-shadow:var(--shadow-lg); position:relative;">
-        <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(to right,var(--danger),#ff6b6b); border-radius:var(--radius-lg) var(--radius-lg) 0 0;"></div>
         <div style="font-size:2.5rem; margin-bottom:14px; text-align:center;">🗑️</div>
         <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:10px; text-align:center;">Xác nhận xóa sách</h3>
         <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:28px; text-align:center; line-height:1.6;">

@@ -18,6 +18,9 @@
 
     String ctx = request.getContextPath();
 
+    String rolePath = (String) request.getAttribute("rolePath");
+    if (rolePath == null) rolePath = "";
+
     // Default values
     String title       = book != null && book.getTitle() != null ? book.getTitle() : "";
     String isbn        = book != null && book.getIsbn() != null ? book.getIsbn() : "";
@@ -49,7 +52,7 @@
                 </div>
                 <h1 class="books-page-title"><%= isEdit ? "Chỉnh sửa: " + title : "Thêm sách mới" %></h1>
                 <p class="books-page-subtitle">
-                    <a href="<%= isEdit ? ctx + "/book/detail?id=" + bookId : ctx + "/books" %>" style="color:var(--primary);">
+                    <a href="<%= isEdit ? ctx + rolePath + "/book/detail?id=" + bookId : ctx + rolePath + "/books" %>" style="color:var(--primary);">
                         <i class="fa-solid fa-arrow-left"></i> <%= isEdit ? "Quay lại chi tiết" : "Quay lại danh sách" %>
                     </a>
                 </p>
@@ -79,7 +82,7 @@
     <% } %>
 
     <!-- ===== BOOK FORM ===== -->
-    <form id="bookForm" action="<%= isEdit ? ctx + "/book/edit" : ctx + "/book/add" %>" method="post" enctype="multipart/form-data" novalidate>
+    <form id="bookForm" action="<%= isEdit ? ctx + rolePath + "/book/edit" : ctx + rolePath + "/book/add" %>" method="post" enctype="multipart/form-data" novalidate>
         <input type="hidden" name="action" value="<%= isEdit ? "update" : "create" %>">
         <% if (isEdit) { %>
             <input type="hidden" name="id" value="<%= bookId %>">
@@ -199,14 +202,22 @@
                             <div class="form-group">
                                 <label for="quantityInput" class="form-label">Tổng số lượng</label>
                                 <input type="number" id="quantityInput" name="quantity" class="form-control"
-                                       value="<%= quantity %>" min="0" onchange="syncAvailable()">
+                                       value="<%= quantity %>" min="0" onchange="syncAvailable()"
+                                       <%= hasCopies ? "readonly style='background-color: var(--bg-card); cursor: not-allowed; opacity: 0.85; border-color: var(--border-light);'" : "" %>>
                             </div>
                             <div class="form-group">
                                 <label for="availableInput" class="form-label">Số lượng có sẵn</label>
                                 <input type="number" id="availableInput" name="available" class="form-control"
-                                       value="<%= available %>" min="0">
+                                       value="<%= available %>" min="0"
+                                       <%= hasCopies ? "readonly style='background-color: var(--bg-card); cursor: not-allowed; opacity: 0.85; border-color: var(--border-light);'" : "" %>>
                             </div>
                         </div>
+                        <% if (hasCopies) { %>
+                            <div style="margin-top: 10px; font-size: 0.82rem; color: #f5a623; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>Số lượng được đồng bộ tự động từ các bản sao vật lý.</span>
+                            </div>
+                        <% } %>
 
                         <div class="form-group">
                             <label for="subjectInput" class="form-label">Môn học liên quan</label>
@@ -246,7 +257,7 @@
 
                 <!-- Submit Buttons -->
                 <div class="book-form-buttons">
-                    <a href="<%= isEdit ? ctx + "/book/detail?id=" + bookId : ctx + "/books" %>" class="btn btn-outline">
+                    <a href="<%= isEdit ? ctx + rolePath + "/book/detail?id=" + bookId : ctx + rolePath + "/books" %>" class="btn btn-outline">
                         <i class="fa-solid fa-xmark"></i> Hủy
                     </a>
                     <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
