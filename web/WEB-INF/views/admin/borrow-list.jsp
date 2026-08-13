@@ -129,7 +129,7 @@
                                 <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Hạn: <%= br.getDueDate() != null ? br.getDueDate() : "-" %></div>
                             </td>
                             <td style="padding: 16px 20px;">
-                                <span style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
+                                <span style="display: inline-block; white-space: nowrap; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
                             </td>
                             <td style="padding: 16px 20px; text-align: right;">
                                 <% if ("PENDING_PICKUP".equals(br.getStatus())) { %>

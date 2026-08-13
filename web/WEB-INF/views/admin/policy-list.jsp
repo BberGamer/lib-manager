@@ -43,13 +43,13 @@
                     <td><span class="policy-badge ${fn:toLowerCase(policy.publicationStatus)}"><c:out value="${policy.effectiveStatus}" /></span></td>
                     <td><div class="policy-actions">
                         <c:if test="${policy.publicationStatus == 'DRAFT'}">
-                            <a href="${pageContext.request.contextPath}/admin/policies/edit?id=${policy.id}">Sửa</a>
-                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/publish" data-confirm-action data-confirm-message="Xuất bản điều lệ này?"><input type="hidden" name="id" value="${policy.id}"><button type="submit">Xuất bản</button></form>
-                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/delete" data-confirm-action data-confirm-message="Xóa bản nháp này?"><input type="hidden" name="id" value="${policy.id}"><button class="danger" type="submit">Xóa</button></form>
+                            <a class="policy-action policy-action-edit" href="${pageContext.request.contextPath}/admin/policies/edit?id=${policy.id}" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i> Sửa</a>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/publish" data-confirm-action data-confirm-message="Xuất bản điều lệ này?" style="display: inline;"><input type="hidden" name="id" value="${policy.id}"><button class="policy-action policy-action-publish" type="submit" title="Xuất bản"><i class="fa-solid fa-circle-check"></i> Xuất bản</button></form>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/delete" data-confirm-action data-confirm-message="Xóa bản nháp này?" style="display: inline;"><input type="hidden" name="id" value="${policy.id}"><button class="policy-action policy-action-delete" type="submit" title="Xóa bản nháp"><i class="fa-solid fa-trash"></i> Xóa</button></form>
                         </c:if>
                         <c:if test="${policy.publicationStatus == 'PUBLISHED'}">
-                            <a href="${pageContext.request.contextPath}/admin/policies/revise?id=${policy.id}">Tạo phiên bản mới</a>
-                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/archive" data-confirm-action data-confirm-message="Lưu trữ điều lệ này?"><input type="hidden" name="id" value="${policy.id}"><button type="submit">Lưu trữ</button></form>
+                            <a class="policy-action policy-action-revise" href="${pageContext.request.contextPath}/admin/policies/revise?id=${policy.id}" title="Tạo phiên bản mới"><i class="fa-solid fa-code-branch"></i> Bản mới</a>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/policies/archive" data-confirm-action data-confirm-message="Lưu trữ điều lệ này?" style="display: inline;"><input type="hidden" name="id" value="${policy.id}"><button class="policy-action policy-action-archive" type="submit" title="Lưu trữ"><i class="fa-solid fa-box-archive"></i> Lưu trữ</button></form>
                         </c:if>
                     </div></td>
                 </tr></c:forEach></c:otherwise>

@@ -120,7 +120,7 @@
                                 <%= r.getExpiryDate() != null ? r.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "-" %>
                             </td>
                             <td style="padding: 16px 20px;">
-                                <span style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
+                                <span style="display: inline-block; white-space: nowrap; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
                             </td>
                             <td style="padding: 16px 20px; text-align: right;">
                                 <% if ("WAITING".equals(r.getStatus())) { %>
