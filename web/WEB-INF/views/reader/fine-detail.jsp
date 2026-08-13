@@ -43,10 +43,20 @@
                         <fmt:formatNumber value="${fine.amount}" pattern="#,##0" /> VNĐ
                     </dd>
                 </div>
-                <div>
-                    <dt>Số ngày quá hạn</dt>
-                    <dd><c:out value="${fine.overdueDays}" /> ngày</dd>
-                </div>
+                <c:choose>
+                    <c:when test="${fine.fineType eq 'OVERDUE'}">
+                        <div>
+                            <dt>Số ngày quá hạn</dt>
+                            <dd><c:out value="${fine.overdueDays}" /> ngày × 5.000 VNĐ</dd>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div>
+                            <dt>Tình trạng cuốn sách</dt>
+                            <dd><c:out value="${fine.bookConditionLabel}" /></dd>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
                 <div>
                     <dt>Ngày mượn</dt>
                     <dd><c:out value="${fine.borrowRecord.borrowDate}" default="—" /></dd>

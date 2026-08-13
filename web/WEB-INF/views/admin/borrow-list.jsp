@@ -1,3 +1,7 @@
+<%--
+    Trang quản lý mượn trả do BorrowManagementServlet render.
+    Mong đợi borrowList, borrowActionPrefix, dữ liệu phân trang và session loggedUser.
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List, model.BorrowRecord, java.time.format.DateTimeFormatter" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -141,9 +145,11 @@
                                         <button class="btn btn-sm btn-success" onclick="openReturnModal(<%= br.getId() %>, '<%= br.getBook().getTitle() %>', '<%= br.getBookCopy().getBarcode() %>')" style="font-size: 0.8rem; border-radius: 6px;">
                                             <i class="fa-solid fa-rotate-left"></i> Nhận trả
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="openFineModal(<%= br.getId() %>, <%= br.getUserId() %>, '<%= br.getUser().getFullName() %>', '<%= br.getBook().getTitle() %>')" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #e74c3c; color: #e74c3c; background: transparent;">
-                                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Phạt
-                                        </button>
+                                        <% if (!br.isHasFine()) { %>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="openFineModal(<%= br.getId() %>, <%= br.getUserId() %>, '<%= br.getUser().getFullName() %>', '<%= br.getBook().getTitle() %>', <%= br.getBook().getPrice() != null ? br.getBook().getPrice() : 0 %>)" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #e74c3c; color: #e74c3c; background: transparent;">
+                                                <i class="fa-solid fa-circle-dollar-to-slot"></i> Phạt
+                                            </button>
+                                        <% } %>
                                     </div>
                                 <% } else { %>
                                     <span style="color: var(--text-muted); font-size: 0.85rem;">Hoàn tất</span>
@@ -325,7 +331,7 @@
         <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-circle-dollar-to-slot" style="color: #e74c3c;"></i> Lập phiếu phạt độc giả</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Tạo khoản tiền phạt độc giả do trả quá hạn hoặc làm hỏng/mất sách.</p>
         
-        <form action="${pageContext.request.contextPath}/admin/fine/create" method="post">
+        <form action="${pageContext.request.contextPath}${borrowActionPrefix}/fine/create" method="post">
             <input type="hidden" name="borrowRecordId" id="fineBorrowRecordId">
             <input type="hidden" name="userId" id="fineUserId">
             
@@ -339,22 +345,27 @@
                 <input type="text" id="fineBookTitle" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 16px;">
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Số tiền phạt (đ)</label>
-                    <input type="number" name="amount" required min="1000" step="500" value="10000"
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Số ngày quá hạn</label>
-                    <input type="number" name="overdueDays" required min="0" value="0"
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Tình trạng cuốn sách</label>
+                <select id="fineBookCondition" name="bookCondition" required
+                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
+                    <option value="DAMAGED">Hỏng nhẹ</option>
+                    <option value="LOST">Mất sách</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Số tiền phạt (đ)</label>
+                <input type="number" id="fineAmount" name="amount" required min="1" step="1"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
+                <small style="display: block; margin-top: 6px; color: var(--text-muted);">
+                    Hệ thống tự điền theo tình trạng sách; thủ thư có thể điều chỉnh khi cần.
+                </small>
             </div>
 
             <div style="margin-bottom: 24px;">
                 <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Lý do phạt</label>
-                <input type="text" name="reason" required placeholder="Trả muộn X ngày, hư hại bìa sách..."
+                <input type="text" name="reason" required maxlength="255" placeholder="Mô tả tình trạng hỏng hoặc mất sách..."
                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
             </div>
 
@@ -393,18 +404,6 @@
         document.getElementById('returnModal').style.display = 'none';
     }
 
-    function openFineModal(brId, userId, name, bookTitle) {
-        document.getElementById('fineBorrowRecordId').value = brId;
-        document.getElementById('fineUserId').value = userId;
-        document.getElementById('fineReaderName').value = name;
-        document.getElementById('fineBookTitle').value = bookTitle;
-        document.getElementById('fineModal').style.display = 'flex';
-    }
-    
-    function closeFineModal() {
-        document.getElementById('fineModal').style.display = 'none';
-    }
-
     // Đóng modal khi nhấn ra ngoài
     window.onclick = function(event) {
         let lm = document.getElementById('loanModal');
@@ -415,5 +414,6 @@
         if (event.target == fm) fm.style.display = 'none';
     }
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/fine-form.js" defer></script>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

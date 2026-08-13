@@ -67,7 +67,7 @@
                                 <th>Ngày mượn</th>
                                 <th>Hạn trả</th>
                                 <th>Ngày trả</th>
-                                <th>Số ngày quá hạn</th>
+                                <th>Chi tiết phạt</th>
                                 <th>Số tiền</th>
                                 <th>Trạng thái</th>
                                 <th>Ngày tạo</th>
@@ -98,9 +98,16 @@
                                     <td data-label="Ngày trả">
                                         <c:out value="${fine.borrowRecord.returnDate}" default="—" />
                                     </td>
-                                    <td data-label="Số ngày quá hạn">
-                                        <c:out value="${fine.overdueDays}" />
-                                        ngày
+                                    <td data-label="Chi tiết phạt">
+                                        <c:choose>
+                                            <c:when test="${fine.fineType eq 'OVERDUE'}">
+                                                Quá hạn <c:out value="${fine.overdueDays}" /> ngày
+                                                (5.000 VNĐ/ngày)
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:out value="${fine.bookConditionLabel}" />
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
                                     <td data-label="Số tiền">
                                         <strong>
@@ -108,7 +115,7 @@
                                             VNĐ
                                         </strong>
                                     </td>
-                                    <td data-label="Trạng thái">\
+                                    <td data-label="Trạng thái">
                                         <span class="fine-badge ${fine.status == 'UNPAID' ? 'unpaid' : (fine.status == 'PAID' ? 'paid' : 'waived')}">
                                             <c:choose>
                                                 <c:when test="${fine.status eq 'UNPAID'}">Chưa thanh toán</c:when>
