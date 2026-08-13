@@ -84,6 +84,11 @@
         <div class="admin-sidebar-backdrop" data-sidebar-backdrop></div>
         <div class="admin-shell">
             <aside class="admin-sidebar" data-admin-sidebar>
+                <script>
+                    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+                        document.currentScript.parentElement.classList.add('collapsed');
+                    }
+                </script>
                 <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
             </aside>
             <div class="admin-main">

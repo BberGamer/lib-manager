@@ -34,7 +34,7 @@ public class UserProfileService {
             return "Họ và tên chỉ được chứa chữ cái và khoảng trắng.";
         }
         if (fullName.length() < 3) {
-            return "Họ và tên phải có ít nhất 2 ký tự.";
+            return "Họ và tên phải có ít nhất 3 ký tự.";
         }
 
         // ===== 2. VALIDATE email =====
@@ -91,8 +91,8 @@ public class UserProfileService {
                 if (studentId.length() > 20) {
                     return "Mã số sinh viên không được vượt quá 20 ký tự.";
                 }
-                if (!studentId.matches("^[a-zA-Z0-9]+$")) {
-                    return "Mã số sinh viên chỉ được chứa chữ và số.";
+                if (!studentId.matches("^H[A-Z][0-9]{6}$")) {
+                    return "Mã số sinh viên chỉ được chứa chữ và số và đúng định dạng .";
                 }
                 // Chỉ check trùng khi studentId mới khác studentId cũ
                 boolean studentIdChanged = user.getStudentId() == null

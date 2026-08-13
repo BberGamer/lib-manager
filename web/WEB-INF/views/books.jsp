@@ -223,7 +223,7 @@
                                 Giá <i class="fa-solid <%= "price".equals(sortField) ? ("ASC".equals(sortOrder)?"fa-sort-up":"fa-sort-down") : "fa-sort" %> sort-icon fa-xs"></i>
                             </a>
                         </th>
-                        <% if (isAdmin || (loggedUser != null && !isAdminLib)) { %><th style="width:140px; text-align:center;">Thao tác</th><% } %>
+                        <% if (isAdminLib || loggedUser != null) { %><th style="width:160px; text-align:center;">Thao tác</th><% } %>
                     </tr>
                 </thead>
                 <tbody>
@@ -264,10 +264,10 @@
                                 <% } %>
                             </td>
                             <td style="font-weight:600; color:var(--accent);"><%= b.getFormattedPrice() %></td>
-                            <% if (isAdmin || (loggedUser != null && !isAdminLib)) { %>
+                            <% if (isAdminLib || loggedUser != null) { %>
                             <td style="text-align:center;">
                                 <div style="display:flex; gap:6px; justify-content:center;">
-                                    <% if (isAdmin) { %>
+                                    <% if (isAdminLib) { %>
                                     <a href="<%= detailBase %>?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
@@ -282,8 +282,7 @@
                                             onclick="confirmDelete(<%= b.getId() %>, '<%= b.getTitle().replace("'", "\\'") %>')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
-                                    <% } %>
-                                    <% if (loggedUser != null && !isAdminLib) { %>
+                                    <% } else { %>
                                     <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
@@ -494,7 +493,7 @@ function confirmDelete(bookId, bookTitle) {
     document.getElementById('deleteBookTitle').textContent =
         'Bạn có chắc muốn xóa/ẩn sách: "' + bookTitle + '"?';
     document.getElementById('deleteConfirmBtn').href =
-        '<%= ctx %>/book/delete?id=' + bookId;
+        '<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/delete?id=' + bookId;
     document.getElementById('deleteModal').style.display = 'flex';
 }
 function closeDeleteModal() {
