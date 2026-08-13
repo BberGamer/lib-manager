@@ -442,10 +442,17 @@ public class PolicyDao {
         }
     }
 
-    /** @return số phiên bản kế tiếp của cùng mã */
+    /**
+     * Tính số phiên bản kế tiếp trên toàn bộ lịch sử, kể cả bản đã xóa mềm, để không tái sử dụng
+     * cặp mã và phiên bản đang được unique constraint của database bảo vệ.
+     * @param connection kết nối thuộc giao dịch tạo revision
+     * @param policyCode mã nghiệp vụ của điều lệ
+     * @return số phiên bản chưa từng được sử dụng của cùng mã
+     * @throws SQLException khi không thể đọc lịch sử phiên bản
+     */
     private int findNextVersion(Connection connection, String policyCode) throws SQLException {
         String sql = "SELECT COALESCE(MAX(version), 0) + 1 FROM policies "
-                + "WHERE policy_code = ? AND is_deleted = 0";
+                + "WHERE policy_code = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, policyCode);
             try (ResultSet resultSet = statement.executeQuery()) {
