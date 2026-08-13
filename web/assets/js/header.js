@@ -64,6 +64,7 @@ function initializeHeader() {
     const sidebar = document.querySelector('[data-admin-sidebar]');
     const backdrop = document.querySelector('[data-sidebar-backdrop]');
     const toggleButton = document.querySelector('[data-sidebar-toggle]');
+    const desktopToggle = document.getElementById('sidebarDesktopToggle');
 
     if (navbar) {
         updateNavbarScrollState(navbar);
@@ -73,6 +74,19 @@ function initializeHeader() {
     if (sidebar && backdrop && toggleButton) {
         toggleButton.addEventListener('click', handleAdminSidebarToggle);
         backdrop.addEventListener('click', handleAdminSidebarToggle);
+    }
+
+    if (sidebar && desktopToggle) {
+        // Apply saved preference immediately on load to prevent flicker
+        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+        }
+
+        desktopToggle.addEventListener('click', () => {
+            const nowCollapsed = sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebar-collapsed', String(nowCollapsed));
+        });
     }
 }
 

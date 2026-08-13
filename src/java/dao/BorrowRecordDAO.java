@@ -392,6 +392,13 @@ public class BorrowRecordDAO {
                     ps.executeUpdate();
                 }
 
+                // 1b. Update associated fines to PAID
+                String updateFineSql = "UPDATE fines SET status = 'PAID', paid_date = CURDATE(), payment_method = 'CASH', payment_note = 'Thanh toán khi trả sách', updated_at = NOW() WHERE borrow_record_id = ? AND status IN ('UNPAID', 'PENDING_VERIFY')";
+                try (PreparedStatement ps = conn.prepareStatement(updateFineSql)) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+
                 // 2. Check for waiting reservation
                 int waitingResId = -1;
                 int waitingUserId = -1;
