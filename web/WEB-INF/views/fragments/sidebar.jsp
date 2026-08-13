@@ -26,10 +26,11 @@
 <c:url var="sidebarLogoutUrl" value="/logout" />
 <c:url var="sidebarLibraryStatsUrl" value="${rolePath}/dashboard/library" />
 <c:url var="sidebarAdminStatsUrl" value="/admin" />
+<c:url var="sidebarLogoUrl" value="/assets/images/logo.png" />
 
 <a href="${sidebarUser.admin ? sidebarAdminStatsUrl : (sidebarUser.librarian ? sidebarLibraryStatsUrl : sidebarHomeUrl)}" class="admin-sidebar-brand">
     <span class="brand-icon">
-        <i class="fa-solid fa-graduation-cap"></i>
+        <img src="${sidebarLogoUrl}" alt="FPT University">
     </span>
     <span>
         <span class="brand-title">FPT Library</span>
