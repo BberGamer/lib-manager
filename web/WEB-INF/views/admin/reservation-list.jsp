@@ -45,8 +45,8 @@
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Trạng thái</label>
                     <select name="status" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="PENDING" ${selectedStatus == 'PENDING' ? 'selected' : ''}>Chờ duyệt (PENDING)</option>
-                        <option value="READY" ${selectedStatus == 'READY' ? 'selected' : ''}>Sách sẵn sàng (READY)</option>
+                        <option value="WAITING" ${selectedStatus == 'WAITING' ? 'selected' : ''}>Chờ mượn (WAITING)</option>
+                        <option value="READY_FOR_PICKUP" ${selectedStatus == 'READY_FOR_PICKUP' ? 'selected' : ''}>Sách sẵn sàng (READY_FOR_PICKUP)</option>
                         <option value="COMPLETED" ${selectedStatus == 'COMPLETED' ? 'selected' : ''}>Đã mượn sách (COMPLETED)</option>
                         <option value="CANCELLED" ${selectedStatus == 'CANCELLED' ? 'selected' : ''}>Đã hủy (CANCELLED)</option>
                         <option value="EXPIRED" ${selectedStatus == 'EXPIRED' ? 'selected' : ''}>Đã hết hạn (EXPIRED)</option>
@@ -86,10 +86,10 @@
                         for (ReservationRecord r : reservationList) {
                             String badgeColor = "";
                             String badgeText = "";
-                            if ("PENDING".equals(r.getStatus())) {
+                            if ("WAITING".equals(r.getStatus())) {
                                 badgeColor = "background: #fff9e6; color: #f39c12;";
-                                badgeText = "Chờ xử lý";
-                            } else if ("READY".equals(r.getStatus())) {
+                                badgeText = "Chờ mượn";
+                            } else if ("READY_FOR_PICKUP".equals(r.getStatus())) {
                                 badgeColor = "background: #ebf5fb; color: #2980b9;";
                                 badgeText = "Sách sẵn sàng";
                             } else if ("COMPLETED".equals(r.getStatus())) {
@@ -123,16 +123,16 @@
                                 <span style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
                             </td>
                             <td style="padding: 16px 20px; text-align: right;">
-                                <% if ("PENDING".equals(r.getStatus())) { %>
+                                <% if ("WAITING".equals(r.getStatus())) { %>
                                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                        <form action="${pageContext.request.contextPath}/admin/reservation/update" method="post" style="display: inline;">
+                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
                                             <input type="hidden" name="id" value="<%= r.getId() %>">
                                             <input type="hidden" name="action" value="ready">
                                             <button type="submit" class="btn btn-sm btn-primary" style="font-size: 0.8rem; border-radius: 6px;">
                                                 <i class="fa-solid fa-circle-check"></i> Sách về (Ready)
                                             </button>
                                         </form>
-                                        <form action="${pageContext.request.contextPath}/admin/reservation/update" method="post" style="display: inline;">
+                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
                                             <input type="hidden" name="id" value="<%= r.getId() %>">
                                             <input type="hidden" name="action" value="cancel">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #7f8c8d; color: #7f8c8d; background: transparent;">
@@ -140,16 +140,16 @@
                                             </button>
                                         </form>
                                     </div>
-                                <% } else if ("READY".equals(r.getStatus())) { %>
+                                <% } else if ("READY_FOR_PICKUP".equals(r.getStatus())) { %>
                                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                        <form action="${pageContext.request.contextPath}/admin/reservation/update" method="post" style="display: inline;">
+                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
                                             <input type="hidden" name="id" value="<%= r.getId() %>">
                                             <input type="hidden" name="action" value="complete">
                                             <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.8rem; border-radius: 6px;">
                                                 <i class="fa-solid fa-check-double"></i> Đã lấy (Done)
                                             </button>
                                         </form>
-                                        <form action="${pageContext.request.contextPath}/admin/reservation/update" method="post" style="display: inline;">
+                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
                                             <input type="hidden" name="id" value="<%= r.getId() %>">
                                             <input type="hidden" name="action" value="cancel">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #7f8c8d; color: #7f8c8d; background: transparent;">

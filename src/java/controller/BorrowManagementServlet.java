@@ -189,9 +189,19 @@ public class BorrowManagementServlet extends HttpServlet {
             condition = "GOOD";
         }
 
-        boolean success = borrowRecordDAO.confirmReturn(id, operator, condition, note);
-        if (success) {
+        dao.BorrowRecordDAO.ReturnResult result = borrowRecordDAO.confirmReturn(id, operator, condition, note);
+        if (result.success) {
             session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
+            
+            if (result.activatedReservationId != -1) {
+                String notifTitle = "Sách đặt trước đã sẵn sàng – FPT Library";
+                String notifMessage = "Xin chào " + result.userFullName + ",\n\n"
+                        + "Cuốn sách '" + result.bookTitle + "' bạn đặt trước hiện đã sẵn sàng để mượn.\n"
+                        + "Vui lòng đến thư viện để nhận sách trong vòng 24 giờ kể từ thời điểm này.";
+                new service.NotificationService().createAndSendNotification(
+                        result.activatedUserId, notifTitle, notifMessage, "RESERVATION", 
+                        result.activatedReservationId, "reservation", result.userEmail);
+            }
         } else {
             session.setAttribute("errorMsg", "Xác nhận trả sách thất bại!");
         }

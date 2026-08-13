@@ -14,6 +14,15 @@ import java.util.List;
 
 public class BorrowRecordDAO {
 
+    public static class ReturnResult {
+        public boolean success = false;
+        public int activatedReservationId = -1;
+        public int activatedUserId = -1;
+        public String bookTitle = null;
+        public String userEmail = null;
+        public String userFullName = null;
+    }
+
     private static final String BORROW_RECORD_SELECT
             = "SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, "
             + "br.pickup_date, br.borrow_date, br.due_date, "
@@ -331,16 +340,32 @@ public class BorrowRecordDAO {
         }
     }
 
-    public boolean confirmReturn(int id, String operator, String condition, String note) throws Exception {
+    public ReturnResult confirmReturn(int id, String operator, String condition, String note) throws Exception {
+        ReturnResult resObj = new ReturnResult();
+        resObj.success = false;
+
         String selectRecord = "SELECT book_id, copy_id FROM borrow_records WHERE id = ? "
                 + "AND status IN ('BORROWED', 'OVERDUE')";
         String updateRecord = "UPDATE borrow_records SET return_date = CURDATE(), status = 'RETURNED', updated_at = NOW() WHERE id = ?";
-        String updateCopy = "UPDATE book_copies SET status = 'AVAILABLE', book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
+        
+        String selectReservation = "SELECT r.id, r.user_id, b.title, u.email, u.full_name "
+                + "FROM book_reservations r "
+                + "INNER JOIN books b ON r.book_id = b.id "
+                + "INNER JOIN users u ON r.user_id = u.id "
+                + "WHERE r.book_id = ? AND r.status = 'WAITING' "
+                + "AND NOT EXISTS (SELECT 1 FROM fines f WHERE f.user_id = r.user_id AND f.status = 'UNPAID') "
+                + "AND (SELECT COUNT(*) FROM borrow_records br WHERE br.user_id = r.user_id AND br.status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) < 3 "
+                + "ORDER BY r.created_at, r.id LIMIT 1 FOR UPDATE";
+        
+        String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
+        
+        String updateCopyReserved = "UPDATE book_copies SET status = 'RESERVED', book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
+        String updateCopyAvailable = "UPDATE book_copies SET status = 'AVAILABLE', book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
+        
+        String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
+                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, 0, 'PENDING_PICKUP', NOW(), NOW())";
+        
         String updateBook = "UPDATE books SET available = available + 1 WHERE id = ?";
-        String activateReservation = "UPDATE book_reservations SET status='READY_FOR_PICKUP',"
-                + "notified_at=NOW(),expiry_date=DATE_ADD(NOW(),INTERVAL 24 HOUR),updated_at=NOW() "
-                + "WHERE id=(SELECT id FROM (SELECT id FROM book_reservations WHERE book_id=? "
-                + "AND status='WAITING' ORDER BY created_at,id LIMIT 1) waiting)";
 
         try (Connection conn = DBContext.getInstance().getConnection()) {
             conn.setAutoCommit(false);
@@ -358,36 +383,82 @@ public class BorrowRecordDAO {
                 }
                 if (bookId == -1 || copyId == -1) {
                     conn.rollback();
-                    return false;
+                    return resObj;
                 }
 
-                // 1. Update borrow record
+                // 1. Update borrow record to RETURNED
                 try (PreparedStatement ps = conn.prepareStatement(updateRecord)) {
                     ps.setInt(1, id);
                     ps.executeUpdate();
                 }
 
-                // 2. Update book copy
-                try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
-                    ps.setString(1, condition);
-                    ps.setString(2, note);
-                    ps.setString(3, operator);
-                    ps.setInt(4, copyId);
-                    ps.executeUpdate();
+                // 2. Check for waiting reservation
+                int waitingResId = -1;
+                int waitingUserId = -1;
+                String bookTitle = null;
+                String userEmail = null;
+                String userFullName = null;
+                try (PreparedStatement ps = conn.prepareStatement(selectReservation)) {
+                    ps.setInt(1, bookId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            waitingResId = rs.getInt("id");
+                            waitingUserId = rs.getInt("user_id");
+                            bookTitle = rs.getString("title");
+                            userEmail = rs.getString("email");
+                            userFullName = rs.getString("full_name");
+                        }
+                    }
                 }
 
-                // 3. Update book availability
-                try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
-                    ps.setInt(1, bookId);
-                    ps.executeUpdate();
-                }
-                try (PreparedStatement ps = conn.prepareStatement(activateReservation)) {
-                    ps.setInt(1, bookId);
-                    ps.executeUpdate();
+                if (waitingResId != -1) {
+                    // There is a waiting reservation!
+                    // a. Update reservation to READY_FOR_PICKUP
+                    try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
+                        ps.setInt(1, waitingResId);
+                        ps.executeUpdate();
+                    }
+                    // b. Update book copy to RESERVED
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyReserved)) {
+                        ps.setString(1, condition);
+                        ps.setString(2, note);
+                        ps.setString(3, operator);
+                        ps.setInt(4, copyId);
+                        ps.executeUpdate();
+                    }
+                    // c. Insert a new PENDING_PICKUP borrow record for the reservation user
+                    try (PreparedStatement ps = conn.prepareStatement(insertBorrow)) {
+                        ps.setInt(1, waitingUserId);
+                        ps.setInt(2, bookId);
+                        ps.setInt(3, copyId);
+                        ps.executeUpdate();
+                    }
+
+                    resObj.activatedReservationId = waitingResId;
+                    resObj.activatedUserId = waitingUserId;
+                    resObj.bookTitle = bookTitle;
+                    resObj.userEmail = userEmail;
+                    resObj.userFullName = userFullName;
+                } else {
+                    // No waiting reservation
+                    // a. Update book copy to AVAILABLE
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyAvailable)) {
+                        ps.setString(1, condition);
+                        ps.setString(2, note);
+                        ps.setString(3, operator);
+                        ps.setInt(4, copyId);
+                        ps.executeUpdate();
+                    }
+                    // b. Increment available count on books table
+                    try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
+                        ps.setInt(1, bookId);
+                        ps.executeUpdate();
+                    }
                 }
 
                 conn.commit();
-                return true;
+                resObj.success = true;
+                return resObj;
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
@@ -690,6 +761,16 @@ public class BorrowRecordDAO {
                 throw exception;
             } finally {
                 connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    public int countActiveByUserId(int userId) throws Exception {
+        String sql = "SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')";
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
             }
         }
     }

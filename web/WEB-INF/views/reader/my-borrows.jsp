@@ -57,7 +57,7 @@
         </c:if>
 
         <section class="borrow-summary" aria-label="Chỉ số mượn sách">
-            <article class="borrow-summary-card borrow-summary-limit">
+            <article class="borrow-summary-card borrow-summary-limit ${borrowPage.activeRecords.size() ge maximumActiveBorrows ? 'is-limit-reached' : 'is-under-limit'}">
                 <span>Đang hoạt động / Giới hạn</span>
                 <strong><c:out value="${borrowPage.activeRecords.size()}" /> /
                     <c:out value="${maximumActiveBorrows}" /></strong>
