@@ -38,7 +38,7 @@
 <c:url var="categoriesUrl" value="${rolePath}/categories" />
 <c:url var="policiesAdminUrl" value="/admin/policies" />
 <c:url var="usersUrl" value="${rolePath}/users" />
-<c:url var="profileUrl" value="/user/profile" />
+<c:url var="profileUrl" value="${navUser.admin ? '/admin/user/profile' : (navUser.librarian ? '/librarian/user/profile' : '/user/profile')}" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
 <c:url var="libraryStatsUrl" value="${rolePath}/dashboard/library" />

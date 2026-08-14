@@ -257,7 +257,7 @@
         <div class="tab-content" id="reminders-tab" style="display: none;">
             
             <div style="display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px dashed #ddd; padding-bottom: 15px;">
-                <button onclick="switchReminderSubSection('due-reminders-sub')" class="btn btn-sm btn-outline active-sub-btn" id="due-sub-btn" style="border-radius: 20px; padding: 6px 16px;">Sách sắp đến hạn (<%= nearDueLoans != null ? nearDueLoans.size() : 0 %>)</button>
+                <button onclick="switchReminderSubSection('due-reminders-sub')" class="btn btn-sm btn-primary active-sub-btn" id="due-sub-btn" style="border-radius: 20px; padding: 6px 16px;">Sách sắp đến hạn (<%= nearDueLoans != null ? nearDueLoans.size() : 0 %>)</button>
                 <button onclick="switchReminderSubSection('overdue-reminders-sub')" class="btn btn-sm btn-outline" id="overdue-sub-btn" style="border-radius: 20px; padding: 6px 16px;">Quá hạn (<%= overdueLoans != null ? overdueLoans.size() : 0 %>)</button>
                 <button onclick="switchReminderSubSection('fines-reminders-sub')" class="btn btn-sm btn-outline" id="fines-sub-btn" style="border-radius: 20px; padding: 6px 16px;">Phạt chưa nộp (<%= unpaidFines != null ? unpaidFines.size() : 0 %>)</button>
             </div>
@@ -417,13 +417,6 @@
     <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--text-brand); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
     <span style="font-weight: 600; color: var(--text-secondary);">Đang xử lý gửi thông báo đến người nhận...</span>
 </div>
-
-<style>
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
 
 <script>
     function switchTab(tabId) {
