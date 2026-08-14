@@ -26,6 +26,7 @@ public class BorrowRecord {
     private BookCopy bookCopy;
     private Book book;
     private Set<Fine> fines = new HashSet<>();
+    private boolean hasFine;
 
     public BorrowRecord() {}
 
@@ -181,6 +182,24 @@ public class BorrowRecord {
 
     public void setFines(Set<Fine> fines) {
         this.fines = fines;
+    }
+
+    /**
+     * Cho biết lượt mượn đã có phiếu phạt hay chưa.
+     *
+     * @return {@code true} khi đã tồn tại ít nhất một khoản phạt cho lượt mượn
+     */
+    public boolean isHasFine() {
+        return hasFine;
+    }
+
+    /**
+     * Gán trạng thái tồn tại phiếu phạt được tổng hợp từ truy vấn danh sách.
+     *
+     * @param hasFine trạng thái đã có phiếu phạt
+     */
+    public void setHasFine(boolean hasFine) {
+        this.hasFine = hasFine;
     }
 
     @Override

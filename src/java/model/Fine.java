@@ -10,6 +10,8 @@ public class Fine {
     private int userId;
     private BigDecimal amount;
     private int overdueDays;
+    private String bookCondition;
+    private String fineType;
     private String reason;
     private String status; // UNPAID, PENDING_VERIFY, PAID, WAIVED
     private String paymentMethod; // CASH, ONLINE
@@ -73,6 +75,57 @@ public class Fine {
 
     public void setOverdueDays(int overdueDays) {
         this.overdueDays = overdueDays;
+    }
+
+    /**
+     * Lấy tình trạng cuốn sách làm phát sinh khoản phạt.
+     *
+     * @return mã tình trạng {@code DAMAGED}, {@code LOST} hoặc {@code null} với dữ liệu cũ
+     */
+    public String getBookCondition() {
+        return bookCondition;
+    }
+
+    /**
+     * Gán tình trạng cuốn sách làm căn cứ tính tiền phạt.
+     *
+     * @param bookCondition mã tình trạng cuốn sách đã được service kiểm tra
+     */
+    public void setBookCondition(String bookCondition) {
+        this.bookCondition = bookCondition;
+    }
+
+    /**
+     * Cung cấp nhãn tiếng Việt để các trang quản lý và độc giả hiển thị thống nhất.
+     *
+     * @return nhãn tình trạng cuốn sách
+     */
+    public String getBookConditionLabel() {
+        if ("DAMAGED".equals(bookCondition)) {
+            return "Hỏng nhẹ (30% giá trị sách)";
+        }
+        if ("LOST".equals(bookCondition)) {
+            return "Mất sách (100% giá trị sách)";
+        }
+        return "Không xác định";
+    }
+
+    /**
+     * Lấy loại khoản phạt để phân biệt quá hạn, tình trạng sách và dữ liệu cũ.
+     *
+     * @return mã loại khoản phạt
+     */
+    public String getFineType() {
+        return fineType;
+    }
+
+    /**
+     * Gán loại khoản phạt đọc từ cơ sở dữ liệu.
+     *
+     * @param fineType mã loại khoản phạt
+     */
+    public void setFineType(String fineType) {
+        this.fineType = fineType;
     }
 
     public String getReason() {

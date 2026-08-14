@@ -16,7 +16,7 @@ import java.util.List;
 public class FineDAO {
 
     private static final String FINE_DETAIL_SELECT =
-            "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, "
+            "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.book_condition, f.fine_type, f.reason, "
             + "f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, "
             + "u.username, u.full_name, u.email, u.phone, b.title, "
             + "br.borrow_date, br.due_date, br.return_date "
@@ -31,6 +31,8 @@ public class FineDAO {
         fine.setUserId(rs.getInt("user_id"));
         fine.setAmount(rs.getBigDecimal("amount"));
         fine.setOverdueDays(rs.getInt("overdue_days"));
+        fine.setBookCondition(rs.getString("book_condition"));
+        fine.setFineType(rs.getString("fine_type"));
         fine.setReason(rs.getString("reason"));
         fine.setStatus(rs.getString("status"));
         fine.setPaymentMethod(rs.getString("payment_method"));
@@ -78,7 +80,7 @@ public class FineDAO {
     public List<Fine> searchFines(String status, String keyword, int pageNum, int pageSize) throws Exception {
         List<Fine> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, ")
+        sb.append("SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.book_condition, f.fine_type, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, ")
           .append("u.username, u.full_name, u.email, u.phone, ")
           .append("b.title, br.borrow_date, br.due_date, br.return_date ")
           .append("FROM fines f ")
@@ -160,19 +162,68 @@ public class FineDAO {
     }
 
     public boolean createFine(Fine fine) throws Exception {
-        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, reason, "
+        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, book_condition, fine_type, reason, "
                 + "status, created_at, updated_at) "
-                + "SELECT ?, ?, ?, ?, ?, 'UNPAID', NOW(), NOW() "
-                + "WHERE NOT EXISTS (SELECT 1 FROM fines WHERE borrow_record_id = ?)";
+                + "SELECT ?, ?, ?, 0, ?, 'BOOK_CONDITION', ?, 'UNPAID', NOW(), NOW() "
+                + "WHERE NOT EXISTS (SELECT 1 FROM fines WHERE borrow_record_id = ? "
+                + "AND fine_type = 'BOOK_CONDITION')";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, fine.getBorrowRecordId());
             ps.setInt(2, fine.getUserId());
             ps.setBigDecimal(3, fine.getAmount());
-            ps.setInt(4, fine.getOverdueDays());
+            ps.setString(4, fine.getBookCondition());
             ps.setString(5, fine.getReason());
             ps.setInt(6, fine.getBorrowRecordId());
             return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Tạo các khoản phạt quá hạn còn thiếu và cập nhật tiền theo ngày hiện tại.
+     * Khoản phạt quá hạn được nhận biết bằng loại {@code OVERDUE} để không xung đột
+     * với khoản phạt hỏng hoặc mất sách của cùng lượt mượn.
+     *
+     * @param userId mã độc giả cần đồng bộ, hoặc {@code null} để đồng bộ toàn hệ thống
+     * @param dailyRate mức tiền phạt áp dụng cho mỗi ngày quá hạn
+     * @throws Exception khi thao tác cơ sở dữ liệu thất bại
+     */
+    public void synchronizeOverdueFines(Integer userId, BigDecimal dailyRate) throws Exception {
+        String userFilter = userId == null ? "" : "AND br.user_id = ? ";
+        String insertSql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, "
+                + "book_condition, fine_type, reason, status, created_at, updated_at) "
+                + "SELECT br.id, br.user_id, DATEDIFF(CURDATE(), br.due_date) * ?, "
+                + "DATEDIFF(CURDATE(), br.due_date), NULL, 'OVERDUE', 'Phạt trả sách quá hạn', "
+                + "'UNPAID', NOW(), NOW() FROM borrow_records br "
+                + "WHERE br.due_date < CURDATE() AND br.status IN ('BORROWED', 'OVERDUE') "
+                + userFilter
+                + "AND NOT EXISTS (SELECT 1 FROM fines f WHERE f.borrow_record_id = br.id "
+                + "AND f.fine_type = 'OVERDUE')";
+        String updateSql = "UPDATE fines f INNER JOIN borrow_records br ON f.borrow_record_id = br.id "
+                + "SET f.overdue_days = DATEDIFF(CURDATE(), br.due_date), "
+                + "f.amount = DATEDIFF(CURDATE(), br.due_date) * ?, f.updated_at = NOW() "
+                + "WHERE f.fine_type = 'OVERDUE' AND f.status = 'UNPAID' "
+                + "AND br.due_date < CURDATE() AND br.status IN ('BORROWED', 'OVERDUE') "
+                + userFilter;
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertSql);
+                    PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+                insertStatement.setBigDecimal(1, dailyRate);
+                updateStatement.setBigDecimal(1, dailyRate);
+                if (userId != null) {
+                    insertStatement.setInt(2, userId);
+                    updateStatement.setInt(2, userId);
+                }
+                insertStatement.executeUpdate();
+                updateStatement.executeUpdate();
+                connection.commit();
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         }
     }
 
@@ -229,7 +280,7 @@ public class FineDAO {
     }
 
     public Fine findById(int id) throws Exception {
-        String sql = "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, " +
+        String sql = "SELECT f.id, f.borrow_record_id, f.user_id, f.amount, f.overdue_days, f.book_condition, f.fine_type, f.reason, f.status, f.payment_method, f.payment_note, f.paid_date, f.created_at, f.updated_at, " +
                      "u.username, u.full_name, u.email, u.phone, " +
                      "b.title, br.borrow_date, br.due_date, br.return_date " +
                      "FROM fines f " +
