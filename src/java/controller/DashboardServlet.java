@@ -51,6 +51,7 @@ public class DashboardServlet extends HttpServlet {
                 request.setAttribute("currentPage", "dashboard-library");
                 request.setAttribute("pageTitle", "Thống kê Thư viện – FPT Library");
                 request.setAttribute("isManagePageAttr", true);
+                request.setAttribute("pageStylesheet", "/assets/css/dashboard.css");
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/library_statistics.jsp").forward(request, response);
                 
             } else if ("/dashboard/admin".equals(path) || "/admin".equals(path)) {
@@ -67,6 +68,7 @@ public class DashboardServlet extends HttpServlet {
                 request.setAttribute("currentPage", "dashboard-admin");
                 request.setAttribute("pageTitle", "Thống kê hệ thống Admin – FPT Library");
                 request.setAttribute("isManagePageAttr", true);
+                request.setAttribute("pageStylesheet", "/assets/css/dashboard.css");
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/admin_statistics.jsp").forward(request, response);
             }
         } catch (Exception e) {

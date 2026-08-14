@@ -1366,3 +1366,17 @@ a.book-title-link:hover {
 .select-field {
   min-width: 180px;
 }
+
+/* About page responsive layout override */
+@media (max-width: 768px) {
+  .about-section > .container > div[style*="grid-template-columns:1fr 1fr"],
+  .about-section > .container > div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Global Keyframes */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
