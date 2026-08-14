@@ -1,0 +1,201 @@
+/*
+ * fine-list.css – Định dạng trang quản lý các khoản phạt của thư viện (Admin / Librarian)
+ */
+
+.fine-management-container {
+    padding-top: 30px;
+    padding-bottom: 50px;
+}
+
+.fine-page-header {
+    margin-bottom: 30px;
+}
+
+.fine-filter-card,
+.fine-table-card {
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+    border: 1px solid #eef2f6;
+}
+
+.fine-filter-card {
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+.fine-filter-form {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.fine-filter-form label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--text-secondary, #526177);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.fine-filter-form input,
+.fine-filter-form select,
+.fine-modal-dialog input,
+.fine-modal-dialog select,
+.fine-modal-dialog textarea {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1px solid #d7dce2;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-primary, #2c3e50);
+    font: inherit;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.fine-filter-form input:focus,
+.fine-filter-form select:focus,
+.fine-modal-dialog input:focus,
+.fine-modal-dialog select:focus,
+.fine-modal-dialog textarea:focus {
+    border-color: var(--primary, #f47920);
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+    outline: 0;
+}
+
+.fine-table-card {
+    overflow: hidden;
+}
+
+.fine-table-scroll {
+    overflow-x: auto;
+}
+
+.fine-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.fine-table th {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e6e9ed;
+    background: #f8f9fa;
+    color: var(--text-secondary, #526177);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fine-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.fine-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.fine-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.fine-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Status Badges */
+.fine-status {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fine-status-unpaid {
+    background: #fde8e7;
+    color: #e74c3c;
+}
+
+.fine-status-paid {
+    background: #e8f8f5;
+    color: #27ae60;
+}
+
+.fine-status-waived {
+    background: #f2f4f4;
+    color: #7f8c8d;
+}
+
+.fine-status-pending_verify {
+    background: #fff9e6;
+    color: #f39c12;
+}
+
+.fine-amount {
+    font-weight: 700;
+    color: #e74c3c;
+}
+
+.fine-empty-state {
+    padding: 42px !important;
+    color: var(--text-muted, #95a5a6);
+    text-align: center;
+}
+
+.fine-empty-state i,
+.fine-empty-state span {
+    display: block;
+}
+
+.fine-empty-state i {
+    margin-bottom: 14px;
+    font-size: 2.5rem;
+}
+
+/* Modals */
+.fine-modal[hidden] {
+    display: none;
+}
+
+.fine-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.52);
+}
+
+.fine-modal-dialog {
+    width: min(500px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 30px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.fine-modal-dialog h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 9px;
+    font-size: 1.2rem;
+}
+
+.fine-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
