@@ -230,6 +230,8 @@ public class PolicyDao {
             throws SQLException, ClassNotFoundException {
         Connection connection = openConnection();
         boolean previousAutoCommit = connection.getAutoCommit();
+        int revisionId = 0;
+        Policy existingDraft = null;
         try {
             connection.setAutoCommit(false);
             Policy source = findPublishedForUpdate(connection, sourceId);
@@ -237,37 +239,35 @@ public class PolicyDao {
                 connection.rollback();
                 return Optional.empty();
             }
-            Policy existingDraft = findDraftByCodeForUpdate(connection, source.getPolicyCode());
+            existingDraft = findDraftByCodeForUpdate(connection, source.getPolicyCode());
             if (existingDraft != null) {
                 connection.commit();
-                return Optional.of(existingDraft);
-            }
-            int nextVersion = findNextVersion(connection, source.getPolicyCode());
-            String sql = "INSERT INTO policies (policy_code, version, title, content, category, "
-                    + "publication_status, effective_from, effective_to, created_by, updated_by) "
-                    + "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)";
-            int revisionId;
-            try (PreparedStatement statement = connection.prepareStatement(
-                    sql, Statement.RETURN_GENERATED_KEYS)) {
-                statement.setString(1, source.getPolicyCode());
-                statement.setInt(2, nextVersion);
-                statement.setString(3, revision.getTitle());
-                statement.setString(4, revision.getContent());
-                statement.setString(5, revision.getCategory().name());
-                statement.setDate(6, toSqlDate(revision.getEffectiveFrom()));
-                statement.setDate(7, toSqlDate(revision.getEffectiveTo()));
-                statement.setString(8, actor);
-                statement.setString(9, actor);
-                statement.executeUpdate();
-                try (ResultSet keys = statement.getGeneratedKeys()) {
-                    if (!keys.next()) {
-                        throw new SQLException("Không nhận được ID phiên bản điều lệ mới");
+            } else {
+                int nextVersion = findNextVersion(connection, source.getPolicyCode());
+                String sql = "INSERT INTO policies (policy_code, version, title, content, category, "
+                        + "publication_status, effective_from, effective_to, created_by, updated_by) "
+                        + "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?)";
+                try (PreparedStatement statement = connection.prepareStatement(
+                        sql, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setString(1, source.getPolicyCode());
+                    statement.setInt(2, nextVersion);
+                    statement.setString(3, revision.getTitle());
+                    statement.setString(4, revision.getContent());
+                    statement.setString(5, revision.getCategory().name());
+                    statement.setDate(6, toSqlDate(revision.getEffectiveFrom()));
+                    statement.setDate(7, toSqlDate(revision.getEffectiveTo()));
+                    statement.setString(8, actor);
+                    statement.setString(9, actor);
+                    statement.executeUpdate();
+                    try (ResultSet keys = statement.getGeneratedKeys()) {
+                        if (!keys.next()) {
+                            throw new SQLException("Không nhận được ID phiên bản điều lệ mới");
+                        }
+                        revisionId = keys.getInt(1);
                     }
-                    revisionId = keys.getInt(1);
                 }
+                connection.commit();
             }
-            connection.commit();
-            return findById(revisionId);
         } catch (SQLException exception) {
             connection.rollback();
             throw exception;
@@ -275,6 +275,11 @@ public class PolicyDao {
             connection.setAutoCommit(previousAutoCommit);
             connection.close();
         }
+
+        if (existingDraft != null) {
+            return Optional.of(existingDraft);
+        }
+        return findById(revisionId);
     }
 
     /**
