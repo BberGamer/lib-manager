@@ -1,16 +1,106 @@
 <%-- Biểu mẫu thêm/sửa tác giả do AuthorServlet hiển thị; nhận author, formMode và validationErrors. --%>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %><%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %><%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<c:set var="isManagePageAttr" value="true" scope="request" /><c:set var="activePage" value="authors" scope="request" /><c:set var="pageTitle" value="${formMode == 'create' ? 'Thêm tác giả' : 'Sửa tác giả'} – FPT Library" scope="request" /><c:set var="pageStylesheet" value="/assets/css/author.css" scope="request" /><%@ include file="/WEB-INF/views/fragments/header.jsp" %>
-<c:url var="authorListUrl" value="/admin/authors" /><c:set var="formAction" value="${formMode == 'create' ? '/admin/authors/create' : '/admin/authors/update'}" />
-<main class="author-management author-editor"><section class="author-hero"><div class="author-content author-hero-inner"><div><span class="author-eyebrow"><i class="fa-solid fa-user-pen"></i> Tác giả</span><h1>${formMode == 'create' ? 'Thêm tác giả mới' : 'Cập nhật tác giả'}</h1><p>Nhập thông tin hồ sơ tác giả trong thư viện.</p></div><div class="author-stat author-form-stat"><strong><i class="fa-solid fa-${formMode == 'create' ? 'user-plus' : 'user-pen'}"></i></strong><span>${formMode == 'create' ? 'Thêm mới' : 'Chỉnh sửa'}</span></div></div></section>
-<div class="author-form-content author-form-body"><a class="author-back" href="${authorListUrl}"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách tác giả</a>
-<section class="author-form-card"><header><span><i class="fa-solid fa-address-card"></i></span><div><h2>Thông tin tác giả</h2><p>Các trường có dấu * là bắt buộc.</p></div></header>
-<form action="${pageContext.request.contextPath}${formAction}" method="post" class="author-form"><c:if test="${formMode == 'update'}"><input type="hidden" name="id" value="${author.id}"></c:if>
-<div class="author-form-grid">
-<div class="author-field full ${not empty validationErrors.name ? 'invalid' : ''}"><label for="author-name">Tên tác giả *</label><input id="author-name" name="name" required maxlength="150" value="${fn:escapeXml(author.name)}"><c:if test="${not empty validationErrors.name}"><p><c:out value="${validationErrors.name}" /></p></c:if></div>
-<div class="author-field ${not empty validationErrors.nationality ? 'invalid' : ''}"><label for="author-nationality">Quốc tịch</label><input id="author-nationality" name="nationality" maxlength="100" value="${fn:escapeXml(author.nationality)}"><c:if test="${not empty validationErrors.nationality}"><p><c:out value="${validationErrors.nationality}" /></p></c:if></div>
-<div class="author-field ${not empty validationErrors.birthDate ? 'invalid' : ''}"><label for="author-birth-date">Ngày sinh</label><input id="author-birth-date" type="date" name="birthDate" value="${not empty birthDateValue ? fn:escapeXml(birthDateValue) : author.birthDate}"><c:if test="${not empty validationErrors.birthDate}"><p><c:out value="${validationErrors.birthDate}" /></p></c:if></div>
-<div class="author-field full ${not empty validationErrors.avatarUrl ? 'invalid' : ''}"><label for="author-avatar">URL ảnh đại diện</label><input id="author-avatar" type="url" name="avatarUrl" maxlength="500" value="${fn:escapeXml(author.avatarUrl)}" placeholder="https://example.com/author.jpg"><c:if test="${not empty validationErrors.avatarUrl}"><p><c:out value="${validationErrors.avatarUrl}" /></p></c:if></div>
-<div class="author-field full ${not empty validationErrors.bio ? 'invalid' : ''}"><label for="author-bio">Tiểu sử</label><textarea id="author-bio" name="bio" rows="6" maxlength="2000" placeholder="Giới thiệu ngắn về tác giả..."><c:out value="${author.bio}" /></textarea><div class="author-field-meta"><c:if test="${not empty validationErrors.bio}"><p><c:out value="${validationErrors.bio}" /></p></c:if><span data-bio-counter>Tối đa 2000 ký tự</span></div></div>
-</div><div class="author-form-actions"><a class="author-button secondary" href="${authorListUrl}">Hủy bỏ</a><button class="author-button primary" type="submit"><i class="fa-solid fa-${formMode == 'create' ? 'plus' : 'floppy-disk'}"></i> ${formMode == 'create' ? 'Thêm tác giả' : 'Lưu thay đổi'}</button></div></form></section></div></main>
-<script src="${pageContext.request.contextPath}/assets/js/author-form.js" defer></script><%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
+<c:set var="isManagePageAttr" value="true" scope="request" />
+<c:set var="activePage" value="authors" scope="request" />
+<c:set var="pageTitle" value="${formMode == 'create' ? 'Thêm tác giả' : 'Sửa tác giả'} – FPT Library" scope="request" />
+<c:set var="pageStylesheet" value="/assets/css/author.css" scope="request" />
+<%@ include file="/WEB-INF/views/fragments/header.jsp" %>
+
+<c:url var="authorListUrl" value="/admin/authors" />
+<c:set var="formAction" value="${formMode == 'create' ? '/admin/authors/create' : '/admin/authors/update'}" />
+
+<main class="author-management author-editor">
+    <section class="author-hero">
+        <div class="author-content author-hero-inner">
+            <div>
+                <span class="author-eyebrow">
+                    <i class="fa-solid fa-user-pen"></i> Tác giả
+                </span>
+                <h1>${formMode == 'create' ? 'Thêm tác giả mới' : 'Cập nhật tác giả'}</h1>
+                <p>Nhập thông tin hồ sơ tác giả trong thư viện.</p>
+            </div>
+            <div class="author-stat author-form-stat">
+                <strong>
+                    <i class="fa-solid fa-${formMode == 'create' ? 'user-plus' : 'user-pen'}"></i>
+                </strong>
+                <span>${formMode == 'create' ? 'Thêm mới' : 'Chỉnh sửa'}</span>
+            </div>
+        </div>
+    </section>
+    <div class="author-form-content author-form-body">
+        <a class="author-back" href="${authorListUrl}">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách tác giả
+        </a>
+        <section class="author-form-card">
+            <header>
+                <span>
+                    <i class="fa-solid fa-address-card"></i>
+                </span>
+                <div>
+                    <h2>Thông tin tác giả</h2>
+                    <p>Các trường có dấu * là bắt buộc.</p>
+                </div>
+            </header>
+            <form action="${pageContext.request.contextPath}${formAction}" method="post" class="author-form">
+                <c:if test="${formMode == 'update'}">
+                    <input type="hidden" name="id" value="${author.id}">
+                </c:if>
+                <div class="author-form-grid">
+                    <div class="author-field full ${not empty validationErrors.name ? 'invalid' : ''}">
+                        <label for="author-name">Tên tác giả *</label>
+                        <input id="author-name" name="name" required maxlength="150" value="${fn:escapeXml(author.name)}">
+                        <c:if test="${not empty validationErrors.name}">
+                            <p><c:out value="${validationErrors.name}" /></p>
+                            </c:if>
+                    </div>
+                    <div class="author-field ${not empty validationErrors.nationality ? 'invalid' : ''}">
+                        <label for="author-nationality">Quốc tịch</label>
+                        <input id="author-nationality" name="nationality" maxlength="100" value="${fn:escapeXml(author.nationality)}">
+                        <c:if test="${not empty validationErrors.nationality}">
+                            <p><c:out value="${validationErrors.nationality}" /></p>
+                            </c:if>
+                    </div>
+                    <div class="author-field ${not empty validationErrors.birthDate ? 'invalid' : ''}">
+                        <label for="author-birth-date">Ngày sinh</label>
+                        <input id="author-birth-date" type="date" name="birthDate" value="${not empty birthDateValue ? fn:escapeXml(birthDateValue) : author.birthDate}">
+                        <c:if test="${not empty validationErrors.birthDate}">
+                            <p><c:out value="${validationErrors.birthDate}" /></p>
+                            </c:if>
+                    </div>
+                    <div class="author-field full ${not empty validationErrors.avatarUrl ? 'invalid' : ''}">
+                        <label for="author-avatar">URL ảnh đại diện</label>
+                        <input id="author-avatar" type="url" name="avatarUrl" maxlength="500" value="${fn:escapeXml(author.avatarUrl)}" placeholder="https://example.com/author.jpg">
+                        <c:if test="${not empty validationErrors.avatarUrl}"><p><c:out value="${validationErrors.avatarUrl}" /></p>
+                            </c:if>
+                    </div>
+                    <div class="author-field full ${not empty validationErrors.bio ? 'invalid' : ''}">
+                        <label for="author-bio">Tiểu sử</label>
+                        <textarea id="author-bio" name="bio" rows="6" maxlength="2000" placeholder="Giới thiệu ngắn về tác giả...">
+                            <c:out value="${author.bio}" />
+                        </textarea>
+                        <div class="author-field-meta">
+                            <c:if test="${not empty validationErrors.bio}">
+                                <p><c:out value="${validationErrors.bio}" /></p>
+                                </c:if>
+                            <span data-bio-counter>Tối đa 2000 ký tự</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="author-form-actions">
+                    <a class="author-button secondary" href="${authorListUrl}">Hủy bỏ</a>
+                    <button class="author-button primary" type="submit">
+                        <i class="fa-solid fa-${formMode == 'create' ? 'plus' : 'floppy-disk'}"></i>
+                        ${formMode == 'create' ? 'Thêm tác giả' : 'Lưu thay đổi'}
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<script src="${pageContext.request.contextPath}/assets/js/author-form.js" defer></script>
+
+<%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

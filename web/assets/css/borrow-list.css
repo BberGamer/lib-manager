@@ -1,0 +1,77 @@
+/*
+ * Định dạng trang quản lý mượn trả, gồm bộ lọc, bảng dữ liệu, phân trang và các modal nghiệp vụ.
+ */
+
+.borrow-management-container { padding-top: 30px; padding-bottom: 50px; }
+.borrow-page-header { margin-bottom: 30px; }
+.borrow-alert { display: flex; gap: 9px; align-items: center; margin-bottom: 24px; padding: 15px; border-left: 5px solid; border-radius: 8px; }
+.borrow-alert-success { border-color: #2ecc71; background: #e8f8f5; color: #277c55; }
+.borrow-alert-error { border-color: #e74c3c; background: #fde8e7; color: #b83c32; }
+.borrow-filter-card, .borrow-table-card { border-radius: 12px; background: #fff; box-shadow: 0 4px 10px rgba(0, 0, 0, .04); }
+.borrow-filter-card { margin-bottom: 30px; padding: 20px; }
+.borrow-filter-form { display: grid; grid-template-columns: minmax(250px, 1fr) 200px auto; gap: 15px; align-items: end; }
+.borrow-filter-form label > span, .borrow-modal-dialog label > span { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: .85rem; font-weight: 700; }
+.borrow-filter-form input, .borrow-filter-form select, .borrow-modal-dialog input, .borrow-modal-dialog select, .borrow-modal-dialog textarea { width: 100%; padding: 10px 13px; border: 1px solid #d7dce2; border-radius: 8px; background: #fff; color: var(--text-primary); font: inherit; font-size: .9rem; }
+.borrow-filter-form input:focus, .borrow-filter-form select:focus, .borrow-modal-dialog input:focus, .borrow-modal-dialog select:focus, .borrow-modal-dialog textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); outline: 0; }
+.borrow-filter-button { min-height: 41px; padding-inline: 24px; }
+.borrow-table-card { overflow: hidden; }
+.borrow-table-scroll { overflow-x: auto; }
+.borrow-table { width: 100%; border-collapse: collapse; text-align: left; }
+.borrow-table th { padding: 16px 20px; border-bottom: 1px solid #e6e9ed; background: #f8f9fa; color: var(--text-secondary); font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.borrow-table td { padding: 16px 20px; border-bottom: 1px solid #eee; vertical-align: middle; }
+.borrow-table tbody tr { transition: background .2s ease; }
+.borrow-table tbody tr:hover { background: #fafafa; }
+.borrow-table tbody tr:last-child td { border-bottom: 0; }
+.borrow-table td strong, .borrow-table td small { display: block; }
+.borrow-table td small { margin-top: 4px; color: var(--text-muted); font-size: .8rem; }
+.borrow-record-id { font-weight: 700; }
+.borrow-barcode { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #f0f0f0; font-family: monospace; font-weight: 700; }
+.borrow-muted { color: var(--text-muted); font-size: .85rem; font-style: italic; }
+.borrow-status { display: inline-flex; padding: 5px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.borrow-status-pending_pickup { background: #fff9e6; color: #b96e00; }
+.borrow-status-borrowed { background: #ebf5fb; color: #2672a3; }
+.borrow-status-returned { background: #e8f8f5; color: #277c55; }
+.borrow-status-overdue { background: #fde8e7; color: #c44236; }
+.borrow-status-expired, .borrow-status-cancelled { background: #f2f4f4; color: #68747a; }
+.borrow-table-actions-heading, .borrow-table-actions { text-align: right; }
+.borrow-action-group { display: flex; justify-content: flex-end; gap: 8px; }
+.borrow-table-actions .btn { border-radius: 6px; font-size: .8rem; white-space: nowrap; }
+.borrow-fine-button { border: 1px solid #e74c3c; background: transparent; color: #c84035; }
+.borrow-fine-button:hover { background: #fde8e7; }
+.borrow-empty-state { padding: 42px !important; color: var(--text-muted); text-align: center; }
+.borrow-empty-state i, .borrow-empty-state span { display: block; }
+.borrow-empty-state i { margin-bottom: 14px; font-size: 2.5rem; }
+.borrow-pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 30px; }
+.borrow-pagination a { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dce4ec; border-radius: 8px; background: #fff; color: #536278; text-decoration: none; }
+.borrow-pagination a.current { border-color: var(--primary); background: var(--primary); color: #fff; }
+.borrow-modal[hidden] { display: none; }
+.borrow-modal { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .52); }
+.borrow-modal-dialog { width: min(500px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 30px; border-radius: 12px; background: #fff; box-shadow: 0 10px 28px rgba(0, 0, 0, .18); }
+.borrow-modal-dialog h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 9px; font-size: 1.2rem; }
+.borrow-modal-dialog h2 i { color: var(--primary); }
+.borrow-modal-dialog > p { margin: 0 0 24px; color: var(--text-muted); font-size: .9rem; }
+.borrow-modal-dialog label { display: block; margin-bottom: 16px; }
+.borrow-modal-dialog input[readonly] { background: #f8f9fa; }
+.borrow-modal-dialog textarea { resize: vertical; }
+.borrow-modal-dialog label small { display: block; margin-top: 6px; color: var(--text-muted); }
+.borrow-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.borrow-modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.borrow-modal-actions .btn { padding: 10px 20px; border-radius: 8px; }
+.borrow-monospace { font-family: monospace !important; }
+.borrow-deadline { border-color: #f2b8a0 !important; background: #fff8f4 !important; color: #ad4918 !important; font-weight: 700 !important; }
+.borrow-success-icon { color: #278a52 !important; }
+.borrow-danger-icon { color: #c84035 !important; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 800px) {
+    .borrow-filter-form { grid-template-columns: 1fr; }
+    .borrow-filter-button { width: 100%; }
+}
+
+@media (max-width: 560px) {
+    .borrow-management-container { padding-top: 20px; }
+    .borrow-modal-grid { grid-template-columns: 1fr; }
+    .borrow-modal-dialog { padding: 22px; }
+    .borrow-modal-actions { flex-direction: column-reverse; }
+    .borrow-modal-actions .btn { width: 100%; }
+}

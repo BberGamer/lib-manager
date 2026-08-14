@@ -1,242 +1,246 @@
+<%--
+    Trang quản lý đặt trước do ReservationManagementServlet hiển thị.
+    Mong đợi request attributes reservationList, totalPages, currentPageNum, selectedStatus và keyword;
+    session attributes successMsg, errorMsg và loggedUser.
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.List, model.ReservationRecord, java.time.format.DateTimeFormatter" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <c:set var="isManagePageAttr" value="true" scope="request" />
 <c:set var="activePage" value="reservation" scope="request" />
+<c:set var="pageStylesheet" value="/assets/css/reservation-list.css" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
-<%
-    List<ReservationRecord> reservationList = (List<ReservationRecord>) request.getAttribute("reservationList");
-    String successMsg = (String) session.getAttribute("successMsg");
-    String errorMsg = (String) session.getAttribute("errorMsg");
-    if (successMsg != null) session.removeAttribute("successMsg");
-    if (errorMsg != null) session.removeAttribute("errorMsg");
-%>
+<c:url var="reservationListUrl" value="${rolePath}/reservation/list" />
+<c:url var="reservationUpdateUrl" value="${rolePath}/reservation/update" />
 
-<main class="page-wrapper">
-    <div class="container" style="padding-top: 30px; padding-bottom: 50px;">
-        <div class="section-header" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 class="section-title"><i class="fa-solid fa-clock"></i> Quản lý Đặt trước sách (Reservations)</h1>
-                <p class="section-subtitle">Duyệt các yêu cầu đặt giữ chỗ trước của độc giả khi sách đang bận</p>
-            </div>
-        </div>
+<main class="page-wrapper reservation-management-page">
+    <div class="container reservation-management-container">
+        <header class="reservation-page-header">
+            <h1 class="section-title">
+                <i class="fa-solid fa-clock"></i>
+                Quản lý đặt trước sách
+            </h1>
+            <p class="section-subtitle">
+                Duyệt các yêu cầu giữ chỗ trước của độc giả khi sách đang được mượn.
+            </p>
+        </header>
 
-        <!-- Alerts -->
-        <% if (successMsg != null) { %>
-            <div class="alert alert-success" style="background: #e8f8f5; border-left: 5px solid #2ecc71; color: #27ae60; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
-                <i class="fa-solid fa-circle-check"></i> <%= successMsg %>
+        <c:if test="${not empty sessionScope.successMsg}">
+            <div class="reservation-alert reservation-alert-success" role="status">
+                <i class="fa-solid fa-circle-check"></i>
+                <c:out value="${sessionScope.successMsg}" />
             </div>
-        <% } %>
-        <% if (errorMsg != null) { %>
-            <div class="alert alert-error" style="background: #fde8e7; border-left: 5px solid #e74c3c; color: #c0392b; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
-                <i class="fa-solid fa-circle-exclamation"></i> <%= errorMsg %>
+            <c:remove var="successMsg" scope="session" />
+        </c:if>
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <div class="reservation-alert reservation-alert-error" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <c:out value="${sessionScope.errorMsg}" />
             </div>
-        <% } %>
+            <c:remove var="errorMsg" scope="session" />
+        </c:if>
 
-        <!-- Filter bar -->
-        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px;">
-            <form action="${pageContext.request.contextPath}/admin/reservation/list" method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 1; min-width: 250px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Tìm kiếm</label>
-                    <input type="text" name="keyword" value="${keyword}" placeholder="Tên độc giả, tên sách, ISBN..." 
-                           style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-                </div>
-                <div style="width: 200px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Trạng thái</label>
-                    <select name="status" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: white;">
+        <section class="reservation-filter-card" aria-labelledby="reservation-filter-title">
+            <h2 id="reservation-filter-title" class="visually-hidden">Bộ lọc yêu cầu đặt trước</h2>
+            <form class="reservation-filter-form" action="${reservationListUrl}" method="get">
+                <label class="reservation-filter-keyword">
+                    <span>Tìm kiếm</span>
+                    <input type="search" name="keyword" maxlength="200"
+                           value="${fn:escapeXml(keyword)}"
+                           placeholder="Tên độc giả, tên sách, ISBN...">
+                </label>
+                <label>
+                    <span>Trạng thái</span>
+                    <select name="status">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="WAITING" ${selectedStatus == 'WAITING' ? 'selected' : ''}>Chờ mượn (WAITING)</option>
-                        <option value="READY_FOR_PICKUP" ${selectedStatus == 'READY_FOR_PICKUP' ? 'selected' : ''}>Sách sẵn sàng (READY_FOR_PICKUP)</option>
-                        <option value="COMPLETED" ${selectedStatus == 'COMPLETED' ? 'selected' : ''}>Đã mượn sách (COMPLETED)</option>
-                        <option value="CANCELLED" ${selectedStatus == 'CANCELLED' ? 'selected' : ''}>Đã hủy (CANCELLED)</option>
-                        <option value="EXPIRED" ${selectedStatus == 'EXPIRED' ? 'selected' : ''}>Đã hết hạn (EXPIRED)</option>
+                        <option value="WAITING" ${selectedStatus eq 'WAITING' ? 'selected' : ''}>
+                            Chờ mượn
+                        </option>
+                        <option value="READY_FOR_PICKUP"
+                                ${selectedStatus eq 'READY_FOR_PICKUP' ? 'selected' : ''}>
+                            Sách sẵn sàng
+                        </option>
+                        <option value="COMPLETED" ${selectedStatus eq 'COMPLETED' ? 'selected' : ''}>
+                            Đã mượn sách
+                        </option>
+                        <option value="CANCELLED" ${selectedStatus eq 'CANCELLED' ? 'selected' : ''}>
+                            Đã hủy
+                        </option>
+                        <option value="EXPIRED" ${selectedStatus eq 'EXPIRED' ? 'selected' : ''}>
+                            Đã hết hạn
+                        </option>
                     </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px;">
-                        <i class="fa-solid fa-magnifying-glass"></i> Lọc kết quả
-                    </button>
-                </div>
+                </label>
+                <button type="submit" class="btn btn-primary reservation-filter-button">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Lọc kết quả
+                </button>
             </form>
-        </div>
+        </section>
 
-        <!-- Table list -->
-        <div style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="background: #f8f9fa; border-bottom: 1px solid #eee;">
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Mã</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Độc giả</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Thông tin sách</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Ngày yêu cầu</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Ngày hết hạn</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem;">Trạng thái</th>
-                        <th style="padding: 16px 20px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; text-align: right;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (reservationList == null || reservationList.isEmpty()) { %>
+        <section class="reservation-table-card" aria-label="Danh sách yêu cầu đặt trước">
+            <div class="reservation-table-scroll">
+                <table class="reservation-table">
+                    <thead>
                         <tr>
-                            <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
-                                <i class="fa-solid fa-hourglass-empty" style="font-size: 2.5rem; margin-bottom: 15px; display: block;"></i>
-                                Không tìm thấy yêu cầu đặt chỗ nào
-                            </td>
+                            <th>Mã</th>
+                            <th>Độc giả</th>
+                            <th>Thông tin sách</th>
+                            <th>Ngày yêu cầu</th>
+                            <th>Ngày hết hạn</th>
+                            <th>Trạng thái</th>
+                            <th class="reservation-actions-heading">Thao tác</th>
                         </tr>
-                    <% } else {
-                        for (ReservationRecord r : reservationList) {
-                            String badgeColor = "";
-                            String badgeText = "";
-                            if ("WAITING".equals(r.getStatus())) {
-                                badgeColor = "background: #fff9e6; color: #f39c12;";
-                                badgeText = "Chờ mượn";
-                            } else if ("READY_FOR_PICKUP".equals(r.getStatus())) {
-                                badgeColor = "background: #ebf5fb; color: #2980b9;";
-                                badgeText = "Sách sẵn sàng";
-                            } else if ("COMPLETED".equals(r.getStatus())) {
-                                badgeColor = "background: #e8f8f5; color: #27ae60;";
-                                badgeText = "Đã hoàn thành";
-                            } else if ("CANCELLED".equals(r.getStatus())) {
-                                badgeColor = "background: #f2f4f4; color: #7f8c8d;";
-                                badgeText = "Đã hủy bỏ";
-                            } else if ("EXPIRED".equals(r.getStatus())) {
-                                badgeColor = "background: #fde8e7; color: #e74c3c;";
-                                badgeText = "Đã quá hạn";
-                            }
-                    %>
-                        <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='none'">
-                            <td style="padding: 16px 20px; font-weight: 600;"><%= r.getId() %></td>
-                            <td style="padding: 16px 20px;">
-                                <div style="font-weight: 600; color: var(--text-primary);"><%= r.getUser().getFullName() %></div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">@<%= r.getUser().getUsername() %> | <%= r.getUser().getPhone() %></div>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <div style="font-weight: 600; color: var(--text-primary);"><%= r.getBook().getTitle() %></div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">ISBN: <%= r.getBook().getIsbn() %></div>
-                            </td>
-                            <td style="padding: 16px 20px; font-size: 0.9rem;">
-                                <%= r.getReserveDate() != null ? r.getReserveDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "-" %>
-                            </td>
-                            <td style="padding: 16px 20px; font-size: 0.9rem;">
-                                <%= r.getExpiryDate() != null ? r.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "-" %>
-                            </td>
-                            <td style="padding: 16px 20px;">
-                                <span style="display: inline-block; white-space: nowrap; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; <%= badgeColor %>"><%= badgeText %></span>
-                            </td>
-                            <td style="padding: 16px 20px; text-align: right;">
-                                <% if ("WAITING".equals(r.getStatus())) { %>
-                                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
-                                            <input type="hidden" name="id" value="<%= r.getId() %>">
-                                            <input type="hidden" name="action" value="ready">
-                                            <button type="submit" class="btn btn-sm btn-primary" style="font-size: 0.8rem; border-radius: 6px;">
-                                                <i class="fa-solid fa-circle-check"></i> Sách về (Ready)
-                                            </button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
-                                            <input type="hidden" name="id" value="<%= r.getId() %>">
-                                            <input type="hidden" name="action" value="cancel">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #7f8c8d; color: #7f8c8d; background: transparent;">
-                                                <i class="fa-solid fa-ban"></i> Hủy
-                                            </button>
-                                        </form>
-                                    </div>
-                                <% } else if ("READY_FOR_PICKUP".equals(r.getStatus())) { %>
-                                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
-                                            <input type="hidden" name="id" value="<%= r.getId() %>">
-                                            <input type="hidden" name="action" value="complete">
-                                            <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.8rem; border-radius: 6px;">
-                                                <i class="fa-solid fa-check-double"></i> Đã lấy (Done)
-                                            </button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}${rolePath}/reservation/update" method="post" style="display: inline;">
-                                            <input type="hidden" name="id" value="<%= r.getId() %>">
-                                            <input type="hidden" name="action" value="cancel">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; border-radius: 6px; border: 1px solid #7f8c8d; color: #7f8c8d; background: transparent;">
-                                                <i class="fa-solid fa-ban"></i> Hủy
-                                            </button>
-                                        </form>
-                                    </div>
-                                <% } else { %>
-                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Hoàn tất</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                    <% }
-                    } %>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <c:choose>
+                            <c:when test="${empty reservationList}">
+                                <tr>
+                                    <td class="reservation-empty-state" colspan="7">
+                                        <i class="fa-solid fa-hourglass-empty"></i>
+                                        <span>Không tìm thấy yêu cầu đặt trước nào.</span>
+                                    </td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="reservation" items="${reservationList}">
+                                    <tr>
+                                        <td class="reservation-record-id">
+                                            <c:out value="${reservation.id}" />
+                                        </td>
+                                        <td>
+                                            <strong><c:out value="${reservation.user.fullName}" /></strong>
+                                            <small>
+                                                @<c:out value="${reservation.user.username}" />
+                                                <c:if test="${not empty reservation.user.phone}">
+                                                    · <c:out value="${reservation.user.phone}" />
+                                                </c:if>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <strong><c:out value="${reservation.book.title}" /></strong>
+                                            <small>ISBN: <c:out value="${reservation.book.isbn}" /></small>
+                                        </td>
+                                        <td>
+                                            <c:out value="${empty reservation.reserveDate
+                                                ? '-' : reservation.reserveDate}" />
+                                        </td>
+                                        <td>
+                                            <c:out value="${empty reservation.expiryDate
+                                                ? '-' : reservation.expiryDate}" />
+                                        </td>
+                                        <td>
+                                            <span class="reservation-status
+                                                  reservation-status-${fn:toLowerCase(reservation.status)}">
+                                                <c:choose>
+                                                    <c:when test="${reservation.status eq 'WAITING'}">Chờ mượn</c:when>
+                                                    <c:when test="${reservation.status eq 'READY_FOR_PICKUP'}">
+                                                        Sách sẵn sàng
+                                                    </c:when>
+                                                    <c:when test="${reservation.status eq 'COMPLETED'}">
+                                                        Đã hoàn thành
+                                                    </c:when>
+                                                    <c:when test="${reservation.status eq 'CANCELLED'}">Đã hủy</c:when>
+                                                    <c:when test="${reservation.status eq 'EXPIRED'}">
+                                                        Đã quá hạn
+                                                    </c:when>
+                                                    <c:otherwise><c:out value="${reservation.status}" /></c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </td>
+                                        <td class="reservation-actions">
+                                            <c:choose>
+                                                <c:when test="${reservation.status eq 'WAITING'}">
+                                                    <div class="reservation-action-group">
+                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                            <input type="hidden" name="id" value="${reservation.id}">
+                                                            <input type="hidden" name="action" value="ready">
+                                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                                <i class="fa-solid fa-circle-check"></i>
+                                                                Sách đã về
+                                                            </button>
+                                                        </form>
+                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                            <input type="hidden" name="id" value="${reservation.id}">
+                                                            <input type="hidden" name="action" value="cancel">
+                                                            <button type="submit"
+                                                                    class="btn btn-sm reservation-cancel-button">
+                                                                <i class="fa-solid fa-ban"></i>
+                                                                Hủy
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </c:when>
+                                                <c:when test="${reservation.status eq 'READY_FOR_PICKUP'}">
+                                                    <div class="reservation-action-group">
+                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                            <input type="hidden" name="id" value="${reservation.id}">
+                                                            <input type="hidden" name="action" value="complete">
+                                                            <button type="submit" class="btn btn-sm btn-success">
+                                                                <i class="fa-solid fa-check-double"></i>
+                                                                Đã lấy sách
+                                                            </button>
+                                                        </form>
+                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                            <input type="hidden" name="id" value="${reservation.id}">
+                                                            <input type="hidden" name="action" value="cancel">
+                                                            <button type="submit"
+                                                                    class="btn btn-sm reservation-cancel-button">
+                                                                <i class="fa-solid fa-ban"></i>
+                                                                Hủy
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="reservation-muted">Hoàn tất</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-        <!-- Pagination -->
-        <%
-            Integer totalPgR = (Integer) request.getAttribute("totalPages");
-            Integer curPgR   = (Integer) request.getAttribute("currentPageNum");
-            String kwR       = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
-            String stR       = request.getAttribute("selectedStatus") != null ? (String) request.getAttribute("selectedStatus") : "";
-            if (totalPgR == null) totalPgR = 1;
-            if (curPgR   == null) curPgR   = 1;
-            String baseUrlR  = request.getContextPath() + "/librarian/reservation/list?status="
-                             + java.net.URLEncoder.encode(stR, "UTF-8")
-                             + "&keyword=" + java.net.URLEncoder.encode(kwR, "UTF-8")
-                             + "&page=";
-            if (totalPgR > 1) {
-        %>
-        <nav aria-label="Phân trang đặt sách" style="margin-top: 30px;">
-            <ul class="pagination">
-                <li class="page-item <%= curPgR <= 1 ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlR %><%= curPgR - 1 %>"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
-                </li>
-                <%
-                   if (totalPgR <= 7) {
-                       for (int pg = 1; pg <= totalPgR; pg++) { %>
-                           <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   } else {
-                       for (int pg = 1; pg <= 2; pg++) { %>
-                           <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                       if (curPgR <= 4) {
-                           for (int pg = 3; pg <= 5; pg++) { %>
-                               <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% } else if (curPgR >= totalPgR - 3) { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = totalPgR - 4; pg <= totalPgR - 2; pg++) { %>
-                               <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% }
-                       } else { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = curPgR - 1; pg <= curPgR + 1; pg++) { %>
-                               <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% }
-                       for (int pg = totalPgR - 1; pg <= totalPgR; pg++) { %>
-                           <li class="page-item <%= pg == curPgR ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlR %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   }
-                %>
-                <li class="page-item <%= curPgR >= totalPgR ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlR %><%= curPgR + 1 %>"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
-                </li>
-            </ul>
-        </nav>
-        <% } %>
-
+        <c:if test="${totalPages gt 1}">
+            <nav class="reservation-pagination" aria-label="Phân trang đặt trước">
+                <c:if test="${currentPageNum gt 1}">
+                    <c:url var="previousPageUrl" value="${rolePath}/reservation/list">
+                        <c:param name="status" value="${selectedStatus}" />
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="page" value="${currentPageNum - 1}" />
+                    </c:url>
+                    <a href="${previousPageUrl}" aria-label="Trang trước">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                </c:if>
+                <c:forEach begin="1" end="${totalPages}" var="pageNumber">
+                    <c:url var="pageUrl" value="${rolePath}/reservation/list">
+                        <c:param name="status" value="${selectedStatus}" />
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="page" value="${pageNumber}" />
+                    </c:url>
+                    <a class="${pageNumber eq currentPageNum ? 'current' : ''}" href="${pageUrl}">
+                        <c:out value="${pageNumber}" />
+                    </a>
+                </c:forEach>
+                <c:if test="${currentPageNum lt totalPages}">
+                    <c:url var="nextPageUrl" value="${rolePath}/reservation/list">
+                        <c:param name="status" value="${selectedStatus}" />
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="page" value="${currentPageNum + 1}" />
+                    </c:url>
+                    <a href="${nextPageUrl}" aria-label="Trang sau">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </c:if>
+            </nav>
+        </c:if>
     </div>
 </main>
 
