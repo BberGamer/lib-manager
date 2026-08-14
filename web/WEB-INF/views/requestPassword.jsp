@@ -7,6 +7,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css">
 
 <main class="page-wrapper">
@@ -21,10 +23,20 @@
                     </div>
 
                     <c:if test="${not empty mess}">
-                        <div class="alert alert-danger">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                            <c:out value="${mess}" />
-                        </div>
+                        <c:choose>
+                            <c:when test="${fn:contains(mess, 'success')}">
+                                <div class="alert alert-success">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Gửi yêu cầu thành công! Vui lòng kiểm tra email của bạn.
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="alert alert-danger">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <c:out value="${mess}" />
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
                     </c:if>
 
                     <form method="POST" action="${pageContext.request.contextPath}/requestPassword" class="login-form">
