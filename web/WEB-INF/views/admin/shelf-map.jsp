@@ -322,9 +322,17 @@
             </label>
             <label>
                 <span>Khu vực lưu trữ</span>
-                <input type="text" name="area" required maxlength="100"
-                       placeholder="Ví dụ: Khu A, Khu B, Phòng học..."
-                       data-location-field="area">
+                <select name="area" required data-location-field="area">
+                    <option value="">-- Chọn khu vực --</option>
+                    <option value="Khu A">Khu A</option>
+                    <option value="Khu B">Khu B</option>
+                    <option value="Khu C">Khu C</option>
+                    <option value="Tầng 1">Tầng 1</option>
+                    <option value="Tầng 2">Tầng 2</option>
+                    <option value="Tầng 3">Tầng 3</option>
+                    <option value="Phòng đọc">Phòng đọc</option>
+                    <option value="Kho lưu trữ">Kho lưu trữ</option>
+                </select>
             </label>
             <div class="shelf-modal-grid">
                 <label>
