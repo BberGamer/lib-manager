@@ -123,7 +123,7 @@
   background: rgba(255,255,255,0.25);
 }
 .admin-nav-group {
-  margin-bottom: 24px;
+margin-bottom: 24px;
 }
 .admin-nav-header {
   font-size: 0.68rem;
@@ -270,7 +270,7 @@
 
 @media (min-width: 1025px) {
   .admin-sidebar.collapsed {
-    width: 80px;
+width: 80px;
     padding: 24px 12px;
   }
   .admin-sidebar.collapsed .brand-text-wrapper {

@@ -117,12 +117,12 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<String> getAllCategories() throws Exception {
         List<String> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT category FROM books WHERE is_deleted = 0 AND category IS NOT NULL AND category != '' ORDER BY category ASC";
+        String sql = "SELECT name FROM categories WHERE is_deleted = 0 ORDER BY name ASC";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                list.add(rs.getString("category"));
+                list.add(rs.getString("name"));
             }
         }
         return list;

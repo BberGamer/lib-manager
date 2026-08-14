@@ -159,13 +159,34 @@ public class CategoryDao {
     public boolean update(Category category, String actor) throws SQLException, ClassNotFoundException {
         String sql = "UPDATE categories SET name = ?, description = ?, updated_by = ? "
                 + "WHERE id = ? AND is_deleted = 0";
-        try (Connection connection = openConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, category.getName());
-            statement.setString(2, category.getDescription());
-            statement.setString(3, actor);
-            statement.setInt(4, category.getId());
-            return statement.executeUpdate() == 1;
+        String updateBooksSql = "UPDATE books SET category = ? WHERE category_id = ?";
+        try (Connection connection = openConnection()) {
+            boolean previousAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setString(1, category.getName());
+                    statement.setString(2, category.getDescription());
+                    statement.setString(3, actor);
+                    statement.setInt(4, category.getId());
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement(updateBooksSql)) {
+                    statement.setString(1, category.getName());
+                    statement.setInt(2, category.getId());
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(previousAutoCommit);
+            }
         }
     }
 
