@@ -208,12 +208,3 @@
 </main>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
-
-<style>
-@media (max-width: 768px) {
-    .about-section > .container > div[style*="grid-template-columns:1fr 1fr"],
-    .about-section > .container > div[style*="grid-template-columns: 1fr 1fr"] {
-        grid-template-columns: 1fr !important;
-    }
-}
-</style>

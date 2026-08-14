@@ -7,7 +7,7 @@ import java.io.IOException;
 import model.User;
 import service.UserProfileService;
 
-@WebServlet(name = "UserProfileController", urlPatterns = {"/user/profile"})
+@WebServlet(name = "UserProfileController", urlPatterns = {"/user/profile", "/admin/user/profile", "/librarian/user/profile"})
 public class UserProfileServlet extends HttpServlet {
 
     private final UserProfileService userProfileService = new UserProfileService();
@@ -19,6 +19,16 @@ public class UserProfileServlet extends HttpServlet {
         if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
+        }
+
+        String path = request.getServletPath();
+        if ("/admin/user/profile".equals(path) || "/librarian/user/profile".equals(path)) {
+            request.setAttribute("isManagePageAttr", true);
+        }
+        if ("/admin/user/profile".equals(path)) {
+            request.setAttribute("rolePath", "/admin");
+        } else if ("/librarian/user/profile".equals(path)) {
+            request.setAttribute("rolePath", "/librarian");
         }
 
         User logged = (User) session.getAttribute("loggedUser");

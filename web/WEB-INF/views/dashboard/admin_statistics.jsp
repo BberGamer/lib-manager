@@ -22,8 +22,8 @@
 %>
 
 <main class="page-wrapper">
-    <div class="container" style="padding-top: 30px; padding-bottom: 50px;">
-        <div class="section-header" style="margin-bottom: 30px;">
+    <div class="container db-container">
+        <div class="section-header db-section-header">
             <div>
                 <h1 class="section-title"><i class="fa-solid fa-chart-line"></i> Thống kê hệ thống Admin</h1>
                 <p class="section-subtitle">Chỉ số tài chính phạt, lượng tài khoản người dùng và nhật ký audit log ngoại lệ</p>
@@ -31,114 +31,114 @@
         </div>
 
         <c:if test="${not empty error}">
-            <div class="alert alert-error" style="background: #fde8e7; border-left: 5px solid #e74c3c; color: #e74c3c; padding: 15px; border-radius: 8px; margin-bottom: 24px;">
+            <div class="alert alert-error db-error-alert">
                 <i class="fa-solid fa-circle-exclamation"></i> <c:out value="${error}" />
             </div>
         </c:if>
 
         <!-- Metric Cards Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px;">
+        <div class="db-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
             <!-- Card 1 -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 5px solid #9b59b6; display: flex; align-items: center; gap: 20px;">
-                <div style="background: #f4ecf7; color: #9b59b6; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <div class="db-card db-card-purple">
+                <div class="db-card-icon db-icon-purple">
                     <i class="fa-solid fa-users"></i>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Tổng số tài khoản</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary);"><%= totalUsers %></div>
+                    <div class="db-card-label">Tổng số tài khoản</div>
+                    <div class="db-card-value"><%= totalUsers %></div>
                 </div>
             </div>
             <!-- Card 2 -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 5px solid #2ecc71; display: flex; align-items: center; gap: 20px;">
-                <div style="background: #eafaf1; color: #2ecc71; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <div class="db-card db-card-green">
+                <div class="db-card-icon db-icon-green">
                     <i class="fa-solid fa-money-bill-wave"></i>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Phạt đã thu</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #2ecc71;"><%= vnFormat.format(paid) %></div>
+                    <div class="db-card-label">Phạt đã thu</div>
+                    <div class="db-card-value-green"><%= vnFormat.format(paid) %></div>
                 </div>
             </div>
             <!-- Card 3 -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 5px solid #e74c3c; display: flex; align-items: center; gap: 20px;">
-                <div style="background: #fde8e7; color: #e74c3c; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <div class="db-card db-card-red">
+                <div class="db-card-icon db-icon-red">
                     <i class="fa-solid fa-receipt"></i>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Phạt chưa đóng</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #e74c3c;"><%= vnFormat.format(unpaid) %></div>
+                    <div class="db-card-label">Phạt chưa đóng</div>
+                    <div class="db-card-value-red"><%= vnFormat.format(unpaid) %></div>
                 </div>
             </div>
             <!-- Card 4 -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 5px solid #95a5a6; display: flex; align-items: center; gap: 20px;">
-                <div style="background: #f2f4f4; color: #95a5a6; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <div class="db-card db-card-gray">
+                <div class="db-card-icon db-icon-gray">
                     <i class="fa-solid fa-hand-holding-heart"></i>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Đã miễn giảm (Waived)</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #7f8c8d;"><%= vnFormat.format(waived) %></div>
+                    <div class="db-card-label">Đã miễn giảm (Waived)</div>
+                    <div class="db-card-value-gray"><%= vnFormat.format(waived) %></div>
                 </div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-bottom: 40px;">
+        <div class="db-columns-admin-grid">
             <!-- User Distribution -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                <h3 style="font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px; color: var(--text-primary);">
+            <div class="db-panel">
+                <h3 class="db-panel-title">
                     <i class="fa-solid fa-users-gear"></i> Phân bổ tài khoản hệ thống
                 </h3>
-                <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="db-progress-list-wide">
                     <div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <div class="db-progress-header">
                             <span>Độc giả / Bạn đọc</span>
                             <span style="font-weight: 600;"><%= readers %> tài khoản</span>
                         </div>
-                        <div style="background: #f1f3f5; height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div style="background: #3498db; width: <%= totalUsers > 0 ? (readers * 100 / totalUsers) : 0 %>%; height: 100%;"></div>
+                        <div class="db-progress-bar-wrap">
+                            <div class="db-progress-bar db-progress-blue" style="width: <%= totalUsers > 0 ? (readers * 100 / totalUsers) : 0 %>%;"></div>
                         </div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <div class="db-progress-header">
                             <span>Thủ thư (LIBRARIAN)</span>
                             <span style="font-weight: 600;"><%= librarians %> tài khoản</span>
                         </div>
-                        <div style="background: #f1f3f5; height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div style="background: #f47920; width: <%= totalUsers > 0 ? (librarians * 100 / totalUsers) : 0 %>%; height: 100%;"></div>
+                        <div class="db-progress-bar-wrap">
+                            <div class="db-progress-bar db-progress-orange" style="width: <%= totalUsers > 0 ? (librarians * 100 / totalUsers) : 0 %>%;"></div>
                         </div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <div class="db-progress-header">
                             <span>Quản trị viên (ADMIN)</span>
                             <span style="font-weight: 600;"><%= admins %> tài khoản</span>
                         </div>
-                        <div style="background: #f1f3f5; height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div style="background: #9b59b6; width: <%= totalUsers > 0 ? (admins * 100 / totalUsers) : 0 %>%; height: 100%;"></div>
+                        <div class="db-progress-bar-wrap">
+                            <div class="db-progress-bar db-progress-purple" style="width: <%= totalUsers > 0 ? (admins * 100 / totalUsers) : 0 %>%;"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Audit Logs -->
-            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                <h3 style="font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px; color: var(--text-primary);">
+            <div class="db-panel">
+                <h3 class="db-panel-title">
                     <i class="fa-solid fa-list-check"></i> Nhật ký Audit Log (Hành vi override ngoại lệ)
                 </h3>
-                <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <table class="db-table-sm">
                     <thead>
-                        <tr style="border-bottom: 2px solid #f1f3f5; text-align: left;">
-                            <th style="padding: 10px; color: var(--text-muted);">Thời gian</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Hành động</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Người duyệt</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Chi tiết log</th>
+                        <tr class="db-table-header">
+                            <th>Thời gian</th>
+                            <th>Hành động</th>
+                            <th>Người duyệt</th>
+                            <th>Chi tiết log</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% if (recentLogs != null && !recentLogs.isEmpty()) { %>
                             <% for (Map<String, Object> log : recentLogs) { %>
-                                <tr style="border-bottom: 1px solid #f1f3f5;">
-                                    <td style="padding: 12px 10px; color: var(--text-muted); font-size: 0.8rem;"><%= log.get("created_at") %></td>
-                                    <td style="padding: 12px 10px; font-weight: 600;"><span class="badge" style="background: #fff4ec; color: #f47920; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem;"><%= log.get("action") %></span></td>
-                                    <td style="padding: 12px 10px; font-weight: 500;">@<%= log.get("performed_by") %></td>
-                                    <td style="padding: 12px 10px; color: var(--text-secondary);"><%= log.get("detail") %></td>
+                                <tr class="db-table-row">
+                                    <td class="db-table-cell-muted"><%= log.get("created_at") %></td>
+                                    <td><span class="badge db-badge-action"><%= log.get("action") %></span></td>
+                                    <td class="db-table-cell-title">@<%= log.get("performed_by") %></td>
+                                    <td><%= log.get("detail") %></td>
                                 </tr>
                             <% } %>
                         <% } else { %>
