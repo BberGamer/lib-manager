@@ -10,7 +10,6 @@
 <c:set var="pageTitle" value="${formMode == 'create' ? 'Thêm danh mục' : 'Cập nhật danh mục'} – FPT Library" scope="request" />
 <c:set var="pageStylesheet" value="/assets/css/category.css" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
-
 <c:url var="categoryListUrl" value="/admin/categories" />
 <c:url var="categoryFormScriptUrl" value="/assets/js/category-form.js" />
 <c:set var="formAction" value="${formMode == 'create' ? '/admin/categories/create' : '/admin/categories/update'}" />
