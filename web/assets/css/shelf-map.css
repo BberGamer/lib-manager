@@ -63,7 +63,8 @@
 
 .shelf-filter-form input,
 .shelf-filter-form select,
-.shelf-modal-dialog input {
+.shelf-modal-dialog input,
+.shelf-modal-dialog select {
     width: 100%;
     padding: 10px 13px;
     border: 1px solid #d7dce2;
@@ -76,7 +77,8 @@
 
 .shelf-filter-form input:focus,
 .shelf-filter-form select:focus,
-.shelf-modal-dialog input:focus {
+.shelf-modal-dialog input:focus,
+.shelf-modal-dialog select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
     outline: 0;
