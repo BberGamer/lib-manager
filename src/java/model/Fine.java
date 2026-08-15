@@ -13,7 +13,7 @@ public class Fine {
     private String bookCondition;
     private String fineType;
     private String reason;
-    private String status; // UNPAID, PENDING_VERIFY, PAID, WAIVED
+    private String status; // Trạng thái hợp lệ: UNPAID, PAID, WAIVED.
     private String paymentMethod; // CASH, ONLINE
     private String paymentNote;
     private LocalDate paidDate;

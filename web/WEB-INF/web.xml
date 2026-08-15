@@ -138,27 +138,6 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-name>ShelfManagementServlet</servlet-name>
-        <servlet-class>controller.ShelfManagementServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ShelfManagementServlet</servlet-name>
-        <url-pattern>/admin/shelf</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ShelfManagementServlet</servlet-name>
-        <url-pattern>/librarian/shelf</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ShelfManagementServlet</servlet-name>
-        <url-pattern>/admin/shelf/update</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>ShelfManagementServlet</servlet-name>
-        <url-pattern>/librarian/shelf/update</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
         <servlet-name>NotificationManagementServlet</servlet-name>
         <servlet-class>controller.NotificationManagementServlet</servlet-class>
     </servlet>

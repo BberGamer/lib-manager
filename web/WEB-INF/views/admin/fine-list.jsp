@@ -53,7 +53,6 @@
                     <select name="status">
                         <option value="">Tất cả trạng thái</option>
                         <option value="UNPAID" ${selectedStatus eq 'UNPAID' ? 'selected' : ''}>Chưa thanh toán (UNPAID)</option>
-                        <option value="PENDING_VERIFY" ${selectedStatus eq 'PENDING_VERIFY' ? 'selected' : ''}>Chờ xác minh</option>
                         <option value="PAID" ${selectedStatus eq 'PAID' ? 'selected' : ''}>Đã thanh toán (PAID)</option>
                         <option value="WAIVED" ${selectedStatus eq 'WAIVED' ? 'selected' : ''}>Được miễn giảm (WAIVED)</option>
                     </select>
@@ -137,9 +136,6 @@
                                                 <c:when test="${f.status eq 'WAIVED'}">
                                                     <span class="fine-status fine-status-waived">Được miễn giảm</span>
                                                 </c:when>
-                                                <c:when test="${f.status eq 'PENDING_VERIFY'}">
-                                                    <span class="fine-status fine-status-pending_verify">Chờ xác minh</span>
-                                                </c:when>
                                                 <c:otherwise>
                                                     <span class="fine-status"><c:out value="${f.status}" /></span>
                                                 </c:otherwise>
@@ -147,7 +143,7 @@
                                         </td>
                                         <td style="text-align: right;">
                                             <c:choose>
-                                                <c:when test="${f.status eq 'UNPAID' or f.status eq 'PENDING_VERIFY'}">
+                                                <c:when test="${f.status eq 'UNPAID'}">
                                                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
                                                         <button type="button" class="btn btn-sm btn-success"
                                                                 onclick="openPaymentModal(${f.id}, '${fn:escapeXml(not empty f.user ? f.user.fullName : '')}', ${f.amount})"
