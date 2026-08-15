@@ -17,12 +17,14 @@
                                         <p>Vào tài khoản của bạn để truy cập thư viện</p>
                                     </div>
 
+                                    <%-- Khối 1: Hiển thị thông báo lỗi từ Controller (nếu có) --%>
                                     <c:if test="${not empty error}">
                                         <div class="alert alert-danger">
                                             <i class="fa-solid fa-circle-exclamation"></i>
                                             <c:out value="${error}" />
                                         </div>
                                     </c:if>
+                                    <%-- Khối 2: Hiển thị thông báo thành công từ Controller (nếu có) --%>
                                     <c:if test="${not empty success}">
                                         <div class="alert alert-success">
                                             <i class="fa-solid fa-circle-check"></i>
@@ -30,14 +32,17 @@
                                         </div>
                                     </c:if>
 
+                                    <%-- Form gửi dữ liệu đăng nhập bằng phương thức POST tới LoginServlet (/login) --%>
                                     <form method="POST" action="${pageContext.request.contextPath}/login"
                                         class="login-form">
+                                        <%-- Ô nhập tên đăng nhập (dùng HTML5 required để ngăn gửi form trống) --%>
                                         <div class="form-group">
                                             <label for="username">Tên đăng nhập</label>
                                             <input type="text" id="username" name="username" required
                                                 placeholder="Nhập tên đăng nhập" class="form-control">
                                         </div>
 
+                                        <%-- Ô nhập mật khẩu --%>
                                         <div class="form-group">
                                             <label for="password">Mật khẩu</label>
                                             <input type="password" id="password" name="password" required
@@ -49,6 +54,7 @@
                                         </button>
                                     </form>
 
+                                    <%-- Đường dẫn chuyển hướng sang trang Yêu cầu Quên mật khẩu (/requestPassword) --%>
                                     <div class="form-actions-sub">
                                         <a href="${pageContext.request.contextPath}/requestPassword"
                                             class="btn-forgot-password">

@@ -78,7 +78,7 @@ public class RequestPasswordServlet extends HttpServlet {
         String email = request.getParameter("email");
 
         try {
-            //email co ton tai trong db
+            // 1. Kiểm tra Email có tồn tại trong cơ sở dữ liệu không
             User user = userDAO.getUserByEmail(email);
             if(user == null) {
                 request.setAttribute("mess", "email khong ton tai");
@@ -86,15 +86,17 @@ public class RequestPasswordServlet extends HttpServlet {
                 return;
             }
             ResetSPasswordService service = new ResetSPasswordService();
+            // 2. Sinh mã Token ngẫu nhiên duy nhất (UUID) và đường dẫn reset
             String token = service.generateToken();
             
             String linkReset = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()
                     + request.getContextPath() + "/resetPassword?token=" + token;
             
+            // 3. Khởi tạo đối tượng Token với hạn sử dụng 10 phút (expireDateTime)
             TokenForgetPassword newTokenForget = new TokenForgetPassword(
                     user.getId(), false, token, service.expireDateTime());
             
-            //send link to this email
+            // 4. Lưu Token vào bảng tokenForgetPassword trong DB
             DAOTokenForget daoToken = new DAOTokenForget();
             boolean isInsert = daoToken.insertTokenForget(newTokenForget);
             if(!isInsert) {
@@ -102,6 +104,8 @@ public class RequestPasswordServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/views/requestPassword.jsp").forward(request, response);
                 return;
             }
+
+            // 5. Gửi Email chứa đường dẫn khôi phục mật khẩu qua JavaMail SMTP
             boolean isSend = service.sendEmail(email, linkReset, user.getUsername());
             if(!isSend) {
                 request.setAttribute("mess", "can not send request");

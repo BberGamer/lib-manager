@@ -73,7 +73,7 @@
 
     <div class="container user-list-container">
 
-        <!-- ===== SEARCH BAR ===== -->
+        <%-- Form Tìm kiếm, Lọc theo Vai trò, Trạng thái và Phân trang (gửi theo phương thức GET tới UserListServlet) --%>
         <form id="searchForm" action="<%= ctx %><%= currentPath %>" method="get">
             <input type="hidden" name="sort"  value="<%= sortField %>">
             <input type="hidden" name="order" value="<%= sortOrder %>">
@@ -81,7 +81,7 @@
 
             <div class="search-bar-wrapper">
                 <div class="search-bar-inner">
-                    <!-- Keyword -->
+                    <%-- Ô nhập từ khóa tìm kiếm theo username, họ tên hoặc email --%>
                     <div class="search-field user-search-keyword">
                         <label for="keywordInput">Tìm kiếm người dùng</label>
                         <div class="search-input-wrap">
@@ -95,7 +95,7 @@
                         </div>
                     </div>
 
-                    <!-- Role filter -->
+                    <%-- Bộ lọc Vai trò (Role Filter: ADMIN, LIBRARIAN, READER) --%>
                     <div class="search-field select-field">
                         <label for="roleSelect">Vai trò</label>
                         <select id="roleSelect" name="role" class="form-select">
@@ -106,7 +106,7 @@
                         </select>
                     </div>
 
-                    <!-- Active filter -->
+                    <%-- Bộ lọc Trạng thái tài khoản (Active Filter: Active = 1, Locked = 0) --%>
                     <div class="search-field select-field">
                         <label for="activeSelect">Trạng thái</label>
                         <select id="activeSelect" name="active" class="form-select">
@@ -116,7 +116,6 @@
                         </select>
                     </div>
 
-                    <!-- Buttons -->
                     <div class="user-search-buttons">
                         <button type="submit" class="btn btn-primary" id="searchBtn">
                             <i class="fa-solid fa-search"></i> Tìm
@@ -129,7 +128,7 @@
             </div>
         </form>
 
-        <!-- ===== NOTIFICATIONS ===== -->
+        <%-- Khối hiển thị Thông báo Thành công hoặc Lỗi phản hồi từ Controller --%>
         <% if (successMsg != null) { %>
             <div class="alert alert-success">
                 <i class="fa-solid fa-circle-check"></i> <%= successMsg %>
@@ -250,8 +249,9 @@
                                             <%= u.getActive()==1 ? "Khóa" : "Mở khóa" %>
                                         </button>
                                     </form>
+                                    <%-- Form Xóa mềm người dùng (POST action=delete, kiểm tra các giao dịch dở dang và chuyển active = 0) --%>
                                     <form method="post" action="<%= ctx %>/users" class="user-action-form"
-                                          onsubmit="return confirm('Xác nhận xóa người dùng <%= u.getUsername().replace("'", "\\'") %>?')">
+                                          onsubmit="return confirm('Xác nhận xóa người dùng <%= u.getUsername().replace("'", "\\'") %> (tài khoản sẽ chuyển sang trạng thái Khóa)?')">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="id" value="<%= u.getId() %>">
                                         <button type="submit" class="user-action-delete">
