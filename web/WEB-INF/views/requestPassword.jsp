@@ -20,6 +20,7 @@
                         <p>Nhập email của bạn để nhận liên kết khôi phục mật khẩu</p>
                     </div>
 
+                    <%-- Khối 1: Hiển thị thông báo phản hồi từ RequestPasswordServlet --%>
                     <c:if test="${not empty mess}">
                         <div class="alert alert-danger">
                             <i class="fa-solid fa-circle-exclamation"></i>
@@ -27,7 +28,9 @@
                         </div>
                     </c:if>
 
+                    <%-- Form gửi Email yêu cầu nhận Token khôi phục tới /requestPassword --%>
                     <form method="POST" action="${pageContext.request.contextPath}/requestPassword" class="login-form">
+                        <%-- Ô nhập Email với kiểm tra loại email chuẩn HTML5 --%>
                         <div class="form-group">
                             <label for="email">Địa chỉ Email</label>
                             <input type="email" id="email" name="email" value="${param.email}"
