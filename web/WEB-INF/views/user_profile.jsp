@@ -6,7 +6,9 @@
 <% String contextPath=request.getContextPath(); User profile=(User) request.getAttribute("profileUser");
     User logged=(User) session.getAttribute("loggedUser"); boolean isAdmin=logged !=null && "admin"
     .equalsIgnoreCase(logged.getRole()); boolean isAdminEditingOther=isAdmin && profile !=null &&
-    logged.getId() !=profile.getId(); %>
+    logged.getId() !=profile.getId();
+    String rolePath = (String) request.getAttribute("rolePath");
+    String profileActionUrl = contextPath + (rolePath != null ? rolePath : "") + "/user/profile"; %>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <link rel="stylesheet" href="<%= contextPath %>/assets/css/user_profile.css">
@@ -40,7 +42,7 @@
                 <%-- Khối Form 1: Cập nhật thông tin cá nhân (phương thức POST gửi tới /user/profile với action=updateProfile) --%>
                 <div class="profile-card">
                     <form method="POST"
-                          action="<%= contextPath %>/user/profile">
+                          action="<%= profileActionUrl %>">
                         <input type="hidden" name="action"
                                value="updateProfile" />
                         <input type="hidden" name="id"
@@ -172,7 +174,7 @@
                     <% } %>
 
                     <form method="POST"
-                          action="<%= contextPath %>/user/profile"
+                          action="<%= profileActionUrl %>"
                           autocomplete="off">
                         <input type="hidden" name="action"
                                value="changePassword" />

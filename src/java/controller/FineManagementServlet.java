@@ -1,6 +1,7 @@
 package controller;
 
 import dao.FineDAO;
+import service.FineService;
 import model.Fine;
 import model.User;
 
@@ -18,6 +19,7 @@ import java.util.List;
 public class FineManagementServlet extends HttpServlet {
 
     private final FineDAO fineDAO = new FineDAO();
+    private final FineService fineService = new FineService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -46,6 +48,7 @@ public class FineManagementServlet extends HttpServlet {
 
         int pageSize = 15;
         try {
+            fineService.synchronizeAllOverdueFines();
             List<Fine> list = fineDAO.searchFines(status, keyword, page, pageSize);
             int totalRecords = fineDAO.countFines(status, keyword);
             int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
@@ -105,12 +108,12 @@ public class FineManagementServlet extends HttpServlet {
         HttpSession session = request.getSession();
         int borrowRecordId = Integer.parseInt(request.getParameter("borrowRecordId"));
         int userId = Integer.parseInt(request.getParameter("userId"));
+        String bookCondition = request.getParameter("bookCondition");
         BigDecimal amount = new BigDecimal(request.getParameter("amount"));
-        int overdueDays = Integer.parseInt(request.getParameter("overdueDays"));
         String reason = request.getParameter("reason");
 
-        Fine fine = new Fine(borrowRecordId, userId, amount, overdueDays, reason, "UNPAID");
-        boolean success = fineDAO.createFine(fine);
+        boolean success = fineService.createBookConditionFine(
+                borrowRecordId, userId, bookCondition, amount, reason);
         
         if (success) {
             session.setAttribute("successMsg", "Đã ghi nhận khoản phạt phạt tiền thành công!");

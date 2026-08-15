@@ -34,6 +34,7 @@
     String rolePathBooks = (String) request.getAttribute("rolePath");
     String detailBase    = ctx + ("/librarian".equals(rolePathBooks) ? "/librarian/book/detail" :
                            ("/admin".equals(rolePathBooks) ? "/admin/book/detail" : "/book/detail"));
+    String booksBaseUrl  = ctx + (rolePathBooks != null ? rolePathBooks : "") + "/books";
 %>
 
 <main class="page-wrapper">
@@ -62,7 +63,7 @@
 <div class="container" style="padding-top:28px;">
 
     <!-- ==================== SEARCH & FILTER BAR ==================== -->
-    <form id="searchForm" action="<%= ctx %>/books" method="get" novalidate>
+    <form id="searchForm" action="<%= booksBaseUrl %>" method="get" novalidate>
         <input type="hidden" name="view"  value="<%= viewMode %>">
         <input type="hidden" name="sort"  value="<%= sortField %>">
         <input type="hidden" name="order" value="<%= sortOrder %>">
@@ -103,11 +104,9 @@
                     <button type="submit" class="btn btn-primary" id="searchBtn">
                         <i class="fa-solid fa-search"></i> Tìm
                     </button>
-                    <% if (rolePathBooks == null || rolePathBooks.isEmpty()) { %>
-                    <a href="<%= ctx %>/books" class="btn btn-outline" title="Xóa bộ lọc">
+                    <a href="<%= booksBaseUrl %>" class="btn btn-outline" title="Xóa bộ lọc">
                         <i class="fa-solid fa-rotate-right"></i>
                     </a>
-                    <% } %>
                 </div>
             </div>
         </div>
@@ -155,7 +154,7 @@
                         String thisOrder = active ? nextOrder : "ASC";
                         String icon = active ? ("ASC".equals(sortOrder) ? " ▲" : " ▼") : "";
                 %>
-                    <a href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sf %>&order=<%= thisOrder %>&page=1&view=<%= viewMode %>"
+                    <a href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sf %>&order=<%= thisOrder %>&page=1&view=<%= viewMode %>"
                        class="sort-btn <%= active ? "sort-btn-active" : "" %>">
                         <%= sl %><%= icon %>
                     </a>
@@ -203,27 +202,27 @@
                         <th style="width:50px;">#</th>
                         <th style="width:48px;"></th>
                         <th>
-                            <a href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=title&order=<%= "title".equals(sortField) ? nextOrder : "ASC" %>&page=1&view=table">
+                            <a href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=title&order=<%= "title".equals(sortField) ? nextOrder : "ASC" %>&page=1&view=table">
                                 Tên sách <i class="fa-solid <%= "title".equals(sortField) ? ("ASC".equals(sortOrder)?"fa-sort-up":"fa-sort-down") : "fa-sort" %> sort-icon fa-xs"></i>
                             </a>
                         </th>
                         <th>Danh mục</th>
                         <th>
-                            <a href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=publish_year&order=<%= "publish_year".equals(sortField) ? nextOrder : "DESC" %>&page=1&view=table">
+                            <a href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=publish_year&order=<%= "publish_year".equals(sortField) ? nextOrder : "DESC" %>&page=1&view=table">
                                 Năm XB <i class="fa-solid <%= "publish_year".equals(sortField) ? ("ASC".equals(sortOrder)?"fa-sort-up":"fa-sort-down") : "fa-sort" %> sort-icon fa-xs"></i>
                             </a>
                         </th>
                         <th>
-                            <a href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=available&order=<%= "available".equals(sortField) ? nextOrder : "DESC" %>&page=1&view=table">
+                            <a href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=available&order=<%= "available".equals(sortField) ? nextOrder : "DESC" %>&page=1&view=table">
                                 Trạng thái <i class="fa-solid <%= "available".equals(sortField) ? ("ASC".equals(sortOrder)?"fa-sort-up":"fa-sort-down") : "fa-sort" %> sort-icon fa-xs"></i>
                             </a>
                         </th>
                         <th>
-                            <a href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=price&order=<%= "price".equals(sortField) ? nextOrder : "ASC" %>&page=1&view=table">
+                            <a href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=price&order=<%= "price".equals(sortField) ? nextOrder : "ASC" %>&page=1&view=table">
                                 Giá <i class="fa-solid <%= "price".equals(sortField) ? ("ASC".equals(sortOrder)?"fa-sort-up":"fa-sort-down") : "fa-sort" %> sort-icon fa-xs"></i>
                             </a>
                         </th>
-                        <% if (isAdmin || (loggedUser != null && !isAdminLib)) { %><th style="width:140px; text-align:center;">Thao tác</th><% } %>
+                        <% if (isAdminLib || loggedUser != null) { %><th style="width:160px; text-align:center;">Thao tác</th><% } %>
                     </tr>
                 </thead>
                 <tbody>
@@ -247,7 +246,7 @@
                                 <span class="book-isbn"><%= b.getIsbn() %></span>
                             </td>
                             <td>
-                                <a href="<%= ctx %>/books?category=<%= java.net.URLEncoder.encode(b.getCategory() != null ? b.getCategory() : "","UTF-8") %>&view=table"
+                                <a href="<%= booksBaseUrl %>?category=<%= java.net.URLEncoder.encode(b.getCategory() != null ? b.getCategory() : "","UTF-8") %>&view=table"
                                    class="badge badge-primary">
                                     <%= b.getCategory() != null ? b.getCategory() : "—" %>
                                 </a>
@@ -264,10 +263,10 @@
                                 <% } %>
                             </td>
                             <td style="font-weight:600; color:var(--accent);"><%= b.getFormattedPrice() %></td>
-                            <% if (isAdmin || (loggedUser != null && !isAdminLib)) { %>
+                            <% if (isAdminLib || loggedUser != null) { %>
                             <td style="text-align:center;">
                                 <div style="display:flex; gap:6px; justify-content:center;">
-                                    <% if (isAdmin) { %>
+                                    <% if (isAdminLib) { %>
                                     <a href="<%= detailBase %>?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
@@ -282,8 +281,7 @@
                                             onclick="confirmDelete(<%= b.getId() %>, '<%= b.getTitle().replace("'", "\\'") %>')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
-                                    <% } %>
-                                    <% if (loggedUser != null && !isAdminLib) { %>
+                                    <% } else { %>
                                     <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
@@ -330,7 +328,7 @@
                     </a>
                     <div class="book-body">
                         <div class="book-category">
-                            <a href="<%= ctx %>/books?category=<%= java.net.URLEncoder.encode(b.getCategory() != null ? b.getCategory() : "","UTF-8") %>&view=grid"
+                            <a href="<%= booksBaseUrl %>?category=<%= java.net.URLEncoder.encode(b.getCategory() != null ? b.getCategory() : "","UTF-8") %>&view=grid"
                                style="color:var(--primary); text-decoration:none;">
                                 <%= b.getCategory() != null ? b.getCategory() : "—" %>
                             </a>
@@ -393,7 +391,7 @@
                 <!-- Prev -->
                 <li class="page-item <%= currentPageNum <= 1 ? "disabled" : "" %>">
                     <a class="page-link"
-                       href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= currentPageNum - 1 %>&view=<%= viewMode %>">
+                       href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= currentPageNum - 1 %>&view=<%= viewMode %>">
                         <i class="fa-solid fa-chevron-left fa-xs"></i>
                     </a>
                 </li>
@@ -402,14 +400,14 @@
                    if (totalPages <= 7) {
                        for (int pg = 1; pg <= totalPages; pg++) { %>
                            <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                               <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                               <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                            </li>
                        <% }
                    } else {
                        // Show first 2 pages
                        for (int pg = 1; pg <= 2; pg++) { %>
                            <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                               <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                               <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                            </li>
                        <% }
 
@@ -417,7 +415,7 @@
                            // Current page is near the start
                            for (int pg = 3; pg <= 5; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                                </li>
                            <% } %>
                            <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -426,7 +424,7 @@
                            <li class="page-item disabled"><span class="page-link">…</span></li>
                            <% for (int pg = totalPages - 4; pg <= totalPages - 2; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                                </li>
                            <% }
                        } else { %>
@@ -434,7 +432,7 @@
                            <li class="page-item disabled"><span class="page-link">…</span></li>
                            <% for (int pg = currentPageNum - 1; pg <= currentPageNum + 1; pg++) { %>
                                <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                                   <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                                   <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                                </li>
                            <% } %>
                            <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -443,7 +441,7 @@
                        // Show last 2 pages
                        for (int pg = totalPages - 1; pg <= totalPages; pg++) { %>
                            <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
-                               <a class="page-link" href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
+                               <a class="page-link" href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= pg %>&view=<%= viewMode %>"><%= pg %></a>
                            </li>
                        <% }
                    }
@@ -452,7 +450,7 @@
                 <!-- Next -->
                 <li class="page-item <%= currentPageNum >= totalPages ? "disabled" : "" %>">
                     <a class="page-link"
-                       href="<%= ctx %>/books?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= currentPageNum + 1 %>&view=<%= viewMode %>">
+                       href="<%= booksBaseUrl %>?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>&page=<%= currentPageNum + 1 %>&view=<%= viewMode %>">
                         <i class="fa-solid fa-chevron-right fa-xs"></i>
                     </a>
                 </li>
@@ -494,7 +492,7 @@ function confirmDelete(bookId, bookTitle) {
     document.getElementById('deleteBookTitle').textContent =
         'Bạn có chắc muốn xóa/ẩn sách: "' + bookTitle + '"?';
     document.getElementById('deleteConfirmBtn').href =
-        '<%= ctx %>/book/delete?id=' + bookId;
+        '<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/delete?id=' + bookId;
     document.getElementById('deleteModal').style.display = 'flex';
 }
 function closeDeleteModal() {
@@ -513,3 +511,4 @@ document.getElementById('searchForm').addEventListener('submit', function(e) {
     }
 });
 </script>
+
