@@ -69,6 +69,7 @@ public class UserListService {
     /** Ném IllegalArgumentException với message thân thiện nếu dữ liệu không hợp lệ. */
     public int createUser(User u, String rawPassword) {
         try {
+            // 1. Validate Username (tên đăng nhập: Regex kiểm tra chữ/số/gạch dưới + Check trùng lặp DB)
             String username = u.getUsername() == null ? "" : u.getUsername().trim();
             if (!USERNAME_PATTERN.matcher(username).matches()) {
                 throw new IllegalArgumentException(
@@ -77,6 +78,8 @@ public class UserListService {
             if (dao.getUserByUsername(username) != null) {
                 throw new IllegalArgumentException("Tên đăng nhập đã tồn tại.");
             }
+
+            // 2. Validate Email (Kiểm tra rỗng, độ dài max 100, Regex email + Check trùng DB)
             if (u.getEmail() == null || u.getEmail().isBlank()) {
                 throw new IllegalArgumentException("Email không được để trống.");
             }
@@ -90,12 +93,14 @@ public class UserListService {
             if (dao.getUserByEmail(email) != null) {
                 throw new IllegalArgumentException("Email đã được sử dụng bởi tài khoản khác.");
             }
+
+            // 3. Validate Số điện thoại (Không bắt buộc; nếu có nhập -> Regex 10-11 số bắt đầu bằng 0)
             if (u.getPhone() != null && !u.getPhone().isBlank()
                     && !PHONE_PATTERN.matcher(u.getPhone().trim()).matches()) {
                 throw new IllegalArgumentException("Số điện thoại phải có 10-11 chữ số và bắt đầu bằng 0.");
             }
 
-            // student_id: optional (DB cho NULL). Nếu có nhập -> phải đúng định dạng và không trùng.
+            // 4. Validate Mã sinh viên student_id (Không bắt buộc; nếu nhập -> đúng chuẩn HA123456 & Check trùng DB)
             String studentId = u.getStudentId() == null ? "" : u.getStudentId().trim();
             if (!studentId.isEmpty()) {
                 if (!STUDENT_ID_PATTERN.matcher(studentId).matches()) {
@@ -107,18 +112,20 @@ public class UserListService {
                 }
             }
 
+            // 5. Validate Mật khẩu (mặc định 'password' nếu để trống, tối thiểu 5 ký tự)
             String password = (rawPassword == null || rawPassword.isEmpty()) ? "password" : rawPassword;
             if (password.length() < PASSWORD_MIN_LEN) {
                 throw new IllegalArgumentException("Mật khẩu phải có ít nhất " + PASSWORD_MIN_LEN + " ký tự.");
             }
 
+            // 6. Gán thuộc tính hợp lệ và gọi DAO lưu DB với mật khẩu băm MD5
             u.setUsername(username);
             u.setEmail(email);
-            u.setStudentId(studentId.isEmpty() ? null : studentId); // "" sẽ vi phạm UNIQUE nếu 2 user cùng để trống
+            u.setStudentId(studentId.isEmpty() ? null : studentId); // Để NULL nếu rỗng để không bị vi phạm UNIQUE DB
             u.setActive(1);
             return dao.createUser(u, hashPassword(password));
         } catch (IllegalArgumentException e) {
-            throw e; // lỗi validate -> giữ nguyên để servlet hiển thị đúng message
+            throw e; // Lỗi validate -> Giữ nguyên ném ra cho Servlet hiển thị thông báo
         } catch (Exception e) {
             throw new IllegalStateException("Tạo người dùng thất bại: " + e.getMessage(), e);
         }
@@ -204,12 +211,19 @@ public class UserListService {
     }
 
     /**
-     * Xóa user. UserDAO.deleteUser() đã tự phát hiện lỗi khóa ngoại (còn lịch sử
-     * mượn/phạt...) và ném Exception với message thân thiện sẵn — Service chỉ
-     * cần chuyển tiếp message đó.
+     * Xóa người dùng (Xóa mềm - Chuyển active = 0).
+     * Bổ sung bước 1 kiểm tra dữ liệu liên quan dở dang (sách đang mượn, nợ tiền phạt, sách đang đặt).
+     * Nếu có giao dịch dở dang, hệ thống từ chối xóa và ném thông báo chi tiết.
      */
     public void deleteUser(int id) {
         try {
+            // Bước 1: Kiểm tra các giao dịch dở dang (sách mượn chưa trả, phạt chưa thanh toán, phiếu đặt sách)
+            String pendingErr = dao.checkUserPendingTransactions(id);
+            if (pendingErr != null) {
+                throw new IllegalStateException(pendingErr);
+            }
+
+            // Bước 2: Thực hiện Xóa mềm (UPDATE users SET active = 0)
             boolean ok = dao.deleteUser(id);
             if (!ok) throw new IllegalStateException("Xóa thất bại: không tìm thấy người dùng.");
         } catch (IllegalStateException e) {

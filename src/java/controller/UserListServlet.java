@@ -57,43 +57,48 @@ public class UserListServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // 1. Kiểm tra xác thực đăng nhập
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+
+        // 2. Bắt buộc quyền Admin mới được thực hiện các thao tác thêm/sửa/xóa/khóa người dùng
         User logged = (User) session.getAttribute("loggedUser");
         if (!logged.isAdmin()) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác quản trị này.");
             return;
         }
 
         String action = request.getParameter("action");
         try {
+            // 3. Phân luồng xử lý theo hành động (action)
             switch (action == null ? "" : action) {
                 case "create":
-                    handleCreate(request);
+                    handleCreate(request); // Tạo người dùng mới
                     break;
                 case "delete":
-                    handleDelete(request);
+                    handleDelete(request); // Xóa người dùng
                     break;
                 case "lock":
                 case "unlock":
-                    handleToggleActive(request, action);
+                    handleToggleActive(request, action); // Khóa / Mở khóa tài khoản
                     break;
                 case "update":
-                    handleUpdate(request);
+                    handleUpdate(request); // Cập nhật người dùng
                     break;
                 default:
                     session.setAttribute("errorMsg", "Hành động không hợp lệ.");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            // Lỗi nghiệp vụ đã có message thân thiện từ UserService -> hiển thị thẳng
+            // Lỗi nghiệp vụ đã có message thân thiện từ UserService -> hiển thị thẳng cho Admin
             session.setAttribute("errorMsg", e.getMessage());
         } catch (Exception e) {
             session.setAttribute("errorMsg", "Lỗi hệ thống, vui lòng thử lại.");
         }
 
+        // 4. Áp dụng mẫu Post/Redirect/Get (PRG Pattern) để tránh bị lặp form khi F5
         String redirectPath = request.getServletPath() != null ? request.getServletPath() : "/users";
         response.sendRedirect(request.getContextPath() + redirectPath);
     }
@@ -115,7 +120,7 @@ public class UserListServlet extends HttpServlet {
     private void handleDelete(HttpServletRequest request) {
         int id = Integer.parseInt(request.getParameter("id"));
         userService.deleteUser(id);
-        request.getSession().setAttribute("successMsg", "Xóa người dùng thành công.");
+        request.getSession().setAttribute("successMsg", "Xóa người dùng thành công (tài khoản đã chuyển sang trạng thái Khóa).");
     }
 
     private void handleToggleActive(HttpServletRequest request, String action) {

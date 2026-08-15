@@ -20,6 +20,7 @@
                         <p>Nhập địa chỉ email và mật khẩu mới của bạn</p>
                     </div>
 
+                    <%-- Khối 1: Hiển thị thông báo phản hồi từ ResetPasswordServlet --%>
                     <c:if test="${not empty mess}">
                         <div class="alert alert-danger">
                             <i class="fa-solid fa-circle-exclamation"></i>
@@ -27,6 +28,7 @@
                         </div>
                     </c:if>
 
+                    <%-- Form gửi mật khẩu mới và mật khẩu xác nhận tới /resetPassword --%>
                     <form method="POST" action="${pageContext.request.contextPath}/resetPassword" class="login-form">
                         <div class="form-group">
                             <label for="email">Địa chỉ Email</label>
@@ -34,12 +36,14 @@
                                    required placeholder="Nhập địa chỉ email" class="form-control">
                         </div>
 
+                        <%-- Ô nhập Mật khẩu mới --%>
                         <div class="form-group">
                             <label for="password">Mật khẩu mới</label>
                             <input type="password" id="password" name="password"
                                    required placeholder="Nhập mật khẩu mới" class="form-control">
                         </div>
 
+                        <%-- Ô nhập Xác nhận mật khẩu mới (Server sẽ kiểm tra trùng khớp với password) --%>
                         <div class="form-group">
                             <label for="confirm_password">Xác nhận mật khẩu mới</label>
                             <input type="password" id="confirm_password" name="confirm_password"

@@ -65,6 +65,47 @@
 }
 .shelf-filter-form input:focus, .shelf-filter-form select:focus, .shelf-modal-dialog input:focus {
     border-color: #f47920; box-shadow: 0 0 0 4px rgba(244, 121, 32, .12);
+
+.shelf-filter-form input,
+.shelf-filter-form select,
+.shelf-modal-dialog input,
+.shelf-modal-dialog select {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1px solid #d7dce2;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.shelf-filter-form input:focus,
+.shelf-filter-form select:focus,
+.shelf-modal-dialog input:focus,
+.shelf-modal-dialog select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    outline: 0;
+}
+
+.shelf-filter-button {
+    min-height: 41px;
+    padding-inline: 24px;
+}
+
+.shelf-table-card {
+    overflow: hidden;
+}
+
+.shelf-table-scroll {
+    overflow-x: auto;
+}
+
+.shelf-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
 }
 .shelf-filter-keyword input { border-color: #f47920; box-shadow: 0 0 0 4px rgba(244, 121, 32, .10); }
 .shelf-filter-keyword input:focus { box-shadow: 0 0 0 4px rgba(244, 121, 32, .18); }

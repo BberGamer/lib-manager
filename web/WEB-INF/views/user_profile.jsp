@@ -6,7 +6,9 @@
 <% String contextPath=request.getContextPath(); User profile=(User) request.getAttribute("profileUser");
     User logged=(User) session.getAttribute("loggedUser"); boolean isAdmin=logged !=null && "admin"
     .equalsIgnoreCase(logged.getRole()); boolean isAdminEditingOther=isAdmin && profile !=null &&
-    logged.getId() !=profile.getId(); %>
+    logged.getId() !=profile.getId();
+    String rolePath = (String) request.getAttribute("rolePath");
+    String profileActionUrl = contextPath + (rolePath != null ? rolePath : "") + "/user/profile"; %>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <link rel="stylesheet" href="<%= contextPath %>/assets/css/user_profile.css">
@@ -19,6 +21,7 @@
                 <p>Quản lý thông tin tài khoản và bảo mật</p>
             </div>
 
+            <%-- Hiển thị thông báo Lỗi hoặc Thành công phản hồi từ Controller --%>
             <% if (request.getAttribute("error") !=null) { %>
             <div class="alert alert-danger">
                 <%= request.getAttribute("error") %>
@@ -36,10 +39,10 @@
             <% } else { %>
             <div class="profile-grid">
 
-                <!-- Thông tin cá nhân -->
+                <%-- Khối Form 1: Cập nhật thông tin cá nhân (phương thức POST gửi tới /user/profile với action=updateProfile) --%>
                 <div class="profile-card">
                     <form method="POST"
-                          action="<%= contextPath %>/user/profile">
+                          action="<%= profileActionUrl %>">
                         <input type="hidden" name="action"
                                value="updateProfile" />
                         <input type="hidden" name="id"
@@ -81,7 +84,7 @@
                                    placeholder="example@email.com" />
                         </div>
 
-                        <!-- phone: KHÔNG bắt buộc, bỏ pattern (Service xử lý format) -->
+                        <!-- phone: KHÔNG bắt buộc  (Service xử lý format) -->
                         <div class="form-group">
                             <label for="phone">Số điện thoại</label>
                             <input type="text" id="phone" name="phone"
@@ -90,7 +93,7 @@
                                    maxlength="15" placeholder="0xxxxxxxxx" />
                         </div>
 
-                        <!-- studentId: KHÔNG bắt buộc, bỏ pattern, chỉ hiện khi role hiện tại = READER -->
+                        <!-- studentId: KHÔNG bắt buộc, chỉ hiện khi role hiện tại = READER -->
                         <% if ("READER".equalsIgnoreCase(profile.getRole())) {
                         %>
                         <div class="form-group">
@@ -171,7 +174,7 @@
                     <% } %>
 
                     <form method="POST"
-                          action="<%= contextPath %>/user/profile"
+                          action="<%= profileActionUrl %>"
                           autocomplete="off">
                         <input type="hidden" name="action"
                                value="changePassword" />
