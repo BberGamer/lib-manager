@@ -8,9 +8,9 @@
                 <c:set var="sidebarCurrentPage" value="${not empty activePage ? activePage : currentPage}" />
                 <c:set var="sidebarUser" value="${sessionScope.loggedUser}" />
 
-                <c:url var="sidebarHomeUrl" value="/home" />
-                <c:url var="sidebarProfileUrl" value="/user/profile" />
                 <c:set var="rolePath" value="${sidebarUser.admin ? '/admin' : '/librarian'}" />
+                <c:url var="sidebarHomeUrl" value="/home" />
+                <c:url var="sidebarProfileUrl" value="${rolePath}/user/profile" />
                 <c:url var="sidebarBorrowUrl" value="${rolePath}/borrow/list" />
                 <c:url var="sidebarReservationUrl" value="${rolePath}/reservation/list" />
                 <c:url var="sidebarFineUrl" value="${rolePath}/fine/list" />
@@ -66,6 +66,17 @@
                         <c:when test="${sidebarUser.librarian}">
                             <!-- LIBRARIAN SIDEBAR -->
                             <div class="admin-nav-group">
+                                <div class="admin-nav-header">Báo cáo &amp; Thống kê</div>
+                                <nav class="admin-nav" aria-label="Báo cáo thống kê">
+                                    <a href="${sidebarLibraryStatsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'dashboard-library' ? 'active' : ''}">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        <span>Thống kê Thư viện</span>
+                                    </a>
+                                </nav>
+                            </div>
+
+                            <div class="admin-nav-group">
                                 <div class="admin-nav-header">Nghiệp vụ</div>
                                 <nav class="admin-nav" aria-label="Điều hướng nghiệp vụ">
                                     <a href="${sidebarBorrowUrl}"
@@ -87,17 +98,6 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'notifications' ? 'active' : ''}">
                                         <i class="fa-solid fa-bullhorn"></i>
                                         <span>Gửi thông báo</span>
-                                    </a>
-                                </nav>
-                            </div>
-
-                            <div class="admin-nav-group">
-                                <div class="admin-nav-header">Báo cáo &amp; Thống kê</div>
-                                <nav class="admin-nav" aria-label="Báo cáo thống kê">
-                                    <a href="${sidebarLibraryStatsUrl}"
-                                        class="admin-nav-item ${sidebarCurrentPage eq 'dashboard-library' ? 'active' : ''}">
-                                        <i class="fa-solid fa-chart-pie"></i>
-                                        <span>Thống kê Thư viện</span>
                                     </a>
                                 </nav>
                             </div>

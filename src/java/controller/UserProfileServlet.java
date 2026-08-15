@@ -7,7 +7,7 @@ import java.io.IOException;
 import model.User;
 import service.UserProfileService;
 
-@WebServlet(name = "UserProfileController", urlPatterns = {"/user/profile"})
+@WebServlet(name = "UserProfileController", urlPatterns = {"/user/profile", "/admin/user/profile", "/librarian/user/profile"})
 public class UserProfileServlet extends HttpServlet {
 
     private final UserProfileService userProfileService = new UserProfileService();
@@ -19,6 +19,16 @@ public class UserProfileServlet extends HttpServlet {
         if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
+        }
+
+        String path = request.getServletPath();
+        if ("/admin/user/profile".equals(path) || "/librarian/user/profile".equals(path)) {
+            request.setAttribute("isManagePageAttr", true);
+        }
+        if ("/admin/user/profile".equals(path)) {
+            request.setAttribute("rolePath", "/admin");
+        } else if ("/librarian/user/profile".equals(path)) {
+            request.setAttribute("rolePath", "/librarian");
         }
 
         User logged = (User) session.getAttribute("loggedUser");
@@ -44,6 +54,7 @@ public class UserProfileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // 1. Kiểm tra xác thực: Chưa đăng nhập -> Chuyển hướng về trang login
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
@@ -55,10 +66,11 @@ public class UserProfileServlet extends HttpServlet {
         int id = logged.getId();
         boolean isAdminEditingOther = false;
 
+        // 2. Phân quyền đặc biệt: Bắt buộc quyền Admin mới được truyền tham số ?id=X để sửa hồ sơ người khác
         if (idParam != null && logged.isAdmin()) {
             try {
                 id = Integer.parseInt(idParam);
-                isAdminEditingOther = (id != logged.getId());
+                isAdminEditingOther = (id != logged.getId()); // Flag đánh dấu Admin đang sửa tài khoản của người khác
             } catch (NumberFormatException e) { }
         }
 
@@ -74,6 +86,7 @@ public class UserProfileServlet extends HttpServlet {
 
             String error = null;
             if ("updateProfile".equals(action)) {
+                // Hành động 1: Cập nhật thông tin cá nhân
                 String fullName = request.getParameter("fullName");
                 String email = request.getParameter("email");
                 String phone = request.getParameter("phone");
@@ -85,22 +98,25 @@ public class UserProfileServlet extends HttpServlet {
                     try { active = Integer.parseInt(activeParam); } catch (NumberFormatException e) { }
                 }
 
+                // Gọi Service thực hiện Validate dữ liệu và cập nhật DB (truyền logged.isAdmin() để cho phép sửa Role/Active)
                 error = userProfileService.updateProfile(targetUser, fullName, email, phone,
                         studentId, role, active, logged.isAdmin());
                 request.setAttribute(error == null ? "success" : "error",
                         error == null ? "Cập nhật thông tin cá nhân thành công." : error);
 
             } else if ("changePassword".equals(action)) {
+                // Hành động 2: Đổi mật khẩu
                 String oldPassword = request.getParameter("oldPassword");
                 String newPassword = request.getParameter("newPassword");
                 String confirmPassword = request.getParameter("confirmPassword");
+                // Truyền isAdminEditingOther: Nếu Admin sửa giùm người khác -> Không cần nhập oldPassword
                 error = userProfileService.changePassword(targetUser, oldPassword, newPassword,
                         confirmPassword, isAdminEditingOther);
                 request.setAttribute(error == null ? "success" : "error",
                         error == null ? "Đổi mật khẩu thành công." : error);
             }
 
-            // Nếu đang tự sửa hồ sơ của chính mình, cập nhật lại session cho khớp dữ liệu mới
+            // 3. Nếu người dùng tự sửa hồ sơ của chính mình -> Cập nhật lại đối tượng loggedUser trong Session
             if (!isAdminEditingOther) {
                 session.setAttribute("loggedUser", targetUser);
             }
