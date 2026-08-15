@@ -401,8 +401,8 @@ public class BorrowRecordDAO {
                     ps.executeUpdate();
                 }
 
-                // 1b. Update associated fines to PAID
-                String updateFineSql = "UPDATE fines SET status = 'PAID', paid_date = CURDATE(), payment_method = 'CASH', payment_note = 'Thanh toán khi trả sách', updated_at = NOW() WHERE borrow_record_id = ? AND status IN ('UNPAID', 'PENDING_VERIFY')";
+                // 1b. Chuyển các khoản phạt liên quan sang trạng thái PAID.
+                String updateFineSql = "UPDATE fines SET status = 'PAID', paid_date = CURDATE(), payment_method = 'CASH', payment_note = 'Thanh toán khi trả sách', updated_at = NOW() WHERE borrow_record_id = ? AND status = 'UNPAID'";
                 try (PreparedStatement ps = conn.prepareStatement(updateFineSql)) {
                     ps.setInt(1, id);
                     ps.executeUpdate();
