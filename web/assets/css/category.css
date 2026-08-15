@@ -37,7 +37,7 @@
 .category-table tbody tr:last-child td { border-bottom: 0; }
 .category-table tbody tr:hover { background: #fffaf6; }
 .category-id { color: #8995a7 !important; font-weight: 700; }
-.category-name-cell { display: flex; align-items: center; gap: 11px; color: #223149; }
+.category-name-cell { display: block; align-items: center; gap: 11px; color: #223149;max-width: 220px; overflow: hidden; text-overflow: ellipsis;  white-space: nowrap; }
 .category-icon { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: linear-gradient(135deg, #ff9a52, #f06b0b); color: #fff; }
 .category-description { max-width: 340px; }
 .category-description em { color: #a0a9b6; }

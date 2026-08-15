@@ -1,0 +1,179 @@
+/*
+ * about.css – Giao diện trang giới thiệu Thư viện FPT University
+ */
+
+.about-hero-container {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+}
+
+.mission-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+}
+
+.mission-title {
+    margin-bottom: 24px;
+}
+
+.mission-text {
+    color: var(--text-secondary);
+    line-height: 1.85;
+    margin-bottom: 20px;
+}
+
+.mission-text-last {
+    color: var(--text-secondary);
+    line-height: 1.85;
+}
+
+.mission-highlight {
+    color: var(--primary);
+}
+
+.stats-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.stat-card-item {
+    text-align: center;
+}
+
+.stat-number-primary {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.stat-number-accent {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.stat-number-success {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--success);
+    margin-bottom: 6px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.stat-number-info {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--info);
+    margin-bottom: 6px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.stat-label-item {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.values-header {
+    text-align: center;
+    margin-bottom: 44px;
+}
+
+.values-header .section-title {
+    display: inline-block;
+}
+
+.values-header .section-subtitle {
+    margin-top: 14px;
+}
+
+.hours-contact-section {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.hours-contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+}
+
+.hours-list,
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hours-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.hours-item.weekday {
+    border-left: 3px solid var(--success);
+}
+
+.hours-item.saturday {
+    border-left: 3px solid var(--info);
+}
+
+.hours-item.sunday {
+    border-left: 3px solid var(--danger);
+}
+
+.hours-item-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hours-notice {
+    padding: 14px 18px;
+    background: rgba(244, 121, 32, 0.06);
+    border: 1px solid rgba(244, 121, 32, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--primary);
+}
+
+.map-section-wrapper {
+    height: 340px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.map-badge {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    color: var(--primary);
+    backdrop-filter: blur(8px);
+}
+
+@media (max-width: 768px) {
+    .mission-grid,
+    .hours-contact-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
