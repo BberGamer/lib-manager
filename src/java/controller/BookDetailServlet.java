@@ -579,8 +579,8 @@ public class BookDetailServlet extends HttpServlet {
         // Publish year
         if (book.getPublishYear() != null) {
             int currentYear = java.time.Year.now().getValue();
-            if (book.getPublishYear() < 1000 || book.getPublishYear() > currentYear) {
-                errors.add("Năm xuất bản phải từ 1000 đến " + currentYear + ".");
+            if (book.getPublishYear() < 1995 || book.getPublishYear() > currentYear) {
+                errors.add("Năm xuất bản phải từ 1995 đến " + currentYear + ".");
             }
         }
 
