@@ -9,7 +9,7 @@ import utils.DBContext;
 
 public class UserDAO {
 
-    // Lấy thông tin người dùng theo ID
+    // Lấy thông tin người dùng theo ID(thêm)
     public User getUserById(int id) throws Exception {
         String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -77,7 +77,7 @@ public class UserDAO {
         return list;
     }
 
-    // Tạo mới người dùng và trả về ID tự tăng vừa sinh (Statement.RETURN_GENERATED_KEYS)
+    // Tạo mới người dùng và trả về ID tự tăng vừa sinh (sửa nếu hiển thị trường trong add)
     public int createUser(User user, String rawPassword) throws Exception {
         String sql = "INSERT INTO users (username, password, full_name, email, phone, student_id, avatar, role, active) VALUES (?,?,?,?,?,?,?,?,?)";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -89,8 +89,8 @@ public class UserDAO {
             ps.setString(6, user.getStudentId());
             ps.setString(7, user.getAvatar());
             ps.setString(8, user.getRole());
-            ps.setInt(9, user.getActive());
-            int affected = ps.executeUpdate();
+            ps.setInt(9, user.getActive()); 
+            int affected = ps.executeUpdate(); 
             if (affected == 0) {
                 return -1;
             }
@@ -103,7 +103,7 @@ public class UserDAO {
         return -1;
     }
 
-    // Cập nhật thông tin chi tiết của người dùng
+    // Cập nhật thông tin chi tiết của người dùng (sửa nếu hiển thị trường trong update)
     public boolean updateUser(User user) throws Exception {
         String sql = "UPDATE users SET full_name = ?, email = ?, phone = ?, student_id = ?, avatar = ?, role = ?, active = ? WHERE id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -114,7 +114,7 @@ public class UserDAO {
             ps.setString(5, user.getAvatar());
             ps.setString(6, user.getRole());
             ps.setInt(7, user.getActive());
-            ps.setInt(8, user.getId());
+            ps.setInt(8, user.getId()); // id cuối
             return ps.executeUpdate() > 0;
         }
     }
@@ -200,7 +200,7 @@ public class UserDAO {
         u.setStudentId(rs.getString("student_id"));
         u.setAvatar(rs.getString("avatar"));
         u.setRole(rs.getString("role"));
-        u.setActive(rs.getInt("active"));
+        u.setActive(rs.getInt("active")); // thêm nếu thêm trường
         return u;
     }
     //
@@ -250,22 +250,22 @@ public class UserDAO {
      * vào câu SQL mà không kiểm tra thì sẽ dính SQL Injection.
      * Key = giá trị "sort" trên URL (?sort=full_name), Value = tên cột thật trong DB.
      */
-    
+    // thêm nếu thêm trường sắp xếp mới (sortOption jsp)
     private static final java.util.Map<String, String> SORTABLE_COLUMNS = java.util.Map.of(
             "username", "username",
             "full_name", "full_name",
             "role", "role",
-            "active", "active"
+            "active", "active" 
     );
 
-    // Tìm kiếm danh sách người dùng nâng cao (có lọc từ khóa, role, active và sắp xếp Whitelist chống SQL Injection)
+    // Tìm kiếm danh sách người dùng nâng cao (5 tham số)
     public List<User> searchUsers(String q, String role, Integer active, String sortField, String sortOrder) throws Exception {
         List<User> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        // Ghép nối câu SQL động bằng WHERE 1=1
+        // Hiện thị danh sách
         sb.append("SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE 1=1 ");
         if (q != null && !q.trim().isEmpty()) {
-            sb.append(" AND (username LIKE ? OR full_name LIKE ? OR email LIKE ?)");
+            sb.append(" AND (username LIKE ? OR full_name LIKE ? OR email LIKE ?)"); // nếu thêm lọc thanh tìm
         }
         if (role != null && !role.trim().isEmpty()) {
             sb.append(" AND role = ?");
@@ -276,7 +276,7 @@ public class UserDAO {
 
         // Lấy tên cột sắp xếp hợp lệ từ Whitelist SORTABLE_COLUMNS để bảo mật
         String column = SORTABLE_COLUMNS.getOrDefault(sortField, "username");
-        String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC";
+        String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC"; // nếu sắp xếp giảm
         sb.append(" ORDER BY ").append(column).append(" ").append(order).append(", id DESC");
 
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {
@@ -284,9 +284,9 @@ public class UserDAO {
             // Gán giá trị tham số động tương ứng với vị trí dấu ?
             if (q != null && !q.trim().isEmpty()) {
                 String like = "%" + q.trim() + "%";
-                ps.setString(idx++, like);
-                ps.setString(idx++, like);
-                ps.setString(idx++, like);
+                ps.setString(idx++, like); // username
+                ps.setString(idx++, like); // full_name
+                ps.setString(idx++, like); // email (thêm dưới nếu thêm lọc thanh tìm)
             }
             if (role != null && !role.trim().isEmpty()) {
                 ps.setString(idx++, role);
