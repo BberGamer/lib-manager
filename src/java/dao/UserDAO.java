@@ -27,7 +27,7 @@ public class UserDAO {
     public User getUserByUsername(String username) throws Exception {
         String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE username = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, username);
+            ps.setString(1, username); // thêm nếu (OR = ? ...)
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
@@ -304,3 +304,4 @@ public class UserDAO {
         return list;
     }
 }
+// ORDER BY FIELD(role, 'ADMIN', 'LIBRARIAN', 'READER'), id DESC
