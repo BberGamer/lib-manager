@@ -127,6 +127,37 @@ public class FineService {
         return fineId > 0 ? fineDao.findByIdAndUserId(fineId, userId) : null;
     }
 
+    /**
+     * Lấy khoản phạt theo ID.
+     *
+     * @param fineId mã khoản phạt
+     * @return khoản phạt hoặc {@code null}
+     * @throws Exception khi truy vấn thất bại
+     */
+    public Fine getFineById(int fineId) throws Exception {
+        return fineId > 0 ? fineDao.findById(fineId) : null;
+    }
+
+    /**
+     * Xử lý xác nhận thanh toán khoản phạt thành công qua cổng thanh toán.
+     *
+     * @param fineId mã khoản phạt
+     * @param paymentMethod phương thức thanh toán (ví dụ "VNPay")
+     * @param paymentNote ghi chú thông tin giao dịch
+     * @param operator tên người/hệ thống thực hiện xác nhận
+     * @return {@code true} khi cập nhật thành công
+     * @throws Exception khi truy vấn hoặc cập nhật cơ sở dữ liệu thất bại
+     */
+    public boolean processPaymentSuccess(int fineId, String paymentMethod, String paymentNote, String operator) throws Exception {
+        Fine fine = fineDao.findById(fineId);
+        if (fine == null) {
+            return false;
+        }
+        if ("PAID".equalsIgnoreCase(fine.getStatus())) {
+            return true;
+        }
+        return fineDao.updateStatus(fineId, "PAID", paymentMethod, paymentNote, operator);
+    }
 
     /** Đồng bộ tiền phạt quá hạn cho toàn bộ lượt mượn để trang quản lý hiển thị số mới nhất. */
     public void synchronizeAllOverdueFines() throws Exception {
