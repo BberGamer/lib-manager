@@ -38,6 +38,7 @@
 <c:url var="categoriesUrl" value="${rolePath}/categories" />
 <c:url var="policiesAdminUrl" value="/admin/policies" />
 <c:url var="usersUrl" value="${rolePath}/users" />
+<c:url var="auditLogsUrl" value="/admin/audit-logs" />
 <c:url var="profileUrl" value="${navUser.admin ? '/admin/user/profile' : (navUser.librarian ? '/librarian/user/profile' : '/user/profile')}" />
 <c:url var="loginUrl" value="/login" />
 <c:url var="logoutUrl" value="/logout" />
@@ -173,6 +174,7 @@
                                        or navCurrentPage eq 'categories'
                                        or navCurrentPage eq 'policies'
                                        or navCurrentPage eq 'users'
+                                       or navCurrentPage eq 'audit-logs'
                                        or navCurrentPage eq 'dashboard-library'
                                        or navCurrentPage eq 'dashboard-admin'}" />
                             <li class="nav-item dropdown">
@@ -219,6 +221,10 @@
                                         <li><a href="${usersUrl}"
                                                class="dropdown-item ${navCurrentPage eq 'users' ? 'active' : ''}">
                                                 <i class="fa-solid fa-user-gear"></i> Tài khoản
+                                            </a></li>
+                                        <li><a href="${auditLogsUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'audit-logs' ? 'active' : ''}">
+                                                <i class="fa-solid fa-shield-halved"></i> Nhật ký Audit Log
                                             </a></li>
                                     </c:if>
                                     <li class="dropdown-divider"></li>

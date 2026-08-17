@@ -58,13 +58,13 @@
 
         <!-- Main Tab Navigation -->
         <div class="notification-tabs">
-            <button class="notification-tab-btn active"
+            <button class="notification-tab-btn ${activeTab eq 'reminders' ? '' : 'active'}"
                     onclick="switchNotificationTab('compose-tab')"
                     id="tab-compose-tab-btn"
                     type="button">
                 <i class="fa-solid fa-pen-to-square"></i> Soạn &amp; Lịch sử gửi
             </button>
-            <button class="notification-tab-btn"
+            <button class="notification-tab-btn ${activeTab eq 'reminders' ? 'active' : ''}"
                     onclick="switchNotificationTab('reminders-tab')"
                     id="tab-reminders-tab-btn"
                     type="button">
@@ -73,7 +73,7 @@
         </div>
 
         <!-- TAB 1: COMPOSE & HISTORY -->
-        <div class="tab-content" id="compose-tab" style="display: block;">
+        <div class="tab-content" id="compose-tab" style="${activeTab eq 'reminders' ? 'display: none;' : 'display: block;'}">
             
             <!-- Compose Form Card -->
             <div class="notification-compose-card">
@@ -130,6 +130,7 @@
                     <h3 class="notification-table-title">Lịch sử thông báo đã gửi</h3>
                     
                     <form action="${manageUrl}" method="get" style="display: flex; gap: 10px; margin: 0;">
+                        <input type="hidden" name="tab" value="compose">
                         <select name="filterType" class="notification-select" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
                             <option value="">Tất cả loại</option>
                             <option value="SYSTEM" ${selectedFilterType eq 'SYSTEM' ? 'selected' : ''}>Hệ thống</option>
@@ -249,6 +250,7 @@
                     <ul class="pagination">
                         <li class="page-item ${currentPageNum <= 1 ? 'disabled' : ''}">
                             <c:url var="prevUrl" value="${rolePath}/notification/manage">
+                                <c:param name="tab" value="compose" />
                                 <c:param name="filterType" value="${selectedFilterType}" />
                                 <c:param name="page" value="${currentPageNum - 1}" />
                             </c:url>
@@ -258,6 +260,7 @@
                         </li>
                         <c:forEach begin="1" end="${totalPages}" var="p">
                             <c:url var="pUrl" value="${rolePath}/notification/manage">
+                                <c:param name="tab" value="compose" />
                                 <c:param name="filterType" value="${selectedFilterType}" />
                                 <c:param name="page" value="${p}" />
                             </c:url>
@@ -269,6 +272,7 @@
                         </c:forEach>
                         <li class="page-item ${currentPageNum >= totalPages ? 'disabled' : ''}">
                             <c:url var="nextUrl" value="${rolePath}/notification/manage">
+                                <c:param name="tab" value="compose" />
                                 <c:param name="filterType" value="${selectedFilterType}" />
                                 <c:param name="page" value="${currentPageNum + 1}" />
                             </c:url>
@@ -282,26 +286,81 @@
         </div>
 
         <!-- TAB 2: AUTOMATIC REMINDERS -->
-        <div class="tab-content" id="reminders-tab" style="display: none;">
+        <div class="tab-content" id="reminders-tab" style="${activeTab eq 'reminders' ? 'display: block;' : 'display: none;'}">
             
+            <!-- Automated Scheduler Control Banner -->
+            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.08rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-robot" style="color: #3b82f6;"></i> Hệ thống quét tự động &amp; Lập lịch gửi thông báo (Batch Job)
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+                            Tự động đồng bộ tiền phạt và quét gửi thông báo hạn mượn sách lúc <b>07:00 sáng</b> mỗi ngày.
+                        </div>
+                    </div>
+                    <div>
+                        <form action="${sendUrl}" method="post" onsubmit="showNotificationLoading(this)" style="margin: 0;">
+                            <input type="hidden" name="action" value="run-auto-job">
+                            <input type="hidden" name="sub" value="${empty activeSubTab ? 'due' : activeSubTab}">
+                            <button type="submit" class="btn btn-primary" style="padding: 9px 18px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(230,126,34,0.3);">
+                                <i class="fa-solid fa-bolt"></i> Chạy quét &amp; Gửi hàng loạt ngay
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Toggle Controls Form -->
+                <form action="${sendUrl}" method="post" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 14px; border-top: 1px dashed #e2e8f0; margin: 0;">
+                    <input type="hidden" name="action" value="toggle-automation">
+                    <input type="hidden" name="sub" value="${empty activeSubTab ? 'due' : activeSubTab}">
+                    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">
+                            <i class="fa-regular fa-clock"></i> Lập lịch quét (Cron Job 07:00):
+                        </span>
+                        <input type="hidden" name="enableJob" id="enableJobInput" value="${autoJobEnabled}">
+                        <button type="button" onclick="document.getElementById('enableJobInput').value = '${not autoJobEnabled}'; this.form.submit();"
+                                class="btn btn-sm ${autoJobEnabled ? 'btn-success' : 'btn-secondary'}"
+                                style="padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; ${autoJobEnabled ? 'background: #16a34a; border-color: #16a34a; color: white;' : 'background: #94a3b8; border-color: #94a3b8; color: white;'}">
+                            <i class="fa-solid ${autoJobEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                            ${autoJobEnabled ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
+                        </button>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">
+                            <i class="fa-regular fa-envelope"></i> Tự động gửi Email (SMTP):
+                        </span>
+                        <input type="hidden" name="enableEmail" id="enableEmailInput" value="${autoEmailEnabled}">
+                        <button type="button" onclick="document.getElementById('enableEmailInput').value = '${not autoEmailEnabled}'; this.form.submit();"
+                                class="btn btn-sm ${autoEmailEnabled ? 'btn-success' : 'btn-secondary'}"
+                                style="padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; ${autoEmailEnabled ? 'background: #16a34a; border-color: #16a34a; color: white;' : 'background: #94a3b8; border-color: #94a3b8; color: white;'}">
+                            <i class="fa-solid ${autoEmailEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                            ${autoEmailEnabled ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <!-- Sub-tab Navigation -->
             <div class="reminder-sub-nav">
                 <button type="button" onclick="switchReminderSubSection('due-reminders-sub')"
-                        class="btn btn-sm btn-primary reminder-sub-btn" id="due-sub-btn">
+                        class="btn btn-sm ${empty activeSubTab || activeSubTab eq 'due' ? 'btn-primary' : 'btn-outline'} reminder-sub-btn" id="due-sub-btn">
                     Sách sắp đến hạn (${not empty nearDueLoans ? fn:length(nearDueLoans) : 0})
                 </button>
                 <button type="button" onclick="switchReminderSubSection('overdue-reminders-sub')"
-                        class="btn btn-sm btn-outline reminder-sub-btn" id="overdue-sub-btn">
+                        class="btn btn-sm ${activeSubTab eq 'overdue' ? 'btn-primary' : 'btn-outline'} reminder-sub-btn" id="overdue-sub-btn">
                     Quá hạn (${not empty overdueLoans ? fn:length(overdueLoans) : 0})
                 </button>
                 <button type="button" onclick="switchReminderSubSection('fines-reminders-sub')"
-                        class="btn btn-sm btn-outline reminder-sub-btn" id="fines-sub-btn">
+                        class="btn btn-sm ${activeSubTab eq 'fines' ? 'btn-primary' : 'btn-outline'} reminder-sub-btn" id="fines-sub-btn">
                     Phạt chưa nộp (${not empty unpaidFines ? fn:length(unpaidFines) : 0})
                 </button>
             </div>
 
             <!-- Due Reminders Section -->
-            <div class="reminder-sub-section" id="due-reminders-sub" style="display: block;">
+            <div class="reminder-sub-section" id="due-reminders-sub" style="${empty activeSubTab || activeSubTab eq 'due' ? 'display: block;' : 'display: none;'}">
                 <div class="notification-table-card">
                     <table class="notification-table">
                         <thead>
@@ -343,6 +402,7 @@
                                             <td style="text-align: right;">
                                                 <form action="${sendUrl}" method="post" style="display: inline;" onsubmit="showNotificationLoading(this)">
                                                     <input type="hidden" name="action" value="send-due">
+                                                    <input type="hidden" name="sub" value="due">
                                                     <input type="hidden" name="id" value="${br.id}">
                                                     <button type="submit" class="btn btn-sm btn-primary" style="font-size: 0.8rem; border-radius: 6px;">
                                                         <i class="fa-solid fa-paper-plane"></i> Gửi nhắc nhở
@@ -359,7 +419,7 @@
             </div>
 
             <!-- Overdue Section -->
-            <div class="reminder-sub-section" id="overdue-reminders-sub" style="display: none;">
+            <div class="reminder-sub-section" id="overdue-reminders-sub" style="${activeSubTab eq 'overdue' ? 'display: block;' : 'display: none;'}">
                 <div class="notification-table-card">
                     <table class="notification-table">
                         <thead>
@@ -401,6 +461,7 @@
                                             <td style="text-align: right;">
                                                 <form action="${sendUrl}" method="post" style="display: inline;" onsubmit="showNotificationLoading(this)">
                                                     <input type="hidden" name="action" value="send-overdue">
+                                                    <input type="hidden" name="sub" value="overdue">
                                                     <input type="hidden" name="id" value="${br.id}">
                                                     <button type="submit" class="btn btn-sm btn-danger" style="font-size: 0.8rem; border-radius: 6px; background:#e74c3c; border-color:#e74c3c;">
                                                         <i class="fa-solid fa-paper-plane"></i> Gửi cảnh báo
@@ -417,7 +478,7 @@
             </div>
 
             <!-- Unpaid Fines Section -->
-            <div class="reminder-sub-section" id="fines-reminders-sub" style="display: none;">
+            <div class="reminder-sub-section" id="fines-reminders-sub" style="${activeSubTab eq 'fines' ? 'display: block;' : 'display: none;'}">
                 <div class="notification-table-card">
                     <table class="notification-table">
                         <thead>
@@ -454,6 +515,7 @@
                                             <td style="text-align: right;">
                                                 <form action="${sendUrl}" method="post" style="display: inline;" onsubmit="showNotificationLoading(this)">
                                                     <input type="hidden" name="action" value="send-fine">
+                                                    <input type="hidden" name="sub" value="fines">
                                                     <input type="hidden" name="id" value="${f.id}">
                                                     <button type="submit" class="btn btn-sm btn-warning" style="font-size: 0.8rem; border-radius: 6px; background:#f39c12; border-color:#f39c12; color:white;">
                                                         <i class="fa-solid fa-paper-plane"></i> Yêu cầu nộp phạt

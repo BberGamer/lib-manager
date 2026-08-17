@@ -116,6 +116,13 @@ public class FineManagementServlet extends HttpServlet {
                 borrowRecordId, userId, bookCondition, amount, reason);
         
         if (success) {
+            User loggedUser = (User) session.getAttribute("loggedUser");
+            String operator = loggedUser != null ? loggedUser.getUsername() : "System";
+            if ("LOST".equalsIgnoreCase(bookCondition)) {
+                utils.AuditLogger.logLostFine(operator, userId, borrowRecordId, amount.toString());
+            } else {
+                utils.AuditLogger.logDamageFine(operator, userId, borrowRecordId, amount.toString());
+            }
             session.setAttribute("successMsg", "Đã ghi nhận khoản phạt phạt tiền thành công!");
         } else {
             session.setAttribute("errorMsg", "Ghi nhận khoản phạt thất bại!");
@@ -139,6 +146,11 @@ public class FineManagementServlet extends HttpServlet {
 
         boolean success = fineDAO.updateStatus(id, status, paymentMethod, paymentNote, operator);
         if (success) {
+            if ("WAIVED".equalsIgnoreCase(status)) {
+                Fine f = fineDAO.findById(id);
+                int targetUid = f != null ? f.getUserId() : 0;
+                utils.AuditLogger.logWaiveFine(operator, targetUid, id, paymentNote);
+            }
             session.setAttribute("successMsg", "Cập nhật trạng thái khoản phạt thành công!");
         } else {
             session.setAttribute("errorMsg", "Cập nhật trạng thái khoản phạt thất bại!");
