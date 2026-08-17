@@ -146,77 +146,61 @@
             </div>
         </section>
 
-        <%
-            Integer totalPgC = (Integer) request.getAttribute("totalPages");
-            Integer curPgC   = (Integer) request.getAttribute("currentPage");
-            String ctx4      = request.getContextPath();
-            if (totalPgC == null) totalPgC = 1;
-            if (curPgC   == null) curPgC   = 1;
-            String baseUrlC  = ctx4 + "/admin/categories?page=";
-            if (totalPgC > 1) {
-        %>
-        <nav aria-label="Phân trang danh mục" style="margin-top: 24px;">
-            <ul class="pagination">
-                <!-- Prev -->
-                <li class="page-item <%= curPgC <= 1 ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlC %><%= curPgC - 1 %>">
-                        <i class="fa-solid fa-chevron-left fa-xs"></i>
-                    </a>
-                </li>
+        <c:if test="${totalPages gt 1}">
+            <nav class="category-pagination" aria-label="Phân trang danh mục">
+                <c:choose>
+                    <c:when test="${currentPage gt 1}">
+                        <c:url var="previousPageUrl" value="/admin/categories">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="sort" value="${sortField}" />
+                            <c:param name="order" value="${sortOrder}" />
+                            <c:param name="page" value="${currentPage - 1}" />
+                        </c:url>
+                        <a class="category-page-link" href="${previousPageUrl}" aria-label="Trang trước">
+                            <i class="fa-solid fa-chevron-left fa-xs"></i>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="category-page-link" aria-disabled="true">
+                            <i class="fa-solid fa-chevron-left fa-xs"></i>
+                        </span>
+                    </c:otherwise>
+                </c:choose>
 
-                <%
-                   if (totalPgC <= 7) {
-                       for (int pg = 1; pg <= totalPgC; pg++) { %>
-                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   } else {
-                       for (int pg = 1; pg <= 2; pg++) { %>
-                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                       if (curPgC <= 4) {
-                           for (int pg = 3; pg <= 5; pg++) { %>
-                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% } else if (curPgC >= totalPgC - 3) { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = totalPgC - 4; pg <= totalPgC - 2; pg++) { %>
-                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% }
-                       } else { %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                           <% for (int pg = curPgC - 1; pg <= curPgC + 1; pg++) { %>
-                               <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                                   <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                               </li>
-                           <% } %>
-                           <li class="page-item disabled"><span class="page-link">…</span></li>
-                       <% }
-                       for (int pg = totalPgC - 1; pg <= totalPgC; pg++) { %>
-                           <li class="page-item <%= pg == curPgC ? "active" : "" %>">
-                               <a class="page-link" href="<%= baseUrlC %><%= pg %>"><%= pg %></a>
-                           </li>
-                       <% }
-                   }
-                %>
-
-                <!-- Next -->
-                <li class="page-item <%= curPgC >= totalPgC ? "disabled" : "" %>">
-                    <a class="page-link" href="<%= baseUrlC %><%= curPgC + 1 %>">
-                        <i class="fa-solid fa-chevron-right fa-xs"></i>
+                <c:forEach var="pageNumber" begin="1" end="${totalPages}">
+                    <c:url var="pageUrl" value="/admin/categories">
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="sort" value="${sortField}" />
+                        <c:param name="order" value="${sortOrder}" />
+                        <c:param name="page" value="${pageNumber}" />
+                    </c:url>
+                    <a class="category-page-link ${pageNumber eq currentPage ? 'is-current' : ''}"
+                       href="${pageUrl}" aria-label="Trang ${pageNumber}"
+                       aria-current="${pageNumber eq currentPage ? 'page' : ''}">
+                        <c:out value="${pageNumber}" />
                     </a>
-                </li>
-            </ul>
-        </nav>
-        <% } %>
+                </c:forEach>
+
+                <c:choose>
+                    <c:when test="${currentPage lt totalPages}">
+                        <c:url var="nextPageUrl" value="/admin/categories">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="sort" value="${sortField}" />
+                            <c:param name="order" value="${sortOrder}" />
+                            <c:param name="page" value="${currentPage + 1}" />
+                        </c:url>
+                        <a class="category-page-link" href="${nextPageUrl}" aria-label="Trang tiếp theo">
+                            <i class="fa-solid fa-chevron-right fa-xs"></i>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="category-page-link" aria-disabled="true">
+                            <i class="fa-solid fa-chevron-right fa-xs"></i>
+                        </span>
+                    </c:otherwise>
+                </c:choose>
+            </nav>
+        </c:if>
 
     </div>
 </main>
