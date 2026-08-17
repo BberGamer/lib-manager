@@ -24,6 +24,7 @@
                 <c:url var="sidebarLogoutUrl" value="/logout" />
                 <c:url var="sidebarLibraryStatsUrl" value="${rolePath}/dashboard/library" />
                 <c:url var="sidebarAdminStatsUrl" value="/admin" />
+                <c:url var="sidebarAuditLogsUrl" value="/admin/audit-logs" />
                 <c:url var="sidebarLogoUrl" value="/assets/images/logo.png" />
 
                 <div class="admin-sidebar-header-row"
@@ -175,6 +176,11 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'users' ? 'active' : ''}">
                                         <i class="fa-solid fa-users-gear"></i>
                                         <span>Quản lý tài khoản</span>
+                                    </a>
+                                    <a href="${sidebarAuditLogsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'audit-logs' ? 'active' : ''}">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        <span>Nhật ký Audit Log</span>
                                     </a>
                                 </nav>
                             </div>

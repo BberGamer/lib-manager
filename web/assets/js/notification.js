@@ -23,6 +23,17 @@ function switchNotificationTab(tabId) {
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
+
+    // Cập nhật query param trên URL trình duyệt
+    try {
+        const url = new URL(window.location.href);
+        const tabParam = (tabId === 'reminders-tab') ? 'reminders' : 'compose';
+        url.searchParams.set('tab', tabParam);
+        if (tabParam === 'compose') {
+            url.searchParams.delete('sub');
+        }
+        window.history.pushState({}, '', url.toString());
+    } catch (e) {}
 }
 
 /**
@@ -47,14 +58,32 @@ function switchReminderSubSection(subSectionId) {
     if (finesBtn) finesBtn.className = 'btn btn-sm btn-outline reminder-sub-btn';
 
     let activeSubBtnId = '';
-    if (subSectionId === 'due-reminders-sub') activeSubBtnId = 'due-sub-btn';
-    if (subSectionId === 'overdue-reminders-sub') activeSubBtnId = 'overdue-sub-btn';
-    if (subSectionId === 'fines-reminders-sub') activeSubBtnId = 'fines-sub-btn';
+    let subParam = 'due';
+    if (subSectionId === 'due-reminders-sub') {
+        activeSubBtnId = 'due-sub-btn';
+        subParam = 'due';
+    }
+    if (subSectionId === 'overdue-reminders-sub') {
+        activeSubBtnId = 'overdue-sub-btn';
+        subParam = 'overdue';
+    }
+    if (subSectionId === 'fines-reminders-sub') {
+        activeSubBtnId = 'fines-sub-btn';
+        subParam = 'fines';
+    }
 
     const activeBtn = document.getElementById(activeSubBtnId);
     if (activeBtn) {
         activeBtn.className = 'btn btn-sm btn-primary reminder-sub-btn';
     }
+
+    // Cập nhật query param sub trên URL trình duyệt
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', 'reminders');
+        url.searchParams.set('sub', subParam);
+        window.history.pushState({}, '', url.toString());
+    } catch (e) {}
 }
 
 /**

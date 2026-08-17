@@ -119,9 +119,14 @@
 
             <!-- Audit Logs -->
             <div class="db-panel">
-                <h3 class="db-panel-title">
-                    <i class="fa-solid fa-list-check"></i> Nhật ký Audit Log (Hành vi override ngoại lệ)
-                </h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 class="db-panel-title" style="margin-bottom: 0;">
+                        <i class="fa-solid fa-list-check"></i> Nhật ký Audit Log (Hành vi override ngoại lệ)
+                    </h3>
+                    <a href="${pageContext.request.contextPath}/admin/audit-logs" class="btn btn-sm btn-outline" style="font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; text-decoration: none;">
+                        Xem tất cả <i class="fa-solid fa-arrow-right fa-xs"></i>
+                    </a>
+                </div>
                 <table class="db-table-sm">
                     <thead>
                         <tr class="db-table-header">
@@ -133,12 +138,49 @@
                     </thead>
                     <tbody>
                         <% if (recentLogs != null && !recentLogs.isEmpty()) { %>
-                            <% for (Map<String, Object> log : recentLogs) { %>
+                            <% for (Map<String, Object> log : recentLogs) { 
+                                String act = (String) log.get("action");
+                                String actLabel = act;
+                                String badgeStyle = "background: #f1f5f9; color: #475569;";
+                                if ("UNLOCK_ACCOUNT".equals(act)) {
+                                    actLabel = "Mở khóa tài khoản";
+                                    badgeStyle = "background: #dcfce7; color: #15803d;";
+                                } else if ("LOCK_ACCOUNT".equals(act)) {
+                                    actLabel = "Khóa tài khoản";
+                                    badgeStyle = "background: #fee2e2; color: #dc2626;";
+                                } else if ("DELETE_USER".equals(act)) {
+                                    actLabel = "Xóa tài khoản";
+                                    badgeStyle = "background: #f1f5f9; color: #475569;";
+                                } else if ("WAIVE_FINE".equals(act)) {
+                                    actLabel = "Miễn giảm phạt";
+                                    badgeStyle = "background: #e0f2fe; color: #0284c7;";
+                                } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
+                                    actLabel = "Vượt hạn mức";
+                                    badgeStyle = "background: #fef3c7; color: #d97706;";
+                                } else if ("APPLY_DAMAGE_FINE".equals(act)) {
+                                    actLabel = "Phạt hỏng sách";
+                                    badgeStyle = "background: #ffedd5; color: #c2410c;";
+                                } else if ("APPLY_LOST_FINE".equals(act)) {
+                                    actLabel = "Phạt mất sách";
+                                    badgeStyle = "background: #fee2e2; color: #991b1b;";
+                                } else if ("CONFIRM_RESERVATION".equals(act)) {
+                                    actLabel = "Duyệt đặt trước";
+                                    badgeStyle = "background: #f3e8ff; color: #7e22ce;";
+                                }
+
+                                String detail = (String) log.get("detail");
+                                String formattedDetail = detail;
+                                if ("unlocked by admin".equals(detail)) {
+                                    formattedDetail = "Đã mở khóa tài khoản";
+                                } else if (detail != null && detail.startsWith("reason=")) {
+                                    formattedDetail = "Lý do: " + detail.substring(7);
+                                }
+                            %>
                                 <tr class="db-table-row">
                                     <td class="db-table-cell-muted"><%= log.get("created_at") %></td>
-                                    <td><span class="badge db-badge-action"><%= log.get("action") %></span></td>
+                                    <td><span style="<%= badgeStyle %> padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;"><%= actLabel %></span></td>
                                     <td class="db-table-cell-title">@<%= log.get("performed_by") %></td>
-                                    <td><%= log.get("detail") %></td>
+                                    <td><%= formattedDetail %></td>
                                 </tr>
                             <% } %>
                         <% } else { %>

@@ -145,7 +145,7 @@ public class DashboardDao {
 
     public List<Map<String, Object>> getRecentAuditLogs(int limit) throws Exception {
         String sql = "SELECT id, action, performed_by, target_user_id, detail, created_at "
-                   + "FROM audit_logs ORDER BY created_at DESC LIMIT ?";
+                   + "FROM audit_logs ORDER BY id ASC, created_at ASC LIMIT ?";
         List<Map<String, Object>> list = new ArrayList<>();
         try (Connection con = DBContext.getInstance().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
