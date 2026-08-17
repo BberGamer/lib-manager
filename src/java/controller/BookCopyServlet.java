@@ -184,8 +184,8 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         String barcode = trim(request.getParameter("barcode"));
-        String condition = trim(request.getParameter("bookCondition"));
-        String status = trim(request.getParameter("status"));
+        String condition = "GOOD"; // Tình trạng mặc định là GOOD khi thêm mới
+        String status = "AVAILABLE"; // Trạng thái mặc định là AVAILABLE khi thêm mới
         String area = trim(request.getParameter("area"));
         String shelf = trim(request.getParameter("shelf"));
         String slot = trim(request.getParameter("slot"));
@@ -302,7 +302,19 @@ public class BookCopyServlet extends HttpServlet {
 
         String barcode = trim(request.getParameter("barcode"));
         String condition = trim(request.getParameter("bookCondition"));
-        String status = trim(request.getParameter("status"));
+        String status = existingCopy.getStatus(); // Giữ nguyên trạng thái hiện tại để xử lý tự động
+
+        // Tự động điều chỉnh trạng thái tương thích với tình trạng sách mới
+        if ("GOOD".equals(condition)) {
+            if ("MAINTENANCE".equals(status) || "LOST".equals(status)) {
+                status = "AVAILABLE";
+            }
+        } else if ("WORN".equals(condition) || "DAMAGED".equals(condition)) {
+            status = "MAINTENANCE";
+        } else if ("LOST".equals(condition)) {
+            status = "LOST";
+        }
+
         String area = trim(request.getParameter("area"));
         String shelf = trim(request.getParameter("shelf"));
         String slot = trim(request.getParameter("slot"));

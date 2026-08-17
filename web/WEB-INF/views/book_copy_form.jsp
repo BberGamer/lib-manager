@@ -136,29 +136,28 @@
                 </div>
 
                 <!-- Condition and Status Row -->
-                <div class="form-row">
-                    <!-- Book Condition -->
-                    <div class="form-group">
-                        <label for="conditionSelect" class="form-label">Tình trạng (Condition)</label>
-                        <select id="conditionSelect" name="bookCondition" class="form-select">
-                            <option value="GOOD" <%= "GOOD".equals(selectedCondition) ? "selected" : "" %>>GOOD (Tốt)</option>
-                            <option value="WORN" <%= "WORN".equals(selectedCondition) ? "selected" : "" %>>WORN (Hao mòn)</option>
-                            <option value="DAMAGED" <%= "DAMAGED".equals(selectedCondition) ? "selected" : "" %>>DAMAGED (Hỏng)</option>
-                            <option value="LOST" <%= "LOST".equals(selectedCondition) ? "selected" : "" %>>LOST (Mất)</option>
-                        </select>
+                <% if (isEdit) { %>
+                    <div class="form-row">
+                        <!-- Book Condition -->
+                        <div class="form-group" style="width: 100%;">
+                            <label for="conditionSelect" class="form-label">Tình trạng (Condition) <span class="required">*</span></label>
+                            <select id="conditionSelect" name="bookCondition" class="form-select">
+                                <option value="GOOD" <%= "GOOD".equals(selectedCondition) ? "selected" : "" %>>GOOD (Tốt)</option>
+                                <option value="WORN" <%= "WORN".equals(selectedCondition) ? "selected" : "" %>>WORN (Hao mòn)</option>
+                                <option value="DAMAGED" <%= "DAMAGED".equals(selectedCondition) ? "selected" : "" %>>DAMAGED (Hỏng)</option>
+                                <option value="LOST" <%= "LOST".equals(selectedCondition) ? "selected" : "" %>>LOST (Mất)</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <!-- Status -->
-                    <div class="form-group">
-                        <label for="statusSelect" class="form-label">Trạng thái (Status)</label>
-                        <select id="statusSelect" name="status" class="form-select">
-                            <option value="AVAILABLE" <%= "AVAILABLE".equals(selectedStatus) ? "selected" : "" %>>AVAILABLE (Sẵn sàng)</option>
-                            <option value="BORROWED" <%= "BORROWED".equals(selectedStatus) ? "selected" : "" %>>BORROWED (Đang mượn)</option>
-                            <option value="MAINTENANCE" <%= "MAINTENANCE".equals(selectedStatus) ? "selected" : "" %>>MAINTENANCE (Bảo trì)</option>
-                            <option value="LOST" <%= "LOST".equals(selectedStatus) ? "selected" : "" %>>LOST (Đã mất)</option>
-                        </select>
+                <% } else { %>
+                    <div class="form-row">
+                        <div class="form-group" style="width: 100%;">
+                            <label class="form-label">Tình trạng (Condition)</label>
+                            <input type="text" class="form-control" value="GOOD (Tốt)" readonly style="background:var(--bg-surface); cursor:not-allowed; opacity:0.8;">
+                            <input type="hidden" name="bookCondition" value="GOOD">
+                        </div>
                     </div>
-                </div>
+                <% } %>
 
                 <!-- Location Details Section -->
                 <div style="margin: 24px 0 12px 0; border-top: 1px solid var(--border-light); padding-top: 20px;">
@@ -224,59 +223,6 @@
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var conditionSelect = document.getElementById('conditionSelect');
-    var statusSelect = document.getElementById('statusSelect');
-    var originalSelectedStatus = "<%= selectedStatus %>";
-
-    function updateStatusOptions() {
-        var condition = conditionSelect.value;
-        var currentStatus = statusSelect.value || originalSelectedStatus;
-        
-        var allStatuses = [
-            { value: 'AVAILABLE', text: 'AVAILABLE (Sẵn sàng)' },
-            { value: 'BORROWED', text: 'BORROWED (Đang mượn)' },
-            { value: 'MAINTENANCE', text: 'MAINTENANCE (Bảo trì)' },
-            { value: 'LOST', text: 'LOST (Đã mất)' }
-        ];
-        
-        var allowedValues = [];
-        if (condition === 'GOOD') {
-            allowedValues = ['AVAILABLE', 'BORROWED'];
-        } else if (condition === 'WORN' || condition === 'DAMAGED') {
-            allowedValues = ['MAINTENANCE'];
-        } else if (condition === 'LOST') {
-            allowedValues = ['LOST'];
-        }
-        
-        statusSelect.innerHTML = '';
-        
-        allStatuses.forEach(function(status) {
-            if (allowedValues.indexOf(status.value) !== -1) {
-                var opt = document.createElement('option');
-                opt.value = status.value;
-                opt.textContent = status.text;
-                if (status.value === currentStatus) {
-                    opt.selected = true;
-                }
-                statusSelect.appendChild(opt);
-            }
-        });
-        
-        // If current selected status is no longer valid, select the first allowed status
-        if (allowedValues.indexOf(statusSelect.value) === -1 && allowedValues.length > 0) {
-            statusSelect.value = allowedValues[0];
-        }
-    }
-
-    conditionSelect.addEventListener('change', function() {
-        originalSelectedStatus = ""; // Reset on manual change
-        updateStatusOptions();
-    });
-
-    updateStatusOptions();
-});
-
 document.getElementById('copyForm').addEventListener('submit', function(e) {
     var barcodeVal = document.getElementById('barcodeInput').value.trim();
     var areaVal = document.getElementById('areaInput').value.trim();
