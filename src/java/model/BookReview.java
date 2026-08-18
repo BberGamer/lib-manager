@@ -16,6 +16,11 @@ public class BookReview {
     private String userStudentId;
     private String bookTitle;
 
+    /** Mã lượt mượn liên kết với đánh giá này (mỗi lượt mượn được đánh giá tối đa 1 lần) */
+    private Integer borrowId;
+    /** Ngày mượn thực tế để hiển thị nhãn tin cậy */
+    private java.time.LocalDate borrowDate;
+
     public BookReview() {}
 
     public BookReview(int id, int bookId, int userId, int rating, String comment, Date createdAt, Date updatedAt) {
@@ -70,4 +75,28 @@ public class BookReview {
 
     public String getBookTitle() { return bookTitle; }
     public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
+
+    /**
+     * Lấy mã lượt mượn sách liên kết.
+     * @return mã lượt mượn (nullable)
+     */
+    public Integer getBorrowId() { return borrowId; }
+
+    /**
+     * Gán mã lượt mượn sách liên kết.
+     * @param borrowId mã lượt mượn
+     */
+    public void setBorrowId(Integer borrowId) { this.borrowId = borrowId; }
+
+    /**
+     * Lấy ngày mượn thực tế để hiển thị nhãn tin cậy.
+     * @return ngày mượn thực tế (nullable)
+     */
+    public java.time.LocalDate getBorrowDate() { return borrowDate; }
+
+    /**
+     * Gán ngày mượn thực tế.
+     * @param borrowDate ngày mượn
+     */
+    public void setBorrowDate(java.time.LocalDate borrowDate) { this.borrowDate = borrowDate; }
 }

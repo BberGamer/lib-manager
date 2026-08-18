@@ -152,7 +152,32 @@ public class BookDetailServlet extends HttpServlet {
             User loggedUser = (session != null) ? (User) session.getAttribute("loggedUser") : null;
             
             if (loggedUser != null && "READER".equals(loggedUser.getRole())) {
-                canReview = reviewDAO.hasBorrowedBook(id, loggedUser.getId());
+                Integer borrowIdParam = null;
+                String borrowIdStr = request.getParameter("borrowId");
+                if (borrowIdStr != null && !borrowIdStr.trim().isEmpty()) {
+                    try {
+                        borrowIdParam = Integer.parseInt(borrowIdStr);
+                    } catch (NumberFormatException e) {
+                        // Bỏ qua
+                    }
+                }
+
+                Integer targetBorrowId = null;
+                if (borrowIdParam != null) {
+                    boolean isValid = reviewDAO.isBorrowEligibleForReview(borrowIdParam, id, loggedUser.getId());
+                    if (isValid) {
+                        targetBorrowId = borrowIdParam;
+                    }
+                }
+
+                if (targetBorrowId == null) {
+                    targetBorrowId = reviewDAO.getUnreviewedBorrowId(id, loggedUser.getId());
+                }
+
+                if (targetBorrowId != null) {
+                    canReview = true;
+                    request.setAttribute("unreviewedBorrowId", targetBorrowId);
+                }
             }
 
             request.setAttribute("reviews", reviews);

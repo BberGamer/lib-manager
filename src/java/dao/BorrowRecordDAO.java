@@ -618,14 +618,13 @@ public class BorrowRecordDAO {
     public boolean createPickupRequest(int userId, int bookId, int holdHours) throws Exception {
         String duplicateSql = "SELECT id FROM borrow_records WHERE user_id = ? AND book_id = ? "
                 + "AND status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE') FOR UPDATE";
-        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND status = 'AVAILABLE' "
+        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND is_deleted = 0 "
+                + "AND id NOT IN (SELECT copy_id FROM borrow_records WHERE copy_id IS NOT NULL AND status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) "
                 + "ORDER BY id LIMIT 1 FOR UPDATE";
         String insertSql = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, "
                 + "pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
                 + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
                 + "'PENDING_PICKUP', NOW(), NOW())";
-        String holdSql = "UPDATE book_copies SET status = 'RESERVED', updated_at = NOW() "
-                + "WHERE id = ? AND status = 'AVAILABLE'";
         String decreaseSql = "UPDATE books SET available=GREATEST(0, available-1) WHERE id=?";
         String queueSql = "SELECT id,user_id,status FROM book_reservations WHERE book_id=? "
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') ORDER BY CASE "
@@ -668,13 +667,6 @@ public class BorrowRecordDAO {
                             return false;
                         }
                         copyId = resultSet.getInt(1);
-                    }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(holdSql)) {
-                    statement.setInt(1, copyId);
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
                     }
                 }
                 try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
