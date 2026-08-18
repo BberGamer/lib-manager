@@ -165,21 +165,12 @@
                                                              <td data-label="Thao tác">
                                                                  <a class="fine-detail-link" href="${detailUrl}">Xem chi tiết</a>
                                                                  <c:if test="${fine.status eq 'UNPAID'}">
-                                                                     <c:choose>
-                                                                         <c:when test="${not empty fine.borrowRecord.returnDate}">
-                                                                             <c:url var="payUrl" value="/vnpay-pay">
-                                                                                 <c:param name="fineId" value="${fine.id}" />
-                                                                             </c:url>
-                                                                             <a class="fine-vnpay-btn" href="${payUrl}">
-                                                                                 <i class="fa-solid fa-credit-card"></i> Thanh toán VNPay
-                                                                             </a>
-                                                                         </c:when>
-                                                                         <c:otherwise>
-                                                                             <span class="fine-pending-return-badge" title="Cần trả sách cho thư viện trước khi thanh toán khoản phạt">
-                                                                                 <i class="fa-solid fa-book-bookmark"></i> Chưa trả sách
-                                                                             </span>
-                                                                         </c:otherwise>
-                                                                     </c:choose>
+                                                                     <c:url var="payUrl" value="/vnpay-pay">
+                                                                         <c:param name="fineId" value="${fine.id}" />
+                                                                     </c:url>
+                                                                     <a class="fine-vnpay-btn" href="${payUrl}">
+                                                                         <i class="fa-solid fa-credit-card"></i> Thanh toán VNPay
+                                                                     </a>
                                                                  </c:if>
                                                              </td>
                                                         </tr>
