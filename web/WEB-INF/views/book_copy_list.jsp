@@ -8,7 +8,6 @@
     Integer totalPages = (Integer) request.getAttribute("totalPages");
     Integer currentPageNum = (Integer) request.getAttribute("currentPageNum");
     String keyword = (String) request.getAttribute("keyword");
-    String selectedStatus = (String) request.getAttribute("selectedStatus");
     String selectedArea = (String) request.getAttribute("selectedArea");
     List<String> distinctAreas = (List<String>) request.getAttribute("distinctAreas");
 
@@ -17,7 +16,6 @@
     if (totalPages == null) totalPages = 1;
     if (currentPageNum == null) currentPageNum = 1;
     if (keyword == null) keyword = "";
-    if (selectedStatus == null) selectedStatus = "";
     if (selectedArea == null) selectedArea = "";
 
     // Retrieve success and error alerts
@@ -167,19 +165,6 @@
                                conditionClass = "badge-danger";
                            }
 
-                           // Mapping Status display
-                           String statusLabel = "Sẵn sàng";
-                           String statusClass = "badge-success";
-                           if ("BORROWED".equals(bc.getStatus())) {
-                               statusLabel = "Đang mượn";
-                               statusClass = "badge-info";
-                           } else if ("MAINTENANCE".equals(bc.getStatus())) {
-                               statusLabel = "Bảo trì";
-                               statusClass = "badge-danger";
-                           } else if ("LOST".equals(bc.getStatus())) {
-                               statusLabel = "Đã mất";
-                               statusClass = "badge-danger";
-                           }
                     %>
                         <tr>
                             <td style="color:var(--text-muted); font-size:0.82rem; text-align: center;"><%= rowNum++ %></td>
@@ -206,7 +191,7 @@
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     <% 
-                                        boolean isDeletable = !"BORROWED".equals(bc.getStatus()) && !"RESERVED".equals(bc.getStatus());
+                                        boolean isDeletable = !bc.isBorrowedOrReserved();
                                         HttpSession s = request.getSession(false);
                                         User u = (s != null) ? (User) s.getAttribute("loggedUser") : null;
                                         if (u != null && u.isAdmin

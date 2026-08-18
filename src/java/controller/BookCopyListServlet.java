@@ -88,13 +88,6 @@ public class BookCopyListServlet extends HttpServlet {
             keyword = "";
         }
 
-        String status = request.getParameter("status");
-        if (status != null) {
-            status = status.trim();
-        } else {
-            status = "";
-        }
-
         String area = request.getParameter("area");
         if (area != null) {
             area = area.trim();
@@ -120,8 +113,8 @@ public class BookCopyListServlet extends HttpServlet {
         List<String> distinctAreas = null;
 
         try {
-            copies = copyDao.searchCopies(bookId, keyword, status, area, pageNum, PAGE_SIZE);
-            totalRecords = copyDao.countCopies(bookId, keyword, status, area);
+            copies = copyDao.searchCopies(bookId, keyword, area, pageNum, PAGE_SIZE);
+            totalRecords = copyDao.countCopies(bookId, keyword, area);
             distinctAreas = copyDao.getDistinctAreas();
         } catch (Exception e) {
             e.printStackTrace();
@@ -139,7 +132,6 @@ public class BookCopyListServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("currentPageNum", pageNum);
         request.setAttribute("keyword", keyword);
-        request.setAttribute("selectedStatus", status);
         request.setAttribute("selectedArea", area);
         request.setAttribute("distinctAreas", distinctAreas);
         

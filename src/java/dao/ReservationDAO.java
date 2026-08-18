@@ -241,8 +241,9 @@ public class ReservationDAO {
      */
     public boolean createWaiting(int userId, int bookId) throws Exception {
         String lockBook = "SELECT id FROM books WHERE id=? AND is_deleted=0 FOR UPDATE";
-        String available = "SELECT id FROM book_copies WHERE book_id=? AND status='AVAILABLE' "
-                + "AND is_deleted=0 LIMIT 1 FOR UPDATE";
+        String available = "SELECT id FROM book_copies WHERE book_id=? AND is_deleted=0 "
+                + "AND book_condition='GOOD' AND id NOT IN (SELECT COALESCE(copy_id, 0) FROM borrow_records WHERE status IN ('PENDING_PICKUP','BORROWED','OVERDUE')) "
+                + "LIMIT 1 FOR UPDATE";
         String duplicate = "SELECT id FROM book_reservations WHERE user_id=? AND book_id=? "
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
         String activeBorrow = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? "
@@ -332,10 +333,10 @@ public class ReservationDAO {
                 + "INNER JOIN books b ON r.book_id = b.id "
                 + "INNER JOIN users u ON r.user_id = u.id "
                 + "WHERE r.id = ? FOR UPDATE";
-        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND status = 'AVAILABLE' "
+        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND is_deleted = 0 AND book_condition = 'GOOD' "
+                + "AND id NOT IN (SELECT COALESCE(copy_id, 0) FROM borrow_records WHERE status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) "
                 + "ORDER BY id LIMIT 1 FOR UPDATE";
         String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
-        String updateCopy = "UPDATE book_copies SET status = 'RESERVED', updated_by = ?, updated_at = NOW() WHERE id = ?";
         String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
                 + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, 0, 'PENDING_PICKUP', NOW(), NOW())";
         String updateBook = "UPDATE books SET available = GREATEST(0, available - 1) WHERE id = ?";
@@ -388,13 +389,6 @@ public class ReservationDAO {
                 // 1. Update reservation
                 try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
                     ps.setInt(1, reservationId);
-                    ps.executeUpdate();
-                }
-
-                // 2. Update copy to RESERVED
-                try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
-                    ps.setString(1, operator);
-                    ps.setInt(2, copyId);
                     ps.executeUpdate();
                 }
 

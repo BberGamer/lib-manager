@@ -185,7 +185,6 @@ public class BookCopyServlet extends HttpServlet {
 
         String barcode = trim(request.getParameter("barcode"));
         String condition = "GOOD"; // Tình trạng mặc định là GOOD khi thêm mới
-        String status = "AVAILABLE"; // Trạng thái mặc định là AVAILABLE khi thêm mới
         String area = trim(request.getParameter("area"));
         String shelf = trim(request.getParameter("shelf"));
         String slot = trim(request.getParameter("slot"));
@@ -220,20 +219,7 @@ public class BookCopyServlet extends HttpServlet {
             errors.add("Ghi chú không được vượt quá 255 ký tự.");
         }
 
-        // Validate condition vs status
-        if ("GOOD".equals(condition)) {
-            if (!"AVAILABLE".equals(status) && !"BORROWED".equals(status) && !"RESERVED".equals(status)) {
-                errors.add("Tình trạng 'GOOD' chỉ đi kèm với các trạng thái: AVAILABLE, BORROWED, RESERVED.");
-            }
-        } else if ("WORN".equals(condition) || "DAMAGED".equals(condition)) {
-            if (!"MAINTENANCE".equals(status)) {
-                errors.add("Tình trạng 'WORN' hoặc 'DAMAGED' bắt buộc trạng thái phải là MAINTENANCE.");
-            }
-        } else if ("LOST".equals(condition)) {
-            if (!"LOST".equals(status)) {
-                errors.add("Tình trạng 'LOST' bắt buộc trạng thái phải là LOST.");
-            }
-        }
+        // No status validation required
 
         if (!errors.isEmpty()) {
             setSidebarAttributes(request);
@@ -242,7 +228,6 @@ public class BookCopyServlet extends HttpServlet {
             request.setAttribute("errors", errors);
             request.setAttribute("barcode", barcode);
             request.setAttribute("selectedCondition", condition);
-            request.setAttribute("selectedStatus", status);
             request.setAttribute("area", area);
             request.setAttribute("shelf", shelf);
             request.setAttribute("slot", slot);
@@ -256,7 +241,6 @@ public class BookCopyServlet extends HttpServlet {
         copy.setBookId(bookId);
         copy.setBarcode(barcode);
         copy.setBookCondition(condition == null || condition.isEmpty() ? "GOOD" : condition);
-        copy.setStatus(status == null || status.isEmpty() ? "AVAILABLE" : status);
         copy.setArea(area);
         copy.setShelf(shelf);
         copy.setSlot(slot);
@@ -266,7 +250,7 @@ public class BookCopyServlet extends HttpServlet {
         BookCopyDAO copyDao = new BookCopyDAO();
         boolean success = copyDao.addCopy(copy);
         if (success) {
-            copyDao.addAuditLog(copy.getId(), "ADD", operator, null, copy.getStatus(), null, copy.getBookCondition(), "Thêm bản sao mới");
+            copyDao.addAuditLog(copy.getId(), "ADD", operator, null, copy.getBookCondition(), "Thêm bản sao mới");
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=added");
         } else {
             errors.add("Thêm bản sao thất bại do lỗi hệ thống.");
@@ -300,26 +284,13 @@ public class BookCopyServlet extends HttpServlet {
             return;
         }
 
-        String barcode = trim(request.getParameter("barcode"));
-        String condition = trim(request.getParameter("bookCondition"));
-        String status = existingCopy.getStatus(); // Giữ nguyên trạng thái hiện tại để xử lý tự động
-
-        // Tự động điều chỉnh trạng thái tương thích với tình trạng sách mới
-        if ("GOOD".equals(condition)) {
-            if ("MAINTENANCE".equals(status) || "LOST".equals(status)) {
-                status = "AVAILABLE";
-            }
-        } else if ("WORN".equals(condition) || "DAMAGED".equals(condition)) {
-            status = "MAINTENANCE";
-        } else if ("LOST".equals(condition)) {
-            status = "LOST";
-        }
-
         String area = trim(request.getParameter("area"));
         String shelf = trim(request.getParameter("shelf"));
         String slot = trim(request.getParameter("slot"));
         String note = trim(request.getParameter("note"));
 
+        String barcode = trim(request.getParameter("barcode"));
+        String condition = trim(request.getParameter("bookCondition"));
         List<String> errors = new ArrayList<>();
         if (barcode == null || barcode.isEmpty()) {
             errors.add("Mã bản sao (Barcode) không được để trống.");
@@ -348,20 +319,7 @@ public class BookCopyServlet extends HttpServlet {
             errors.add("Ghi chú không được vượt quá 255 ký tự.");
         }
 
-        // Validate condition vs status
-        if ("GOOD".equals(condition)) {
-            if (!"AVAILABLE".equals(status) && !"BORROWED".equals(status) && !"RESERVED".equals(status)) {
-                errors.add("Tình trạng 'GOOD' chỉ đi kèm với các trạng thái: AVAILABLE, BORROWED, RESERVED.");
-            }
-        } else if ("WORN".equals(condition) || "DAMAGED".equals(condition)) {
-            if (!"MAINTENANCE".equals(status)) {
-                errors.add("Tình trạng 'WORN' hoặc 'DAMAGED' bắt buộc trạng thái phải là MAINTENANCE.");
-            }
-        } else if ("LOST".equals(condition)) {
-            if (!"LOST".equals(status)) {
-                errors.add("Tình trạng 'LOST' bắt buộc trạng thái phải là LOST.");
-            }
-        }
+        // No status validation required
 
         if (!errors.isEmpty()) {
             setSidebarAttributes(request);
@@ -371,7 +329,6 @@ public class BookCopyServlet extends HttpServlet {
             request.setAttribute("errors", errors);
             request.setAttribute("barcode", barcode);
             request.setAttribute("selectedCondition", condition);
-            request.setAttribute("selectedStatus", status);
             request.setAttribute("area", area);
             request.setAttribute("shelf", shelf);
             request.setAttribute("slot", slot);
@@ -381,12 +338,10 @@ public class BookCopyServlet extends HttpServlet {
             return;
         }
 
-        String oldStatus = existingCopy.getStatus();
         String oldCondition = existingCopy.getBookCondition();
 
         existingCopy.setBarcode(barcode);
         existingCopy.setBookCondition(condition);
-        existingCopy.setStatus(status);
         existingCopy.setArea(area);
         existingCopy.setShelf(shelf);
         existingCopy.setSlot(slot);
@@ -395,7 +350,7 @@ public class BookCopyServlet extends HttpServlet {
 
         boolean success = copyDao.updateCopy(existingCopy);
         if (success) {
-            copyDao.addAuditLog(id, "UPDATE", operator, oldStatus, status, oldCondition, condition, "Cập nhật bản sao");
+            copyDao.addAuditLog(id, "UPDATE", operator, oldCondition, condition, "Cập nhật bản sao");
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + existingCopy.getBookId() + "&success=updated");
         } else {
             errors.add("Cập nhật bản sao thất bại do lỗi hệ thống.");
@@ -433,14 +388,20 @@ public class BookCopyServlet extends HttpServlet {
         int bookId = copy.getBookId();
 
         // Constraint check: Cannot delete BORROWED or RESERVED copy
-        if ("BORROWED".equals(copy.getStatus()) || "RESERVED".equals(copy.getStatus())) {
+        boolean isBorrowedOrReserved = false;
+        try {
+            isBorrowedOrReserved = copyDao.isCopyBorrowedOrReserved(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (isBorrowedOrReserved) {
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&error=cannot_delete");
             return;
         }
 
         boolean success = copyDao.deleteCopy(id, operator);
         if (success) {
-            copyDao.addAuditLog(id, "DELETE", operator, copy.getStatus(), null, copy.getBookCondition(), null, "Xóa bản sao");
+            copyDao.addAuditLog(id, "DELETE", operator, copy.getBookCondition(), null, "Xóa bản sao");
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=deleted");
         } else {
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&error=delete_failed");
