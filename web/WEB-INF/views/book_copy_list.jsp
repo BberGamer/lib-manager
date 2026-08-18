@@ -100,17 +100,7 @@
                     </div>
                 </div>
 
-                <!-- Status Filter -->
-                <div class="search-field select-field">
-                    <label for="statusSelect">Trạng thái</label>
-                    <select id="statusSelect" name="status" class="form-select">
-                        <option value="">-- Tất cả trạng thái --</option>
-                        <option value="AVAILABLE" <%= "AVAILABLE".equals(selectedStatus) ? "selected" : "" %>>AVAILABLE (Sẵn sàng)</option>
-                        <option value="BORROWED" <%= "BORROWED".equals(selectedStatus) ? "selected" : "" %>>BORROWED (Đang mượn)</option>
-                        <option value="MAINTENANCE" <%= "MAINTENANCE".equals(selectedStatus) ? "selected" : "" %>>MAINTENANCE (Bảo trì)</option>
-                        <option value="LOST" <%= "LOST".equals(selectedStatus) ? "selected" : "" %>>LOST (Đã mất)</option>
-                    </select>
-                </div>
+
 
                 <!-- Location Area Filter -->
                 <div class="search-field select-field">
@@ -151,14 +141,13 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width:60px;">#</th>
-                        <th>Mã bản sao (Barcode)</th>
-                        <th>Tình trạng (Condition)</th>
-                        <th>Trạng thái (Status)</th>
-                        <th>Khu vực / Tầng</th>
-                        <th>Kệ / Ngăn</th>
-                        <th>Ghi chú</th>
-                        <th style="width:130px; text-align:center;">Hành động</th>
+                        <th style="width: 5%; text-align: center;">#</th>
+                        <th style="width: 20%; text-align: center;">Mã bản sao (Barcode)</th>
+                        <th style="width: 15%; text-align: center;">Tình trạng (Condition)</th>
+                        <th style="width: 20%; text-align: center;">Khu vực / Tầng</th>
+                        <th style="width: 15%; text-align: center;">Kệ / Ngăn</th>
+                        <th style="width: 15%; text-align: center;">Ghi chú</th>
+                        <th style="width: 10%; text-align: center;">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -193,27 +182,22 @@
                            }
                     %>
                         <tr>
-                            <td style="color:var(--text-muted); font-size:0.82rem;"><%= rowNum++ %></td>
-                            <td style="font-weight: 600; font-family: monospace; letter-spacing: 0.5px;"><%= bc.getBarcode() %></td>
-                            <td>
+                            <td style="color:var(--text-muted); font-size:0.82rem; text-align: center;"><%= rowNum++ %></td>
+                            <td style="font-weight: 600; font-family: monospace; letter-spacing: 0.5px; text-align: center;"><%= bc.getBarcode() %></td>
+                            <td style="text-align: center;">
                                 <span class="badge <%= conditionClass %>">
                                     <%= conditionLabel %>
                                 </span>
                             </td>
-                            <td>
-                                <span class="badge <%= statusClass %>">
-                                    <%= statusLabel %>
-                                </span>
-                            </td>
-                            <td><%= bc.getArea() != null ? bc.getArea() : "—" %></td>
-                            <td>
+                            <td style="text-align: center;"><%= bc.getArea() != null ? bc.getArea() : "—" %></td>
+                            <td style="text-align: center;">
                                 <% if (bc.getShelf() != null || bc.getSlot() != null) { %>
                                     <%= bc.getShelf() != null ? bc.getShelf() : "—" %> / <%= bc.getSlot() != null ? bc.getSlot() : "—" %>
                                 <% } else { %>
                                     —
                                 <% } %>
                             </td>
-                            <td style="font-size:0.85rem; color:var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= bc.getNote() != null ? bc.getNote() : "" %>">
+                            <td style="font-size:0.85rem; color:var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;" title="<%= bc.getNote() != null ? bc.getNote() : "" %>">
                                 <%= bc.getNote() != null ? bc.getNote() : "—" %>
                             </td>
                             <td style="text-align:center;">
@@ -246,7 +230,6 @@
         <% if (totalPages > 1) {
             String pgBaseUrl = ctx + rolePath + "/book/copies?bookId=" + book.getId()
                 + "&keyword=" + java.net.URLEncoder.encode(keyword,"UTF-8")
-                + "&status=" + java.net.URLEncoder.encode(selectedStatus,"UTF-8")
                 + "&area=" + java.net.URLEncoder.encode(selectedArea,"UTF-8")
                 + "&page=";
         %>

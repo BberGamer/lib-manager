@@ -1,3 +1,7 @@
+/*
+ * DAO quản lý dữ liệu lượt mượn, nhận sách, trả sách và các truy vấn nhắc hạn.
+ * Lớp chịu trách nhiệm ánh xạ dữ liệu JDBC và bảo đảm tính nhất quán của các giao dịch mượn trả.
+ */
 package dao;
 
 import model.BorrowRecord;
@@ -12,8 +16,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cung cấp các thao tác lưu trữ cho lượt mượn sách và phối hợp cập nhật bản sao, đầu sách,
+ * đặt trước trong cùng giao dịch khi trạng thái mượn thay đổi.
+ */
 public class BorrowRecordDAO {
 
+    /**
+     * Chứa kết quả nhận trả và thông tin đặt trước vừa được kích hoạt để controller gửi thông báo.
+     */
     public static class ReturnResult {
         public boolean success = false;
         public int activatedReservationId = -1;
@@ -34,6 +45,13 @@ public class BorrowRecordDAO {
             + "INNER JOIN books b ON br.book_id = b.id "
             + "LEFT JOIN book_copies bc ON br.copy_id = bc.id ";
 
+    /**
+     * Ánh xạ hàng kết quả truy vấn thành lượt mượn cùng các đối tượng liên kết nếu truy vấn có trả về.
+     *
+     * @param rs hàng dữ liệu đang được trỏ tới
+     * @return lượt mượn đã được ánh xạ
+     * @throws SQLException khi không thể đọc cột bắt buộc
+     */
     private BorrowRecord mapRow(ResultSet rs) throws SQLException {
         BorrowRecord record = new BorrowRecord();
         record.setId(rs.getInt("id"));
@@ -95,7 +113,7 @@ public class BorrowRecordDAO {
             record.setUpdatedAt(updatedAt.toLocalDateTime());
         }
 
-        // Map joined objects if present
+        // Các truy vấn rút gọn có thể không chứa toàn bộ cột của đối tượng liên kết.
         try {
             User user = new User();
             user.setId(rs.getInt("user_id"));
@@ -133,6 +151,16 @@ public class BorrowRecordDAO {
         return record;
     }
 
+    /**
+     * Tìm các lượt mượn cho trang quản lý theo trạng thái, từ khóa và phân trang.
+     *
+     * @param status trạng thái cần lọc hoặc rỗng để lấy tất cả
+     * @param keyword từ khóa theo độc giả, sách hoặc mã bản sao
+     * @param pageNum số trang bắt đầu từ 1
+     * @param pageSize số bản ghi tối đa trên một trang
+     * @return danh sách lượt mượn mới nhất trước
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public List<BorrowRecord> searchBorrowRecords(String status, String keyword, int pageNum, int pageSize) throws Exception {
         List<BorrowRecord> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -183,6 +211,14 @@ public class BorrowRecordDAO {
         return list;
     }
 
+    /**
+     * Đếm tổng số lượt mượn khớp bộ lọc để tính phân trang quản lý.
+     *
+     * @param status trạng thái cần lọc hoặc rỗng để lấy tất cả
+     * @param keyword từ khóa theo độc giả, sách hoặc mã bản sao
+     * @return tổng số bản ghi phù hợp
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public int countBorrowRecords(String status, String keyword) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT COUNT(*) ")
@@ -220,6 +256,13 @@ public class BorrowRecordDAO {
         return 0;
     }
 
+    /**
+     * Tìm một lượt mượn cùng thông tin độc giả, sách và bản sao theo mã định danh.
+     *
+     * @param id mã lượt mượn
+     * @return lượt mượn tương ứng hoặc {@code null} nếu không tồn tại
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public BorrowRecord findById(int id) throws Exception {
         String sql = "SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
                 + "u.username, u.full_name, u.email, u.phone, "
@@ -267,6 +310,22 @@ public class BorrowRecordDAO {
     }
 
     /**
+     * Đồng bộ các lượt chưa trả đã qua hạn từ trạng thái đang mượn sang quá hạn.
+     *
+     * @return số lượt mượn được chuyển sang trạng thái {@code OVERDUE}
+     * @throws Exception khi không thể cập nhật cơ sở dữ liệu
+     */
+    public int markOverdueBorrows() throws Exception {
+        String sql = "UPDATE borrow_records "
+                + "SET status = 'OVERDUE', updated_at = NOW() "
+                + "WHERE status = 'BORROWED' AND due_date < CURDATE()";
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            return statement.executeUpdate();
+        }
+    }
+
+    /**
      * Gia hạn một lượt mượn thuộc đúng độc giả và vẫn còn ở trạng thái đang
      * mượn. Điều kiện số lần gia hạn được kiểm tra nguyên tử trong câu lệnh cập
      * nhật.
@@ -294,6 +353,15 @@ public class BorrowRecordDAO {
         }
     }
 
+    /**
+     * Xác nhận giao một bản sao cho lượt mượn và đồng bộ trạng thái kho sách trong một giao dịch.
+     *
+     * @param id mã lượt mượn
+     * @param copyId mã bản sao được giao
+     * @param operator tài khoản nhân viên thực hiện
+     * @return {@code true} nếu giao dịch hoàn tất, ngược lại {@code false}
+     * @throws Exception khi thao tác dữ liệu thất bại
+     */
     public boolean confirmLoan(int id, int copyId, String operator) throws Exception {
         String selectRecord = "SELECT book_id FROM borrow_records WHERE id = ?";
         String updateRecord = "UPDATE borrow_records SET copy_id = ?, status = 'BORROWING', "
@@ -319,21 +387,21 @@ public class BorrowRecordDAO {
                     return false;
                 }
 
-                // 1. Update borrow record
+                // Ghi nhận ngày mượn và hạn trả trước khi cập nhật trạng thái kho.
                 try (PreparedStatement ps = conn.prepareStatement(updateRecord)) {
                     ps.setInt(1, copyId);
                     ps.setInt(2, id);
                     ps.executeUpdate();
                 }
 
-                // 2. Update book copy
+                // Đánh dấu bản sao đang được độc giả giữ.
                 try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
                     ps.setString(1, operator);
                     ps.setInt(2, copyId);
                     ps.executeUpdate();
                 }
 
-                // 3. Update book availability
+                // Đồng bộ số lượng khả dụng tổng hợp của đầu sách.
                 try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
                     ps.setInt(1, bookId);
                     ps.executeUpdate();
@@ -349,6 +417,17 @@ public class BorrowRecordDAO {
         }
     }
 
+    /**
+     * Xác nhận trả sách và chuyển bản sao cho người đặt kế tiếp hoặc trả về kho trong một giao dịch.
+     * Khoản phạt liên quan vẫn giữ nguyên trạng thái; chỉ luồng đóng phạt mới được cập nhật thanh toán.
+     *
+     * @param id mã lượt mượn cần nhận trả
+     * @param operator tài khoản nhân viên nhận sách
+     * @param condition tình trạng bản sao khi nhận lại
+     * @param note ghi chú kiểm tra bản sao
+     * @return kết quả nhận trả và dữ liệu người đặt kế tiếp nếu có
+     * @throws Exception khi thao tác dữ liệu thất bại
+     */
     public ReturnResult confirmReturn(int id, String operator, String condition, String note) throws Exception {
         ReturnResult resObj = new ReturnResult();
         resObj.success = false;
@@ -395,20 +474,13 @@ public class BorrowRecordDAO {
                     return resObj;
                 }
 
-                // 1. Update borrow record to RETURNED
+                // Việc nhận trả không đồng nghĩa khoản phạt đã được thanh toán.
                 try (PreparedStatement ps = conn.prepareStatement(updateRecord)) {
                     ps.setInt(1, id);
                     ps.executeUpdate();
                 }
 
-                // 1b. Chuyển các khoản phạt liên quan sang trạng thái PAID.
-                String updateFineSql = "UPDATE fines SET status = 'PAID', paid_date = CURDATE(), payment_method = 'CASH', payment_note = 'Thanh toán khi trả sách', updated_at = NOW() WHERE borrow_record_id = ? AND status = 'UNPAID'";
-                try (PreparedStatement ps = conn.prepareStatement(updateFineSql)) {
-                    ps.setInt(1, id);
-                    ps.executeUpdate();
-                }
-
-                // 2. Check for waiting reservation
+                // Khóa người đặt hợp lệ đầu tiên để tránh hai giao dịch cùng cấp một bản sao.
                 int waitingResId = -1;
                 int waitingUserId = -1;
                 String bookTitle = null;
@@ -428,13 +500,12 @@ public class BorrowRecordDAO {
                 }
 
                 if (waitingResId != -1) {
-                    // There is a waiting reservation!
-                    // a. Update reservation to READY_FOR_PICKUP
+                    // Chuyển yêu cầu đặt trước sang trạng thái sẵn sàng nhận.
                     try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
                         ps.setInt(1, waitingResId);
                         ps.executeUpdate();
                     }
-                    // b. Update book copy to RESERVED
+                    // Giữ nguyên bản sao vừa trả cho người đặt kế tiếp.
                     try (PreparedStatement ps = conn.prepareStatement(updateCopyReserved)) {
                         ps.setString(1, condition);
                         ps.setString(2, note);
@@ -442,7 +513,7 @@ public class BorrowRecordDAO {
                         ps.setInt(4, copyId);
                         ps.executeUpdate();
                     }
-                    // c. Insert a new PENDING_PICKUP borrow record for the reservation user
+                    // Tạo lượt chờ nhận tương ứng với thời gian giữ sách 24 giờ.
                     try (PreparedStatement ps = conn.prepareStatement(insertBorrow)) {
                         ps.setInt(1, waitingUserId);
                         ps.setInt(2, bookId);
@@ -456,8 +527,7 @@ public class BorrowRecordDAO {
                     resObj.userEmail = userEmail;
                     resObj.userFullName = userFullName;
                 } else {
-                    // No waiting reservation
-                    // a. Update book copy to AVAILABLE
+                    // Không có người chờ nên đưa bản sao trở lại kho khả dụng.
                     try (PreparedStatement ps = conn.prepareStatement(updateCopyAvailable)) {
                         ps.setString(1, condition);
                         ps.setString(2, note);
@@ -465,7 +535,7 @@ public class BorrowRecordDAO {
                         ps.setInt(4, copyId);
                         ps.executeUpdate();
                     }
-                    // b. Increment available count on books table
+                    // Đồng bộ số lượng khả dụng tổng hợp của đầu sách.
                     try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
                         ps.setInt(1, bookId);
                         ps.executeUpdate();
@@ -484,6 +554,13 @@ public class BorrowRecordDAO {
         }
     }
 
+    /**
+     * Lấy các lượt đang mượn sẽ đến hạn trong khoảng số ngày chỉ định để gửi nhắc nhở.
+     *
+     * @param days số ngày cảnh báo tính từ ngày hiện tại
+     * @return danh sách lượt mượn theo hạn trả gần nhất
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public List<BorrowRecord> getNearDueLoans(int days) throws Exception {
         List<BorrowRecord> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -509,6 +586,12 @@ public class BorrowRecordDAO {
         return list;
     }
 
+    /**
+     * Lấy các lượt đã mang trạng thái quá hạn hoặc có hạn trả trước ngày hiện tại.
+     *
+     * @return danh sách lượt quá hạn theo hạn trả cũ nhất
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public List<BorrowRecord> getOverdueLoans() throws Exception {
         List<BorrowRecord> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -731,7 +814,13 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Đóng một yêu cầu chờ nhận và giải phóng bản sao.
+     * Đóng một yêu cầu chờ nhận và giải phóng bản sao trong cùng giao dịch.
+     *
+     * @param borrowId mã yêu cầu chờ nhận
+     * @param userId mã độc giả sở hữu yêu cầu
+     * @param targetStatus trạng thái kết thúc cần ghi
+     * @return {@code true} nếu yêu cầu hợp lệ và được đóng
+     * @throws Exception khi thao tác dữ liệu thất bại
      */
     private boolean closePendingRequest(int borrowId, int userId, String targetStatus) throws Exception {
         String selectSql = "SELECT copy_id, book_id FROM borrow_records WHERE id=? AND user_id=? "
@@ -781,6 +870,13 @@ public class BorrowRecordDAO {
         }
     }
 
+    /**
+     * Đếm các lượt đang hoạt động của một độc giả để kiểm tra giới hạn mượn.
+     *
+     * @param userId mã độc giả
+     * @return số lượt chờ nhận, đang mượn hoặc quá hạn
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
     public int countActiveByUserId(int userId) throws Exception {
         String sql = "SELECT COUNT(*) FROM borrow_records WHERE user_id = ? AND status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -6,6 +6,7 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css">
 
@@ -82,3 +83,5 @@
         </div>
     </section>
 </main>
+                        
+                           <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
