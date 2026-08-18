@@ -137,7 +137,7 @@ public class AutoReminderService {
                     + result.nearDueSent + " nhắc hạn, "
                     + result.overdueSent + " cảnh báo quá hạn, giải phóng " 
                     + result.expiredPickups + " yêu cầu hết hạn giữ";
-            AuditLogger.log("AUTO_BATCH_REMINDER", triggeredBy != null ? triggeredBy : "SYSTEM", 0, logDetail);
+            AuditLogger.log("AUTO_BATCH_REMINDR", triggeredBy != null ? triggeredBy : "SYSTEM", 0, logDetail);
 
             result.success = true;
             result.message = logDetail;

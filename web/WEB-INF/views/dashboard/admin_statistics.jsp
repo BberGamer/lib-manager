@@ -21,14 +21,30 @@
     NumberFormat vnFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 %>
 
-<main class="page-wrapper">
-    <div class="container db-container">
-        <div class="section-header db-section-header">
-            <div>
-                <h1 class="section-title"><i class="fa-solid fa-chart-line"></i> Thống kê hệ thống Admin</h1>
-                <p class="section-subtitle">Chỉ số tài chính phạt, lượng tài khoản người dùng và nhật ký audit log ngoại lệ</p>
+<main class="page-wrapper dashboard-admin-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-chart-line"></i> Báo cáo &amp; Thống kê
+                    </div>
+                    <h1 class="books-page-title">Thống kê hệ thống Admin</h1>
+                    <p class="books-page-subtitle">
+                        Chỉ số tài chính phạt, lượng tài khoản người dùng và phân bổ nhật ký kiểm toán
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số tài khoản">
+                    <div class="bps-item">
+                        <span class="bps-num"><%= totalUsers %></span>
+                        <span class="bps-lbl">Tài khoản</span>
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
+
+    <div class="container db-container" style="padding-top: 28px; padding-bottom: 48px;">
 
         <c:if test="${not empty error}">
             <div class="alert alert-error db-error-alert">
@@ -117,80 +133,211 @@
                 </div>
             </div>
 
-            <!-- Audit Logs -->
-            <div class="db-panel">
+<%
+    List<Map<String, Object>> actionCounts = (List<Map<String, Object>>) request.getAttribute("auditActionCounts");
+    int totalAuditLogs = 0;
+    if (actionCounts != null) {
+        for (Map<String, Object> ac : actionCounts) {
+            Number cnt = (Number) ac.get("count");
+            if (cnt != null) totalAuditLogs += cnt.intValue();
+        }
+    }
+%>
+
+            <!-- Audit Logs Donut Chart -->
+            <div class="db-panel" style="display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h3 class="db-panel-title" style="margin-bottom: 0;">
-                        <i class="fa-solid fa-list-check"></i> Nhật ký Audit Log (Hành vi override ngoại lệ)
+                        <i class="fa-solid fa-chart-pie"></i> Phân bổ hoạt động Audit Log
                     </h3>
-                    <a href="${pageContext.request.contextPath}/admin/audit-logs" class="btn btn-sm btn-outline" style="font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; text-decoration: none;">
-                        Xem tất cả <i class="fa-solid fa-arrow-right fa-xs"></i>
+                    <a href="${pageContext.request.contextPath}/admin/audit-logs" class="btn btn-sm btn-outline" style="font-size: 0.8rem; padding: 5px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        Xem chi tiết <i class="fa-solid fa-arrow-right fa-xs"></i>
                     </a>
                 </div>
-                <table class="db-table-sm">
-                    <thead>
-                        <tr class="db-table-header">
-                            <th>Thời gian</th>
-                            <th>Hành động</th>
-                            <th>Người duyệt</th>
-                            <th>Chi tiết log</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (recentLogs != null && !recentLogs.isEmpty()) { %>
-                            <% for (Map<String, Object> log : recentLogs) { 
-                                String act = (String) log.get("action");
-                                String actLabel = act;
-                                String badgeStyle = "background: #f1f5f9; color: #475569;";
-                                if ("UNLOCK_ACCOUNT".equals(act)) {
-                                    actLabel = "Mở khóa tài khoản";
-                                    badgeStyle = "background: #dcfce7; color: #15803d;";
-                                } else if ("LOCK_ACCOUNT".equals(act)) {
-                                    actLabel = "Khóa tài khoản";
-                                    badgeStyle = "background: #fee2e2; color: #dc2626;";
-                                } else if ("DELETE_USER".equals(act)) {
-                                    actLabel = "Xóa tài khoản";
-                                    badgeStyle = "background: #f1f5f9; color: #475569;";
-                                } else if ("WAIVE_FINE".equals(act)) {
-                                    actLabel = "Miễn giảm phạt";
-                                    badgeStyle = "background: #e0f2fe; color: #0284c7;";
-                                } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
-                                    actLabel = "Vượt hạn mức";
-                                    badgeStyle = "background: #fef3c7; color: #d97706;";
-                                } else if ("APPLY_DAMAGE_FINE".equals(act)) {
-                                    actLabel = "Phạt hỏng sách";
-                                    badgeStyle = "background: #ffedd5; color: #c2410c;";
-                                } else if ("APPLY_LOST_FINE".equals(act)) {
-                                    actLabel = "Phạt mất sách";
-                                    badgeStyle = "background: #fee2e2; color: #991b1b;";
-                                } else if ("CONFIRM_RESERVATION".equals(act)) {
-                                    actLabel = "Duyệt đặt trước";
-                                    badgeStyle = "background: #f3e8ff; color: #7e22ce;";
-                                }
 
-                                String detail = (String) log.get("detail");
-                                String formattedDetail = detail;
-                                if ("unlocked by admin".equals(detail)) {
-                                    formattedDetail = "Đã mở khóa tài khoản";
-                                } else if (detail != null && detail.startsWith("reason=")) {
-                                    formattedDetail = "Lý do: " + detail.substring(7);
-                                }
+                <% if (actionCounts != null && !actionCounts.isEmpty() && totalAuditLogs > 0) { %>
+                    <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: space-around; padding: 12px 0; flex: 1;">
+                        <!-- Donut Canvas Container -->
+                        <div style="position: relative; width: 190px; height: 190px; flex-shrink: 0;">
+                            <canvas id="auditDonutChart"></canvas>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                                <div style="font-size: 1.4rem; font-weight: 700; color: #1e293b; line-height: 1;"><%= totalAuditLogs %></div>
+                                <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px; font-weight: 500;">nhật ký</div>
+                            </div>
+                        </div>
+
+                        <!-- Legend & Percentage Breakdown -->
+                        <div style="flex: 1; min-width: 230px; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 6px;">
+                            <%
+                                for (Map<String, Object> ac : actionCounts) {
+                                    String act = (String) ac.get("action");
+                                    int count = ((Number) ac.get("count")).intValue();
+                                    int pct = totalAuditLogs > 0 ? Math.round((float) count * 100 / totalAuditLogs) : 0;
+
+                                    String label = act;
+                                    String color = "#94a3b8";
+
+                                    if ("LOCK_ACCOUNT".equals(act)) {
+                                        label = "Khóa tài khoản";
+                                        color = "#ef4444";
+                                    } else if ("UNLOCK_ACCOUNT".equals(act)) {
+                                        label = "Mở khóa tài khoản";
+                                        color = "#22c55e";
+                                    } else if ("DELETE_USER".equals(act)) {
+                                        label = "Xóa tài khoản";
+                                        color = "#64748b";
+                                    } else if ("WAIVE_FINE".equals(act)) {
+                                        label = "Miễn giảm phạt";
+                                        color = "#0284c7";
+                                    } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
+                                        label = "Vượt hạn mức";
+                                        color = "#f59e0b";
+                                    } else if ("APPLY_DAMAGE_FINE".equals(act)) {
+                                        label = "Phạt hỏng sách";
+                                        color = "#ea580c";
+                                    } else if ("APPLY_LOST_FINE".equals(act)) {
+                                        label = "Phạt mất sách";
+                                        color = "#991b1b";
+                                    } else if ("CONFIRM_RESERVATION".equals(act)) {
+                                        label = "Duyệt đặt trước";
+                                        color = "#a855f7";
+                                    } else if ("AUTO_BATCH_REMINDER".equals(act)) {
+                                        label = "Quét tự động hàng loạt";
+                                        color = "#06b6d4";
+                                    } else if ("UPDATE_AUTOMATION_SETTING".equals(act)) {
+                                        label = "Cập nhật cấu hình tự động";
+                                        color = "#eab308";
+                                    }
                             %>
-                                <tr class="db-table-row">
-                                    <td class="db-table-cell-muted"><%= log.get("created_at") %></td>
-                                    <td><span style="<%= badgeStyle %> padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;"><%= actLabel %></span></td>
-                                    <td class="db-table-cell-title">@<%= log.get("performed_by") %></td>
-                                    <td><%= formattedDetail %></td>
-                                </tr>
+                                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.83rem;">
+                                    <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <span style="width: 10px; height: 10px; border-radius: 50%; background: <%= color %>; flex-shrink: 0;"></span>
+                                        <span style="color: #334155; font-weight: 500;"><%= label %></span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                        <span style="font-weight: 600; color: #0f172a;"><%= count %></span>
+                                        <span style="color: #94a3b8; font-size: 0.75rem; width: 34px; text-align: right;"><%= pct %>%</span>
+                                    </div>
+                                </div>
                             <% } %>
-                        <% } else { %>
-                            <tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">Chưa ghi nhận bất kỳ audit log nào trong hệ thống</td></tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+                        <i class="fa-solid fa-chart-pie" style="font-size: 2.2rem; margin-bottom: 10px; display: block; opacity: 0.35;"></i>
+                        <span style="font-size: 0.95rem;">Chưa có dữ liệu nhật ký kiểm toán trong hệ thống</span>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("auditDonutChart");
+    if (!canvas) return;
+
+    <%
+        StringBuilder labelsJson = new StringBuilder("[");
+        StringBuilder dataJson = new StringBuilder("[");
+        StringBuilder colorsJson = new StringBuilder("[");
+        if (actionCounts != null) {
+            boolean first = true;
+            for (Map<String, Object> ac : actionCounts) {
+                if (!first) {
+                    labelsJson.append(",");
+                    dataJson.append(",");
+                    colorsJson.append(",");
+                }
+                String act = (String) ac.get("action");
+                int count = ((Number) ac.get("count")).intValue();
+                String label = act;
+                String color = "#94a3b8";
+
+                if ("LOCK_ACCOUNT".equals(act)) {
+                    label = "Khóa tài khoản";
+                    color = "#ef4444";
+                } else if ("UNLOCK_ACCOUNT".equals(act)) {
+                    label = "Mở khóa tài khoản";
+                    color = "#22c55e";
+                } else if ("DELETE_USER".equals(act)) {
+                    label = "Xóa tài khoản";
+                    color = "#64748b";
+                } else if ("WAIVE_FINE".equals(act)) {
+                    label = "Miễn giảm phạt";
+                    color = "#0284c7";
+                } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
+                    label = "Vượt hạn mức";
+                    color = "#f59e0b";
+                } else if ("APPLY_DAMAGE_FINE".equals(act)) {
+                    label = "Phạt hỏng sách";
+                    color = "#ea580c";
+                } else if ("APPLY_LOST_FINE".equals(act)) {
+                    label = "Phạt mất sách";
+                    color = "#991b1b";
+                } else if ("CONFIRM_RESERVATION".equals(act)) {
+                    label = "Duyệt đặt trước";
+                    color = "#a855f7";
+                } else if ("AUTO_BATCH_REMINDER".equals(act)) {
+                    label = "Quét tự động hàng loạt";
+                    color = "#06b6d4";
+                } else if ("UPDATE_AUTOMATION_SETTING".equals(act)) {
+                    label = "Cập nhật cấu hình tự động";
+                    color = "#eab308";
+                }
+
+                labelsJson.append("\"").append(label).append("\"");
+                dataJson.append(count);
+                colorsJson.append("\"").append(color).append("\"");
+                first = false;
+            }
+        }
+        labelsJson.append("]");
+        dataJson.append("]");
+        colorsJson.append("]");
+    %>
+
+    const labels = <%= labelsJson.toString() %>;
+    const dataValues = <%= dataJson.toString() %>;
+    const backgroundColors = <%= colorsJson.toString() %>;
+
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dataValues,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const val = context.raw || 0;
+                            const total = context.chart._metasets[0].total || 1;
+                            const pct = Math.round((val / total) * 100);
+                            return ' ' + label + ': ' + val + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

@@ -241,8 +241,7 @@ public class NotificationManagementServlet extends HttpServlet {
                 boolean enableEmail = "true".equalsIgnoreCase(request.getParameter("enableEmail"));
                 service.AutoReminderService autoReminderService = new service.AutoReminderService();
                 autoReminderService.updateAutomationSettings(enableJob, enableEmail, loggedUser.getUsername());
-                session.setAttribute("successMsg", "Đã cập nhật cấu hình tự động: Lập lịch quét = " 
-                        + (enableJob ? "BẬT" : "TẮT") + " | Tự động gửi email = " + (enableEmail ? "BẬT" : "TẮT"));
+                // Không hiển thị thông báo - trạng thái bật/tắt đã phản ánh qua giao diện nút gạt
             }
         } catch (Exception e) {
             e.printStackTrace();

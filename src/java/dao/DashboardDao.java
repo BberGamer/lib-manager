@@ -165,4 +165,21 @@ public class DashboardDao {
         }
         return list;
     }
+
+    /** Trả về danh sách {action, count} theo tần suất giảm dần để vẽ Donut Chart */
+    public List<Map<String, Object>> getAuditLogActionCounts() throws Exception {
+        String sql = "SELECT action, COUNT(*) AS cnt FROM audit_logs GROUP BY action ORDER BY cnt DESC";
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBContext.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("action", rs.getString("action"));
+                row.put("count", rs.getInt("cnt"));
+                list.add(row);
+            }
+        }
+        return list;
+    }
 }

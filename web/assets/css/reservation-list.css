@@ -236,7 +236,7 @@
     margin-top: 30px;
 }
 
-.reservation-pagination a {
+.reservation-pagination a, .reservation-pagination span {
     width: 38px;
     height: 38px;
     display: inline-flex;
@@ -249,10 +249,32 @@
     text-decoration: none;
 }
 
+.reservation-pagination a:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .reservation-pagination a.current {
     border-color: var(--primary);
     background: var(--primary);
     color: #fff;
+}
+
+.reservation-pagination span.disabled,
+.reservation-pagination a.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.45 !important;
+    background: #f8fafc !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+}
+
+.reservation-pagination .reservation-page-ellipsis {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: bold;
 }
 
 .visually-hidden {
