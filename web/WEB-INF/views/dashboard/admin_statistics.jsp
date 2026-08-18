@@ -3,6 +3,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="isManagePageAttr" value="true" scope="request" />
 <c:set var="activePage" value="dashboard-admin" scope="request" />
+<c:set var="pageTitle" value="Thống kê Admin – FPT Library" scope="request" />
+<c:set var="pageStylesheet" value="/assets/css/dashboard.css" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 <%
     Map<String, Integer> roleCount = (Map<String, Integer>) request.getAttribute("roleCount");
