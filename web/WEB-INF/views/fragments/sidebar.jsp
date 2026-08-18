@@ -20,6 +20,7 @@
                 <c:url var="sidebarAuthorsUrl" value="${rolePath}/authors" />
                 <c:url var="sidebarCategoriesUrl" value="${rolePath}/categories" />
                 <c:url var="sidebarPoliciesUrl" value="/admin/policies" />
+                <c:url var="sidebarEventsUrl" value="/events" />
                 <c:url var="sidebarUsersUrl" value="${rolePath}/users" />
                 <c:url var="sidebarLogoutUrl" value="/logout" />
                 <c:url var="sidebarLibraryStatsUrl" value="${rolePath}/dashboard/library" />
@@ -100,6 +101,11 @@
                                         <i class="fa-solid fa-bullhorn"></i>
                                         <span>Gửi thông báo</span>
                                     </a>
+                                    <a href="${sidebarEventsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'events' ? 'active' : ''}">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <span>Quản lý sự kiện</span>
+                                    </a>
                                 </nav>
                             </div>
 
@@ -165,6 +171,11 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'policies' ? 'active' : ''}">
                                         <i class="fa-solid fa-scale-balanced"></i>
                                         <span>Quản lý điều lệ</span>
+                                    </a>
+                                    <a href="${sidebarEventsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'events' ? 'active' : ''}">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <span>Quản lý sự kiện</span>
                                     </a>
                                 </nav>
                             </div>
