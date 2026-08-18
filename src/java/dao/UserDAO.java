@@ -89,8 +89,8 @@ public class UserDAO {
             ps.setString(6, user.getStudentId());
             ps.setString(7, user.getAvatar());
             ps.setString(8, user.getRole());
-            ps.setInt(9, user.getActive()); 
-            int affected = ps.executeUpdate(); 
+            ps.setInt(9, user.getActive());
+            int affected = ps.executeUpdate();
             if (affected == 0) {
                 return -1;
             }
@@ -244,18 +244,18 @@ public class UserDAO {
     }
 
     /**
-     * Whitelist các cột được phép ORDER BY.
-     * Bắt buộc phải có whitelist vì ORDER BY không dùng được PreparedStatement (?)
-     * cho tên cột — nếu nối thẳng sortField (lấy từ URL, người dùng tự sửa được)
-     * vào câu SQL mà không kiểm tra thì sẽ dính SQL Injection.
-     * Key = giá trị "sort" trên URL (?sort=full_name), Value = tên cột thật trong DB.
+     * Whitelist các cột được phép ORDER BY. Bắt buộc phải có whitelist vì ORDER
+     * BY không dùng được PreparedStatement (?) cho tên cột — nếu nối thẳng
+     * sortField (lấy từ URL, người dùng tự sửa được) vào câu SQL mà không kiểm
+     * tra thì sẽ dính SQL Injection. Key = giá trị "sort" trên URL
+     * (?sort=full_name), Value = tên cột thật trong DB.
      */
     // thêm nếu thêm trường sắp xếp mới (sortOption jsp)
     private static final java.util.Map<String, String> SORTABLE_COLUMNS = java.util.Map.of(
             "username", "username",
             "full_name", "full_name",
             "role", "role",
-            "active", "active" 
+            "active", "active"
     );
 
     // Tìm kiếm danh sách người dùng nâng cao (5 tham số)
@@ -297,11 +297,15 @@ public class UserDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRow(rs));
+                    User u = mapRow(rs);
+                    // Chỉ thêm vào danh sách nếu là READER VÀ có ID là 12, 13, hoặc 14
+                    if ("READER".equalsIgnoreCase(u.getRole()) && (u.getId() == 12 || u.getId() == 13 || u.getId() == 14)) {
+                        list.add(u);
+                    }
                 }
             }
+            return list;
         }
-        return list;
     }
 }
 // ORDER BY FIELD(role, 'ADMIN', 'LIBRARIAN', 'READER'), id DESC
