@@ -5,6 +5,8 @@ package service;
 
 import dao.AuthorDAO;
 import dao.AuthorDAOImpl;
+import exception.AuthorException;
+import exception.AuthorValidationException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLException;

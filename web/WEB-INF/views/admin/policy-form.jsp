@@ -16,20 +16,28 @@
 <c:url var="listUrl" value="/admin/policies" />
 <c:set var="actionPath" value="${formMode == 'create' ? '/admin/policies/create' : (formMode == 'revision' ? '/admin/policies/revise' : '/admin/policies/update')}" />
 
-<main class="policy-page">
-    <section class="policy-hero">
-        <div class="policy-container policy-hero-inner">
-            <div>
-                <span class="policy-eyebrow">
-                    <i class="fa-solid fa-scale-balanced"></i> Điều lệ
-                </span>
-                <h1>${formMode == 'create' ? 'Thêm điều lệ mới' : (formMode == 'revision' ? 'Soạn phiên bản mới' : 'Cập nhật bản nháp')}</h1>
-                <p>Nội dung được lưu dưới dạng văn bản thuần và chỉ công khai sau khi xuất bản.</p>
+<main class="page-wrapper policy-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-scale-balanced"></i> Điều lệ
+                    </div>
+                    <h1 class="books-page-title">${formMode == 'create' ? 'Thêm điều lệ mới' : (formMode == 'revision' ? 'Soạn phiên bản mới' : 'Cập nhật bản nháp')}</h1>
+                    <p class="books-page-subtitle">Nội dung được lưu dưới dạng văn bản thuần và chỉ công khai sau khi xuất bản</p>
+                </div>
+                <div class="books-page-stats" aria-label="Trạng thái">
+                    <div class="bps-item">
+                        <span class="bps-num"><i class="fa-solid fa-${formMode == 'create' ? 'plus' : 'pen'}"></i></span>
+                        <span class="bps-lbl">${formMode == 'create' ? 'Thêm mới' : 'Chỉnh sửa'}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="policy-form-container">
+    <div class="container policy-form-container" style="padding-top: 28px;">
         <a class="policy-back" href="${listUrl}">
             <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
         </a>

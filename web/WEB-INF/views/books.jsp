@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Book, model.User, java.util.List" %>
+<%@ page import="model.Book, model.User, service.BookExcelService.ImportResult, java.util.List" %>
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 <%
     List<Book>   books            = (List<Book>)   request.getAttribute("books");
@@ -13,6 +13,13 @@
     String       sortOrder        = (String)        request.getAttribute("sortOrder");
     String       viewMode         = (String)        request.getAttribute("viewMode");
     String       dbError          = (String)        request.getAttribute("dbError");
+
+    String sessionSuccess = (String) session.getAttribute("successMsg");
+    if (sessionSuccess != null) { session.removeAttribute("successMsg"); }
+    String sessionDbError = (String) session.getAttribute("dbError");
+    if (sessionDbError != null) { session.removeAttribute("dbError"); dbError = sessionDbError; }
+    ImportResult importResult = (ImportResult) session.getAttribute("importResult");
+    if (importResult != null) { session.removeAttribute("importResult"); }
 
     User loggedUser = (User) session.getAttribute("loggedUser");
     boolean isAdmin    = (loggedUser != null && loggedUser.isAdmin());
@@ -112,6 +119,11 @@
         </div>
     </form>
 
+    <% if (sessionSuccess != null) { %>
+        <div class="alert alert-success">
+            <i class="fa-solid fa-circle-check"></i> <%= sessionSuccess %>
+        </div>
+    <% } %>
     <% if (dbError != null) { %>
         <div class="alert alert-danger">
             <i class="fa-solid fa-circle-xmark"></i> <%= dbError %>
@@ -120,6 +132,57 @@
     <% if ("deleted".equals(request.getParameter("success"))) { %>
         <div class="alert alert-success">
             <i class="fa-solid fa-circle-check"></i> Xóa sách thành công!
+        </div>
+    <% } %>
+
+    <% if (importResult != null) { %>
+        <div class="card" style="margin-bottom: 20px; border-left: 4px solid <%= importResult.getFailureCount() > 0 ? "#e11d48" : "#16a34a" %>; background: #ffffff; padding: 18px 22px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                        <i class="fa-solid fa-file-import" style="color: <%= importResult.getFailureCount() > 0 ? "#e11d48" : "#16a34a" %>;"></i>
+                        Kết quả Nhập dữ liệu sách từ Excel
+                    </h3>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+                        Tổng số dòng: <strong><%= importResult.getTotalRows() %></strong> | 
+                        Thành công: <strong style="color: #16a34a;"><%= importResult.getSuccessCount() %></strong> | 
+                        Thất bại: <strong style="color: #e11d48;"><%= importResult.getFailureCount() %></strong>
+                    </p>
+                </div>
+                <% if (!importResult.getErrorList().isEmpty() || !importResult.getSuccessList().isEmpty()) { %>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="toggleImportDetails()" id="btnToggleImportDetails">
+                        <i class="fa-solid fa-chevron-down"></i> Xem chi tiết
+                    </button>
+                <% } %>
+            </div>
+
+            <div id="importDetailsContainer" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">
+                <% if (!importResult.getErrorList().isEmpty()) { %>
+                    <div style="margin-bottom: 12px;">
+                        <strong style="font-size: 0.85rem; color: #e11d48; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Danh sách lỗi (<%= importResult.getErrorList().size() %> dòng)
+                        </strong>
+                        <ul style="margin: 6px 0 0 18px; padding: 0; font-size: 0.86rem; color: #b91c1c; line-height: 1.5;">
+                            <% for (String err : importResult.getErrorList()) { %>
+                                <li><%= err %></li>
+                            <% } %>
+                        </ul>
+                    </div>
+                <% } %>
+
+                <% if (!importResult.getSuccessList().isEmpty()) { %>
+                    <div>
+                        <strong style="font-size: 0.85rem; color: #16a34a; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fa-solid fa-circle-check"></i> Danh sách sách đã thêm (<%= importResult.getSuccessList().size() %> sách)
+                        </strong>
+                        <ul style="margin: 6px 0 0 18px; padding: 0; font-size: 0.86rem; color: #15803d; line-height: 1.5; max-height: 150px; overflow-y: auto;">
+                            <% for (String succ : importResult.getSuccessList()) { %>
+                                <li><%= succ %></li>
+                            <% } %>
+                        </ul>
+                    </div>
+                <% } %>
+            </div>
         </div>
     <% } %>
 
@@ -172,6 +235,17 @@
                     <i class="fa-solid fa-list"></i>
                 </button>
             </div>
+
+            <!-- Excel Export / Import buttons for Admin & Librarian -->
+            <% if (isAdminLib) { %>
+                <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/export?keyword=<%= java.net.URLEncoder.encode(keyword,"UTF-8") %>&category=<%= java.net.URLEncoder.encode(selectedCategory,"UTF-8") %>&sort=<%= sortField %>&order=<%= sortOrder %>"
+                   class="btn btn-outline btn-sm" title="Xuất danh sách sách ra file Excel (CSV UTF-8)">
+                    <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Xuất Excel
+                </a>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openBookImportModal()" title="Nhập danh sách sách từ file Excel (CSV UTF-8)">
+                    <i class="fa-solid fa-file-import" style="color: #0284c7;"></i> Nhập từ Excel
+                </button>
+            <% } %>
 
             <!-- Admin add button -->
             <% if (isAdmin) { %>
@@ -478,6 +552,72 @@
     </div>
 </div>
 
+<!-- ==================== IMPORT EXCEL MODAL ==================== -->
+<div id="bookImportModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:20px;">
+    <div style="background:#ffffff; border-radius:16px; max-width:540px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.15); overflow:hidden; border:1px solid #e2e8f0; animation:modalFadeIn 0.2s ease-out;">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid #edf2f7; background:linear-gradient(135deg, #fffcf9 0%, #fff5eb 100%);">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:8px; background:rgba(244,121,32,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.1rem;">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text-primary); font-family:'Be Vietnam Pro',sans-serif;">Nhập sách từ Excel (CSV)</h3>
+                    <p style="margin:2px 0 0 0; font-size:0.8rem; color:var(--text-muted);">Thêm hàng loạt đầu sách và tự động tạo bản sao</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeBookImportModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:4px 8px; border-radius:6px;" title="Đóng">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body Form -->
+        <form action="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/import" method="post" enctype="multipart/form-data" id="formImportBooks" style="padding:22px 24px;" onsubmit="return handleImportSubmit();">
+            <!-- Template Download Banner -->
+            <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div>
+                    <div style="font-weight:700; font-size:0.88rem; color:#334155;">Chưa có file mẫu chuẩn?</div>
+                    <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">Tải file mẫu có sẵn dữ liệu minh họa để điền</div>
+                </div>
+                <a href="<%= ctx %><%= rolePathBooks != null ? rolePathBooks : "" %>/book/template" class="btn btn-outline btn-sm" style="font-size:0.82rem; white-space:nowrap; padding:6px 12px;">
+                    <i class="fa-solid fa-download"></i> Tải file mẫu
+                </a>
+            </div>
+
+            <!-- File Drop Area -->
+            <div style="margin-bottom:18px;">
+                <label style="display:block; font-size:0.86rem; font-weight:700; color:#334155; margin-bottom:8px;">
+                    Chọn file dữ liệu (.csv) <span style="color:#ef4444;">*</span>
+                </label>
+                <div id="dropZone" style="border:2px dashed #cbd5e1; border-radius:12px; padding:24px 16px; text-align:center; background:#fafafa; cursor:pointer; transition:all 0.2s ease;" onclick="document.getElementById('excelFileInput').click();">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:2.2rem; color:var(--primary); margin-bottom:8px; display:block;"></i>
+                    <span id="dropZoneText" style="font-size:0.9rem; font-weight:600; color:#475569; display:block;">Nhấn để chọn file hoặc kéo thả vào đây</span>
+                    <span style="font-size:0.76rem; color:#94a3b8; display:block; margin-top:4px;">Chấp nhận file định dạng .csv chuẩn UTF-8 (tối đa 10MB)</span>
+                    <input type="file" id="excelFileInput" name="excelFile" accept=".csv,text/csv,text/plain" style="display:none;" onchange="handleFileChosen(this);">
+                </div>
+            </div>
+
+            <!-- Notes list -->
+            <div style="background:#fffbeb; border-radius:8px; padding:12px 14px; margin-bottom:22px; font-size:0.8rem; color:#92400e; line-height:1.5;">
+                <div style="font-weight:700; margin-bottom:4px;"><i class="fa-solid fa-circle-info"></i> Lưu ý khi nhập dữ liệu:</div>
+                <ul style="margin:0; padding-left:18px;">
+                    <li>Mã <strong>ISBN</strong> và <strong>Tên sách</strong> là 2 cột bắt buộc.</li>
+                    <li>Nhiều tác giả phân cách bằng dấu chấm phẩy (<code>;</code>) hoặc phẩy (<code>,</code>).</li>
+                    <li>Hệ thống sẽ tự động tạo các bản sao (mã <code>BC...</code>) theo số lượng đã nhập.</li>
+                </ul>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-outline" onclick="closeBookImportModal()">Hủy bỏ</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitImport">
+                    <i class="fa-solid fa-file-import"></i> Bắt đầu Nhập sách
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 // ---- View toggle ----
 function setView(mode) {
@@ -510,5 +650,78 @@ document.getElementById('searchForm').addEventListener('submit', function(e) {
         e.preventDefault();
     }
 });
+
+// ---- Book Import Modal ----
+function openBookImportModal() {
+    document.getElementById('bookImportModal').style.display = 'flex';
+}
+function closeBookImportModal() {
+    document.getElementById('bookImportModal').style.display = 'none';
+}
+document.getElementById('bookImportModal').addEventListener('click', function(e) {
+    if (e.target === this) closeBookImportModal();
+});
+
+function handleFileChosen(input) {
+    if (input.files && input.files[0]) {
+        var file = input.files[0];
+        document.getElementById('dropZoneText').innerHTML = 'Đã chọn: <strong style="color:var(--primary);">' + file.name + '</strong> (' + (file.size / 1024).toFixed(1) + ' KB)';
+        document.getElementById('dropZone').style.borderColor = 'var(--primary)';
+        document.getElementById('dropZone').style.background = '#fffaf5';
+    }
+}
+
+function handleImportSubmit() {
+    var input = document.getElementById('excelFileInput');
+    if (!input.files || input.files.length === 0) {
+        alert('Vui lòng chọn một file .csv trước khi nhấn Nhập sách.');
+        return false;
+    }
+    var btn = document.getElementById('btnSubmitImport');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+    return true;
+}
+
+// Drag & drop handlers
+var dropZone = document.getElementById('dropZone');
+if (dropZone) {
+    ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = '#fffaf5';
+        }, false);
+    });
+    ['dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+    dropZone.addEventListener('drop', function(e) {
+        var dt = e.dataTransfer;
+        var files = dt.files;
+        if (files && files.length > 0) {
+            document.getElementById('excelFileInput').files = files;
+            handleFileChosen(document.getElementById('excelFileInput'));
+        }
+    }, false);
+}
+
+// Toggle import details
+function toggleImportDetails() {
+    var container = document.getElementById('importDetailsContainer');
+    var btn = document.getElementById('btnToggleImportDetails');
+    if (!container) return;
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Thu gọn';
+    } else {
+        container.style.display = 'none';
+        btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Xem chi tiết';
+    }
+}
 </script>
 

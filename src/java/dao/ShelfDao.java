@@ -244,7 +244,7 @@ public class ShelfDao {
     public List<BookCopy> findCopies(String code, int offset, int limit)
             throws SQLException, ClassNotFoundException {
         String sql =
-                "SELECT bc.id,bc.barcode,bc.status,bc.slot,b.id book_id,b.title,b.isbn FROM"
+                "SELECT bc.id,bc.barcode,'AVAILABLE' AS status,bc.slot,b.id book_id,b.title,b.isbn FROM"
                         + " book_copies bc JOIN books b ON b.id=bc.book_id WHERE bc.shelf=? AND"
                         + " bc.is_deleted=0 ORDER BY bc.slot,bc.barcode LIMIT ?,?";
         try (Connection c = connection();
@@ -258,7 +258,6 @@ public class ShelfDao {
                     BookCopy bc = new BookCopy();
                     bc.setId(r.getInt("id"));
                     bc.setBarcode(r.getString("barcode"));
-                    bc.setStatus(r.getString("status"));
                     bc.setSlot(r.getString("slot"));
                     Book b = new Book();
                     b.setId(r.getInt("book_id"));

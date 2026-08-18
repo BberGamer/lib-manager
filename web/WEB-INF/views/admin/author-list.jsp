@@ -11,14 +11,30 @@
 <c:url var="newAuthorUrl" value="/admin/authors/new" />
 <c:url var="authorScriptUrl" value="/assets/js/author-list.js" />
 
-<main class="author-management">
-    <section class="author-hero"><div class="author-content author-hero-inner">
-        <div><span class="author-eyebrow"><i class="fa-solid fa-user-pen"></i> Tác giả</span>
-            <h1>Danh sách Tác giả</h1><p>Quản lý thông tin chi tiết của các tác giả có trong thư viện</p></div>
-        <div class="author-stat"><strong><c:out value="${totalAuthors}" /></strong><span>Tác giả</span></div>
-    </div></section>
+<main class="page-wrapper author-management" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-user-pen"></i> Tác giả
+                    </div>
+                    <h1 class="books-page-title">Quản lý Tác giả</h1>
+                    <p class="books-page-subtitle">
+                        Quản lý danh sách và thông tin chi tiết của các tác giả trong Thư viện FPT
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số tác giả">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalAuthors}" /></span>
+                        <span class="bps-lbl">Tác giả</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="author-content author-body">
+    <div class="container author-body" style="padding-top: 28px;">
         <c:if test="${not empty flashSuccess}"><div class="author-alert success"><i class="fa-solid fa-circle-check"></i> <c:out value="${flashSuccess}" /></div></c:if>
         <c:if test="${not empty flashError}"><div class="author-alert error"><i class="fa-solid fa-circle-exclamation"></i> <c:out value="${flashError}" /></div></c:if>
 

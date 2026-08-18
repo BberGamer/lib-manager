@@ -10,7 +10,6 @@ public class BookCopy {
     private int bookId;
     private String barcode;
     private String bookCondition; // GOOD, WORN, DAMAGED, LOST
-    private String status; // AVAILABLE, BORROWED, RESERVED, MAINTENANCE, LOST
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -22,15 +21,15 @@ public class BookCopy {
     private String slot;
     private Book book;
     private Set<BorrowRecord> borrowRecords = new HashSet<>();
+    private boolean borrowedOrReserved; // transient flag nạp động từ DB
 
     public BookCopy() {
     }
 
-    public BookCopy(int bookId, String barcode, String bookCondition, String status) {
+    public BookCopy(int bookId, String barcode, String bookCondition) {
         this.bookId = bookId;
         this.barcode = barcode;
         this.bookCondition = bookCondition;
-        this.status = status;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -92,14 +91,6 @@ public class BookCopy {
         this.bookCondition = bookCondition;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public String getNote() {
         return note;
     }
@@ -154,6 +145,14 @@ public class BookCopy {
         this.borrowRecords = borrowRecords;
     }
 
+    public boolean isBorrowedOrReserved() {
+        return borrowedOrReserved;
+    }
+
+    public void setBorrowedOrReserved(boolean borrowedOrReserved) {
+        this.borrowedOrReserved = borrowedOrReserved;
+    }
+
     @Override
     public String toString() {
         return "BookCopy{"
@@ -161,7 +160,6 @@ public class BookCopy {
                 + ", bookId=" + bookId
                 + ", barcode='" + barcode + '\''
                 + ", bookCondition='" + bookCondition + '\''
-                + ", status='" + status + '\''
                 + ", note='" + note + '\''
                 + ", createdAt=" + createdAt
                 + ", updatedAt=" + updatedAt

@@ -43,7 +43,6 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("totalBooks", dashboardDao.getTotalBooks());
                 request.setAttribute("totalCopies", dashboardDao.getTotalCopies());
-                request.setAttribute("statusCount", dashboardDao.getCopiesCountByStatus());
                 request.setAttribute("conditionCount", dashboardDao.getCopiesCountByCondition());
                 request.setAttribute("topBooks", dashboardDao.getTopBorrowedBooks(5));
                 request.setAttribute("topOverdue", dashboardDao.getTopOverdueUsers(5));
@@ -63,7 +62,8 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("roleCount", dashboardDao.getUsersCountByRole());
                 request.setAttribute("finesStats", dashboardDao.getFinesStats());
-                request.setAttribute("recentLogs", dashboardDao.getRecentAuditLogs(10));
+                request.setAttribute("recentLogs", dashboardDao.getRecentAuditLogs(5));
+                request.setAttribute("auditActionCounts", dashboardDao.getAuditLogActionCounts());
                 
                 request.setAttribute("currentPage", "dashboard-admin");
                 request.setAttribute("pageTitle", "Thống kê hệ thống Admin – FPT Library");

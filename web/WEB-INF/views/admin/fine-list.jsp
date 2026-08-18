@@ -214,40 +214,86 @@
 
         <!-- Pagination -->
         <c:if test="${totalPages > 1}">
+            <c:set var="cp" value="${currentPageNum}" />
+            <c:set var="tp" value="${totalPages}" />
+            <c:set var="winStart" value="${cp - 2 > 2 ? cp - 2 : 2}" />
+            <c:set var="winEnd" value="${cp + 2 < tp - 1 ? cp + 2 : tp - 1}" />
             <nav class="fine-pagination" aria-label="Phân trang phạt">
-                <ul class="pagination">
-                    <li class="page-item ${currentPageNum <= 1 ? 'disabled' : ''}">
-                        <c:url var="prevUrl" value="${rolePath}/fine/list">
-                            <c:param name="status" value="${selectedStatus}" />
-                            <c:param name="keyword" value="${keyword}" />
-                            <c:param name="page" value="${currentPageNum - 1}" />
-                        </c:url>
-                        <a class="page-link" href="${prevUrl}">
-                            <i class="fa-solid fa-chevron-left fa-xs"></i>
-                        </a>
+                <ul class="pagination" style="flex-wrap: wrap;">
+
+                    <li class="page-item ${cp <= 1 ? 'disabled' : ''}">
+                        <c:choose>
+                            <c:when test="${cp > 1}">
+                                <c:url var="finePrev" value="${rolePath}/fine/list">
+                                    <c:param name="status" value="${selectedStatus}" />
+                                    <c:param name="keyword" value="${keyword}" />
+                                    <c:param name="page" value="${cp - 1}" />
+                                </c:url>
+                                <a class="page-link" href="${finePrev}"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link"><i class="fa-solid fa-chevron-left fa-xs"></i></span>
+                            </c:otherwise>
+                        </c:choose>
                     </li>
-                    <c:forEach begin="1" end="${totalPages}" var="pg">
-                        <c:url var="pageUrl" value="${rolePath}/fine/list">
+
+                    <li class="page-item ${cp == 1 ? 'active' : ''}">
+                        <c:url var="fineP1" value="${rolePath}/fine/list">
                             <c:param name="status" value="${selectedStatus}" />
                             <c:param name="keyword" value="${keyword}" />
-                            <c:param name="page" value="${pg}" />
+                            <c:param name="page" value="1" />
                         </c:url>
-                        <li class="page-item ${pg == currentPageNum ? 'active' : ''}">
-                            <a class="page-link" href="${pageUrl}">
-                                <c:out value="${pg}" />
-                            </a>
+                        <a class="page-link" href="${fineP1}">1</a>
+                    </li>
+
+                    <c:if test="${winStart > 2}">
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    </c:if>
+
+                    <c:if test="${winStart <= winEnd}">
+                        <c:forEach begin="${winStart}" end="${winEnd}" var="pg">
+                            <li class="page-item ${pg == cp ? 'active' : ''}">
+                                <c:url var="finePUrl" value="${rolePath}/fine/list">
+                                    <c:param name="status" value="${selectedStatus}" />
+                                    <c:param name="keyword" value="${keyword}" />
+                                    <c:param name="page" value="${pg}" />
+                                </c:url>
+                                <a class="page-link" href="${finePUrl}"><c:out value="${pg}" /></a>
+                            </li>
+                        </c:forEach>
+                    </c:if>
+
+                    <c:if test="${winEnd < tp - 1}">
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    </c:if>
+
+                    <c:if test="${tp > 1}">
+                        <li class="page-item ${cp == tp ? 'active' : ''}">
+                            <c:url var="finePLast" value="${rolePath}/fine/list">
+                                <c:param name="status" value="${selectedStatus}" />
+                                <c:param name="keyword" value="${keyword}" />
+                                <c:param name="page" value="${tp}" />
+                            </c:url>
+                            <a class="page-link" href="${finePLast}"><c:out value="${tp}" /></a>
                         </li>
-                    </c:forEach>
-                    <li class="page-item ${currentPageNum >= totalPages ? 'disabled' : ''}">
-                        <c:url var="nextUrl" value="${rolePath}/fine/list">
-                            <c:param name="status" value="${selectedStatus}" />
-                            <c:param name="keyword" value="${keyword}" />
-                            <c:param name="page" value="${currentPageNum + 1}" />
-                        </c:url>
-                        <a class="page-link" href="${nextUrl}">
-                            <i class="fa-solid fa-chevron-right fa-xs"></i>
-                        </a>
+                    </c:if>
+
+                    <li class="page-item ${cp >= tp ? 'disabled' : ''}">
+                        <c:choose>
+                            <c:when test="${cp < tp}">
+                                <c:url var="fineNext" value="${rolePath}/fine/list">
+                                    <c:param name="status" value="${selectedStatus}" />
+                                    <c:param name="keyword" value="${keyword}" />
+                                    <c:param name="page" value="${cp + 1}" />
+                                </c:url>
+                                <a class="page-link" href="${fineNext}"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link"><i class="fa-solid fa-chevron-right fa-xs"></i></span>
+                            </c:otherwise>
+                        </c:choose>
                     </li>
+
                 </ul>
             </nav>
         </c:if>

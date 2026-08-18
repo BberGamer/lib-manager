@@ -37,13 +37,27 @@ public class DashboardDao {
     }
 
     public Map<String, Integer> getCopiesCountByStatus() throws Exception {
-        String sql = "SELECT status, COUNT(*) FROM book_copies WHERE is_deleted = 0 GROUP BY status";
         Map<String, Integer> map = new HashMap<>();
-        try (Connection con = DBContext.getInstance().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                map.put(rs.getString(1), rs.getInt(2));
+        try (Connection con = DBContext.getInstance().getConnection()) {
+            // 1. AVAILABLE
+            String sqlAvailable = "SELECT COALESCE(SUM(available), 0) FROM books WHERE is_deleted = 0";
+            try (PreparedStatement ps = con.prepareStatement(sqlAvailable);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) map.put("AVAILABLE", rs.getInt(1));
+            }
+
+            // 2. BORROWED
+            String sqlBorrowed = "SELECT COUNT(*) FROM borrow_records WHERE status IN ('APPROVED', 'BORROWED')";
+            try (PreparedStatement ps = con.prepareStatement(sqlBorrowed);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) map.put("BORROWED", rs.getInt(1));
+            }
+
+            // 3. RESERVED
+            String sqlReserved = "SELECT COUNT(*) FROM book_reservations WHERE status = 'PENDING'";
+            try (PreparedStatement ps = con.prepareStatement(sqlReserved);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) map.put("RESERVED", rs.getInt(1));
             }
         }
         return map;
@@ -161,6 +175,23 @@ public class DashboardDao {
                     row.put("created_at", rs.getTimestamp("created_at"));
                     list.add(row);
                 }
+            }
+        }
+        return list;
+    }
+
+    /** Trả về danh sách {action, count} theo tần suất giảm dần để vẽ Donut Chart */
+    public List<Map<String, Object>> getAuditLogActionCounts() throws Exception {
+        String sql = "SELECT action, COUNT(*) AS cnt FROM audit_logs GROUP BY action ORDER BY cnt DESC";
+        List<Map<String, Object>> list = new ArrayList<>();
+        try (Connection con = DBContext.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("action", rs.getString("action"));
+                row.put("count", rs.getInt("cnt"));
+                list.add(row);
             }
         }
         return list;

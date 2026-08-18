@@ -15,16 +15,29 @@
 <c:url var="reservationUpdateUrl" value="${rolePath}/reservation/update" />
 
 <main class="page-wrapper reservation-management-page">
-    <div class="container reservation-management-container">
-        <header class="reservation-page-header">
-            <h1 class="section-title">
-                <i class="fa-solid fa-clock"></i>
-                Quản lý đặt trước sách
-            </h1>
-            <p class="section-subtitle">
-                Duyệt các yêu cầu giữ chỗ trước của độc giả khi sách đang được mượn.
-            </p>
-        </header>
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-clock"></i> Đặt trước
+                    </div>
+                    <h1 class="books-page-title">Quản lý đặt trước sách</h1>
+                    <p class="books-page-subtitle">
+                        Duyệt và theo dõi các yêu cầu giữ sách của độc giả trong Thư viện FPT University
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số yêu cầu đặt trước">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalRecords}" /></span>
+                        <span class="bps-lbl">Đặt trước</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container reservation-management-container" style="padding-top: 28px;">
 
         <c:if test="${not empty sessionScope.successMsg}">
             <div class="reservation-alert reservation-alert-success" role="status">
@@ -208,37 +221,79 @@
         </section>
 
         <c:if test="${totalPages gt 1}">
+            <c:set var="cp" value="${currentPageNum}" />
+            <c:set var="tp" value="${totalPages}" />
+            <c:set var="winStart" value="${cp - 2 > 2 ? cp - 2 : 2}" />
+            <c:set var="winEnd" value="${cp + 2 < tp - 1 ? cp + 2 : tp - 1}" />
             <nav class="reservation-pagination" aria-label="Phân trang đặt trước">
-                <c:if test="${currentPageNum gt 1}">
-                    <c:url var="previousPageUrl" value="${rolePath}/reservation/list">
-                        <c:param name="status" value="${selectedStatus}" />
-                        <c:param name="keyword" value="${keyword}" />
-                        <c:param name="page" value="${currentPageNum - 1}" />
-                    </c:url>
-                    <a href="${previousPageUrl}" aria-label="Trang trước">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </a>
+
+                <c:choose>
+                    <c:when test="${cp > 1}">
+                        <c:url var="resvPrev" value="${rolePath}/reservation/list">
+                            <c:param name="status" value="${selectedStatus}" />
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="page" value="${cp - 1}" />
+                        </c:url>
+                        <a href="${resvPrev}" aria-label="Trang trước">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="disabled" aria-hidden="true">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </span>
+                    </c:otherwise>
+                </c:choose>
+
+                <c:url var="resvP1" value="${rolePath}/reservation/list">
+                    <c:param name="status" value="${selectedStatus}" />
+                    <c:param name="keyword" value="${keyword}" />
+                    <c:param name="page" value="1" />
+                </c:url>
+                <a class="${cp == 1 ? 'current' : ''}" href="${resvP1}">1</a>
+
+                <c:if test="${winStart > 2}"><span class="reservation-page-ellipsis">…</span></c:if>
+
+                <c:if test="${winStart <= winEnd}">
+                    <c:forEach begin="${winStart}" end="${winEnd}" var="pageNumber">
+                        <c:url var="resvPUrl" value="${rolePath}/reservation/list">
+                            <c:param name="status" value="${selectedStatus}" />
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="page" value="${pageNumber}" />
+                        </c:url>
+                        <a class="${pageNumber eq cp ? 'current' : ''}" href="${resvPUrl}"><c:out value="${pageNumber}" /></a>
+                    </c:forEach>
                 </c:if>
-                <c:forEach begin="1" end="${totalPages}" var="pageNumber">
-                    <c:url var="pageUrl" value="${rolePath}/reservation/list">
+
+                <c:if test="${winEnd < tp - 1}"><span class="reservation-page-ellipsis">…</span></c:if>
+
+                <c:if test="${tp > 1}">
+                    <c:url var="resvPLast" value="${rolePath}/reservation/list">
                         <c:param name="status" value="${selectedStatus}" />
                         <c:param name="keyword" value="${keyword}" />
-                        <c:param name="page" value="${pageNumber}" />
+                        <c:param name="page" value="${tp}" />
                     </c:url>
-                    <a class="${pageNumber eq currentPageNum ? 'current' : ''}" href="${pageUrl}">
-                        <c:out value="${pageNumber}" />
-                    </a>
-                </c:forEach>
-                <c:if test="${currentPageNum lt totalPages}">
-                    <c:url var="nextPageUrl" value="${rolePath}/reservation/list">
-                        <c:param name="status" value="${selectedStatus}" />
-                        <c:param name="keyword" value="${keyword}" />
-                        <c:param name="page" value="${currentPageNum + 1}" />
-                    </c:url>
-                    <a href="${nextPageUrl}" aria-label="Trang sau">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </a>
+                    <a class="${cp == tp ? 'current' : ''}" href="${resvPLast}"><c:out value="${tp}" /></a>
                 </c:if>
+
+                <c:choose>
+                    <c:when test="${cp < tp}">
+                        <c:url var="resvNext" value="${rolePath}/reservation/list">
+                            <c:param name="status" value="${selectedStatus}" />
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="page" value="${cp + 1}" />
+                        </c:url>
+                        <a href="${resvNext}" aria-label="Trang sau">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="disabled" aria-hidden="true">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </span>
+                    </c:otherwise>
+                </c:choose>
+
             </nav>
         </c:if>
     </div>

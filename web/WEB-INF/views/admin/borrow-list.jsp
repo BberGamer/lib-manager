@@ -15,17 +15,30 @@
                 <c:url var="borrowListScriptUrl" value="/assets/js/borrow-list.js" />
                 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
-                    <main class="page-wrapper borrow-management-page">
-                        <div class="container borrow-management-container">
-                            <header class="borrow-page-header">
-                                <h1 class="section-title">
-                                    <i class="fa-solid fa-handshake"></i>
-                                    Quản lý mượn trả sách
-                                </h1>
-                                <p class="section-subtitle">
-                                    Phê duyệt yêu cầu mượn, ghi nhận trả sách và xử lý sự cố quá hạn hoặc mất sách.
-                                </p>
-                            </header>
+<main class="page-wrapper borrow-management-page">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-handshake"></i> Mượn trả
+                    </div>
+                    <h1 class="books-page-title">Quản lý mượn trả sách</h1>
+                    <p class="books-page-subtitle">
+                        Phê duyệt yêu cầu mượn, ghi nhận trả sách và xử lý sự cố quá hạn hoặc mất sách
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số phiếu mượn">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalRecords}" /></span>
+                        <span class="bps-lbl">Phiếu mượn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container borrow-management-container" style="padding-top: 28px;">
 
                             <c:if test="${not empty sessionScope.successMsg}">
                                 <div class="borrow-alert borrow-alert-success" role="status">
@@ -238,35 +251,79 @@
                             </section>
 
                             <c:if test="${totalPages gt 1}">
+                                <c:set var="cp" value="${currentPageNum}" />
+                                <c:set var="tp" value="${totalPages}" />
+                                <c:set var="winStart" value="${cp - 2 > 2 ? cp - 2 : 2}" />
+                                <c:set var="winEnd" value="${cp + 2 < tp - 1 ? cp + 2 : tp - 1}" />
                                 <nav class="borrow-pagination" aria-label="Phân trang mượn sách">
-                                    <c:if test="${currentPageNum gt 1}">
-                                        <c:url var="previousPageUrl" value="${borrowActionPrefix}/borrow/list">
-                                            <c:param name="status" value="${selectedStatus}" />
-                                            <c:param name="keyword" value="${keyword}" />
-                                            <c:param name="page" value="${currentPageNum - 1}" />
-                                        </c:url>
-                                        <a href="${previousPageUrl}" aria-label="Trang trước"><i
-                                                class="fa-solid fa-chevron-left"></i></a>
+
+                                    <c:choose>
+                                        <c:when test="${cp > 1}">
+                                            <c:url var="borPrev" value="${borrowActionPrefix}/borrow/list">
+                                                <c:param name="status" value="${selectedStatus}" />
+                                                <c:param name="keyword" value="${keyword}" />
+                                                <c:param name="page" value="${cp - 1}" />
+                                            </c:url>
+                                            <a href="${borPrev}" aria-label="Trang trước">
+                                                <i class="fa-solid fa-chevron-left"></i>
+                                            </a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="disabled" aria-hidden="true">
+                                                <i class="fa-solid fa-chevron-left"></i>
+                                            </span>
+                                        </c:otherwise>
+                                    </c:choose>
+
+                                    <c:url var="borP1" value="${borrowActionPrefix}/borrow/list">
+                                        <c:param name="status" value="${selectedStatus}" />
+                                        <c:param name="keyword" value="${keyword}" />
+                                        <c:param name="page" value="1" />
+                                    </c:url>
+                                    <a class="${cp == 1 ? 'current' : ''}" href="${borP1}">1</a>
+
+                                    <c:if test="${winStart > 2}"><span class="borrow-page-ellipsis">…</span></c:if>
+
+                                    <c:if test="${winStart <= winEnd}">
+                                        <c:forEach begin="${winStart}" end="${winEnd}" var="pageNumber">
+                                            <c:url var="borPUrl" value="${borrowActionPrefix}/borrow/list">
+                                                <c:param name="status" value="${selectedStatus}" />
+                                                <c:param name="keyword" value="${keyword}" />
+                                                <c:param name="page" value="${pageNumber}" />
+                                            </c:url>
+                                            <a class="${pageNumber eq cp ? 'current' : ''}" href="${borPUrl}"><c:out value="${pageNumber}" /></a>
+                                        </c:forEach>
                                     </c:if>
-                                    <c:forEach begin="1" end="${totalPages}" var="pageNumber">
-                                        <c:url var="pageUrl" value="${borrowActionPrefix}/borrow/list">
+
+                                    <c:if test="${winEnd < tp - 1}"><span class="borrow-page-ellipsis">…</span></c:if>
+
+                                    <c:if test="${tp > 1}">
+                                        <c:url var="borPLast" value="${borrowActionPrefix}/borrow/list">
                                             <c:param name="status" value="${selectedStatus}" />
                                             <c:param name="keyword" value="${keyword}" />
-                                            <c:param name="page" value="${pageNumber}" />
+                                            <c:param name="page" value="${tp}" />
                                         </c:url>
-                                        <a class="${pageNumber eq currentPageNum ? 'current' : ''}" href="${pageUrl}">
-                                            <c:out value="${pageNumber}" />
-                                        </a>
-                                    </c:forEach>
-                                    <c:if test="${currentPageNum lt totalPages}">
-                                        <c:url var="nextPageUrl" value="${borrowActionPrefix}/borrow/list">
-                                            <c:param name="status" value="${selectedStatus}" />
-                                            <c:param name="keyword" value="${keyword}" />
-                                            <c:param name="page" value="${currentPageNum + 1}" />
-                                        </c:url>
-                                        <a href="${nextPageUrl}" aria-label="Trang sau"><i
-                                                class="fa-solid fa-chevron-right"></i></a>
+                                        <a class="${cp == tp ? 'current' : ''}" href="${borPLast}"><c:out value="${tp}" /></a>
                                     </c:if>
+
+                                    <c:choose>
+                                        <c:when test="${cp < tp}">
+                                            <c:url var="borNext" value="${borrowActionPrefix}/borrow/list">
+                                                <c:param name="status" value="${selectedStatus}" />
+                                                <c:param name="keyword" value="${keyword}" />
+                                                <c:param name="page" value="${cp + 1}" />
+                                            </c:url>
+                                            <a href="${borNext}" aria-label="Trang sau">
+                                                <i class="fa-solid fa-chevron-right"></i>
+                                            </a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="disabled" aria-hidden="true">
+                                                <i class="fa-solid fa-chevron-right"></i>
+                                            </span>
+                                        </c:otherwise>
+                                    </c:choose>
+
                                 </nav>
                             </c:if>
                         </div>

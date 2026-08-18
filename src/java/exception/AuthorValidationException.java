@@ -1,7 +1,7 @@
 /**
  * Ngoại lệ chứa lỗi validation theo trường của biểu mẫu tác giả.
  */
-package service;
+package exception;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
