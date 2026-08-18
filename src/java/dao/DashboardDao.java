@@ -36,18 +36,6 @@ public class DashboardDao {
         return 0;
     }
 
-    public Map<String, Integer> getCopiesCountByStatus() throws Exception {
-        String sql = "SELECT status, COUNT(*) FROM book_copies WHERE is_deleted = 0 GROUP BY status";
-        Map<String, Integer> map = new HashMap<>();
-        try (Connection con = DBContext.getInstance().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                map.put(rs.getString(1), rs.getInt(2));
-            }
-        }
-        return map;
-    }
 
     public Map<String, Integer> getCopiesCountByCondition() throws Exception {
         String sql = "SELECT book_condition, COUNT(*) FROM book_copies WHERE is_deleted = 0 GROUP BY book_condition";

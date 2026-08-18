@@ -39,7 +39,7 @@ public class BorrowRecordDAO {
             + "br.pickup_date, br.borrow_date, br.due_date, "
             + "br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
             + "u.username, u.full_name, u.email, u.phone, b.title, b.isbn, b.price, "
-            + "bc.barcode, bc.book_condition, bc.status AS copy_status "
+            + "bc.barcode, bc.book_condition "
             + "FROM borrow_records br "
             + "INNER JOIN users u ON br.user_id = u.id "
             + "INNER JOIN books b ON br.book_id = b.id "
@@ -142,7 +142,6 @@ public class BorrowRecordDAO {
                 copy.setId(copyId);
                 copy.setBarcode(barcode);
                 copy.setBookCondition(rs.getString("book_condition"));
-                copy.setStatus(rs.getString("copy_status"));
                 record.setBookCopy(copy);
             }
         } catch (SQLException ignored) {
@@ -167,7 +166,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status, ")
+                .append("bc.barcode, bc.book_condition, ")
                 .append("EXISTS (SELECT 1 FROM fines f WHERE f.borrow_record_id = br.id ")
                 .append("AND f.fine_type = 'BOOK_CONDITION') AS has_fine ")
                 .append("FROM borrow_records br ")
@@ -267,7 +266,7 @@ public class BorrowRecordDAO {
         String sql = "SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
                 + "u.username, u.full_name, u.email, u.phone, "
                 + "b.title, b.isbn, b.price, "
-                + "bc.barcode, bc.book_condition, bc.status AS copy_status "
+                + "bc.barcode, bc.book_condition "
                 + "FROM borrow_records br "
                 + "INNER JOIN users u ON br.user_id = u.id "
                 + "INNER JOIN books b ON br.book_id = b.id "
@@ -367,7 +366,6 @@ public class BorrowRecordDAO {
         String updateRecord = "UPDATE borrow_records SET copy_id = ?, status = 'BORROWING', "
                 + "borrow_date = CURDATE(), due_date = DATE_ADD(CURDATE(), INTERVAL 14 DAY), "
                 + "updated_at = NOW() WHERE id = ?";
-        String updateCopy = "UPDATE book_copies SET status = 'BORROWED', updated_by = ?, updated_at = NOW() WHERE id = ?";
         String updateBook = "UPDATE books SET available = GREATEST(0, available - 1) WHERE id = ?";
 
         try (Connection conn = DBContext.getInstance().getConnection()) {
@@ -391,13 +389,6 @@ public class BorrowRecordDAO {
                 try (PreparedStatement ps = conn.prepareStatement(updateRecord)) {
                     ps.setInt(1, copyId);
                     ps.setInt(2, id);
-                    ps.executeUpdate();
-                }
-
-                // Đánh dấu bản sao đang được độc giả giữ.
-                try (PreparedStatement ps = conn.prepareStatement(updateCopy)) {
-                    ps.setString(1, operator);
-                    ps.setInt(2, copyId);
                     ps.executeUpdate();
                 }
 
@@ -447,8 +438,7 @@ public class BorrowRecordDAO {
         
         String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
         
-        String updateCopyReserved = "UPDATE book_copies SET status = 'RESERVED', book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
-        String updateCopyAvailable = "UPDATE book_copies SET status = 'AVAILABLE', book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
+        String updateCopyCondition = "UPDATE book_copies SET book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
         
         String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
                 + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, 0, 'PENDING_PICKUP', NOW(), NOW())";
@@ -506,7 +496,7 @@ public class BorrowRecordDAO {
                         ps.executeUpdate();
                     }
                     // Giữ nguyên bản sao vừa trả cho người đặt kế tiếp.
-                    try (PreparedStatement ps = conn.prepareStatement(updateCopyReserved)) {
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyCondition)) {
                         ps.setString(1, condition);
                         ps.setString(2, note);
                         ps.setString(3, operator);
@@ -527,8 +517,8 @@ public class BorrowRecordDAO {
                     resObj.userEmail = userEmail;
                     resObj.userFullName = userFullName;
                 } else {
-                    // Không có người chờ nên đưa bản sao trở lại kho khả dụng.
-                    try (PreparedStatement ps = conn.prepareStatement(updateCopyAvailable)) {
+                    // Không có người chờ, chỉ cần cập nhật tình trạng bản sao vừa trả.
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyCondition)) {
                         ps.setString(1, condition);
                         ps.setString(2, note);
                         ps.setString(3, operator);
@@ -567,7 +557,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+                .append("bc.barcode, bc.book_condition ")
                 .append("FROM borrow_records br ")
                 .append("INNER JOIN users u ON br.user_id = u.id ")
                 .append("INNER JOIN books b ON br.book_id = b.id ")
@@ -598,7 +588,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+                .append("bc.barcode, bc.book_condition ")
                 .append("FROM borrow_records br ")
                 .append("INNER JOIN users u ON br.user_id = u.id ")
                 .append("INNER JOIN books b ON br.book_id = b.id ")
@@ -741,8 +731,6 @@ public class BorrowRecordDAO {
                 + "AND pickup_deadline >= NOW() FOR UPDATE";
         String borrowSql = "UPDATE borrow_records SET status='BORROWED', pickup_date=NOW(), "
                 + "borrow_date=CURDATE(), due_date=DATE_ADD(CURDATE(), INTERVAL 14 DAY), updated_at=NOW() WHERE id=?";
-        String copySql = "UPDATE book_copies SET status='BORROWED', updated_by=?, updated_at=NOW() "
-                + "WHERE id=? AND status='RESERVED'";
         try (Connection connection = DBContext.getInstance().getConnection()) {
             connection.setAutoCommit(false);
             try {
@@ -755,14 +743,6 @@ public class BorrowRecordDAO {
                             return false;
                         }
                         copyId = resultSet.getInt(1);
-                    }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(copySql)) {
-                    statement.setString(1, operator);
-                    statement.setInt(2, copyId);
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
                     }
                 }
                 try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
@@ -787,9 +767,6 @@ public class BorrowRecordDAO {
      * @throws Exception khi thao tác dữ liệu thất bại
      */
     public int expirePendingRequests() throws Exception {
-        String copiesSql = "UPDATE book_copies bc INNER JOIN borrow_records br ON br.copy_id=bc.id "
-                + "SET bc.status='AVAILABLE', bc.updated_at=NOW() WHERE br.status='PENDING_PICKUP' "
-                + "AND br.pickup_deadline < NOW()";
         String recordsSql = "UPDATE borrow_records SET status='EXPIRED', updated_at=NOW() "
                 + "WHERE status='PENDING_PICKUP' AND pickup_deadline < NOW()";
         String booksSql = "UPDATE books b INNER JOIN (SELECT book_id, COUNT(*) quantity "
@@ -798,9 +775,8 @@ public class BorrowRecordDAO {
                 + "SET b.available=b.available+expired.quantity";
         try (Connection connection = DBContext.getInstance().getConnection()) {
             connection.setAutoCommit(false);
-            try (PreparedStatement books = connection.prepareStatement(booksSql); PreparedStatement copies = connection.prepareStatement(copiesSql); PreparedStatement records = connection.prepareStatement(recordsSql)) {
+            try (PreparedStatement books = connection.prepareStatement(booksSql); PreparedStatement records = connection.prepareStatement(recordsSql)) {
                 books.executeUpdate();
-                copies.executeUpdate();
                 int count = records.executeUpdate();
                 connection.commit();
                 return count;
@@ -826,8 +802,6 @@ public class BorrowRecordDAO {
         String selectSql = "SELECT copy_id, book_id FROM borrow_records WHERE id=? AND user_id=? "
                 + "AND status='PENDING_PICKUP' FOR UPDATE";
         String recordSql = "UPDATE borrow_records SET status=?, updated_at=NOW() WHERE id=?";
-        String copySql = "UPDATE book_copies SET status='AVAILABLE', updated_at=NOW() "
-                + "WHERE id=? AND status='RESERVED'";
         String increaseSql = "UPDATE books SET available=available+1 WHERE id=?";
         try (Connection connection = DBContext.getInstance().getConnection()) {
             connection.setAutoCommit(false);
@@ -845,10 +819,6 @@ public class BorrowRecordDAO {
                         copyId = resultSet.getInt(1);
                         bookId = resultSet.getInt(2);
                     }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(copySql)) {
-                    statement.setInt(1, copyId);
-                    statement.executeUpdate();
                 }
                 try (PreparedStatement statement = connection.prepareStatement(recordSql)) {
                     statement.setString(1, targetStatus);

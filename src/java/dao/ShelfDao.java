@@ -258,7 +258,6 @@ public class ShelfDao {
                     BookCopy bc = new BookCopy();
                     bc.setId(r.getInt("id"));
                     bc.setBarcode(r.getString("barcode"));
-                    bc.setStatus(r.getString("status"));
                     bc.setSlot(r.getString("slot"));
                     Book b = new Book();
                     b.setId(r.getInt("book_id"));
