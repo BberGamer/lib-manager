@@ -331,8 +331,8 @@ public class BookExcelService {
                 }
 
                 // 4. Generate quantity book_copies
-                String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, status, note, is_deleted, created_by, updated_by, created_at, updated_at) "
-                        + "VALUES (?, ?, 'GOOD', 'AVAILABLE', 'Khởi tạo từ Import Excel', 0, ?, ?, NOW(), NOW())";
+                String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, note, is_deleted, created_by, updated_by, created_at, updated_at) "
+                        + "VALUES (?, ?, 'GOOD', 'Khởi tạo từ Import Excel', 0, ?, ?, NOW(), NOW())";
                 try (PreparedStatement psCopy = conn.prepareStatement(insertCopySql)) {
                     for (int i = 1; i <= quantity; i++) {
                         String barcode = generateUniqueBarcode(conn, bookId, i);

@@ -147,6 +147,22 @@
                                             <span class="renew-unavailable">Không thể gia hạn</span>
                                         </c:otherwise>
                                     </c:choose>
+                                    <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
+                                        <div style="margin-top: 8px;">
+                                            <c:choose>
+                                                <c:when test="${reviewedBorrowIds.contains(record.id)}">
+                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="color: var(--primary); font-size: 0.82rem; text-decoration: underline; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                        <i class="fa-solid fa-pen-to-square"></i> Viết đánh giá
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </c:if>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -175,6 +191,7 @@
                             <th>Ngày mượn</th>
                             <th>Ngày trả</th>
                             <th>Trạng thái</th>
+                            <th>Đánh giá</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -199,11 +216,32 @@
                                         </c:choose>
                                     </span>
                                 </td>
+                                <td data-label="Đánh giá">
+                                    <c:choose>
+                                        <c:when test="${record.status eq 'RETURNED'}">
+                                            <c:choose>
+                                                <c:when test="${reviewedBorrowIds.contains(record.id)}">
+                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
+                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="display: inline-block; padding: 4px 10px; font-size: 0.82rem; text-decoration: none; border-radius: 4px; background: linear-gradient(135deg, #f5a623, #f18d00); color: white; text-align: center; font-weight: 500;">
+                                                        Viết đánh giá
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty borrowPage.historyRecords}">
                             <tr>
-                                <td colspan="4" class="borrow-empty">
+                                <td colspan="5" class="borrow-empty">
                                     <i class="fa-solid fa-clock-rotate-left"></i>
                                     <span>Chưa có lịch sử mượn sách.</span>
                                 </td>

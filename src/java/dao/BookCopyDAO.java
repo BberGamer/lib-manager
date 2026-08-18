@@ -175,17 +175,17 @@ public class BookCopyDAO {
     }
 
     public boolean updateCopy(BookCopy copy) {
-        String sql = "UPDATE book_copies SET barcode = ?, book_condition = ?, status = ?, note = ?, area = ?, shelf = ?, slot = ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
+        String sql = "UPDATE book_copies SET barcode = ?, book_condition = ?, note = ?, area = ?, shelf = ?, slot = ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, copy.getBarcode());
             ps.setString(2, copy.getBookCondition());
-            ps.setString(4, copy.getNote());
-            ps.setString(5, copy.getArea());
-            ps.setString(6, copy.getShelf());
-            ps.setString(7, copy.getSlot());
-            ps.setString(8, copy.getUpdatedBy());
-            ps.setInt(9, copy.getId());
+            ps.setString(3, copy.getNote());
+            ps.setString(4, copy.getArea());
+            ps.setString(5, copy.getShelf());
+            ps.setString(6, copy.getSlot());
+            ps.setString(7, copy.getUpdatedBy());
+            ps.setInt(8, copy.getId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
