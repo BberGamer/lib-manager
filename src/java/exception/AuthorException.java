@@ -1,7 +1,7 @@
 /**
  * Ngoại lệ nghiệp vụ tổng quát của module quản lý tác giả tại tầng service.
  */
-package service;
+package exception;
 
 /**
  * Bao bọc lỗi persistence để controller không phụ thuộc vào SQLException.
