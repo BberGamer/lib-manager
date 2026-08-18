@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Book, model.BookCopy, java.util.List" %>
+<%@ page import="model.Book, model.BookCopy, model.Shelf, java.util.List" %>
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 <%
     String formMode = (String) request.getAttribute("formMode");
@@ -11,6 +11,7 @@
 
     List<String> errors = (List<String>) request.getAttribute("errors");
     String ctx = request.getContextPath();
+    List<Shelf> shelvesList = (List<Shelf>) request.getAttribute("shelvesList");
 
     // Determine current values (either from request attributes after validation failure, or from the model)
     String barcode = (String) request.getAttribute("barcode");
@@ -21,11 +22,6 @@
     String selectedCondition = (String) request.getAttribute("selectedCondition");
     if (selectedCondition == null) {
         selectedCondition = (isEdit && copy != null) ? copy.getBookCondition() : "GOOD";
-    }
-
-    String selectedStatus = (String) request.getAttribute("selectedStatus");
-    if (selectedStatus == null) {
-        selectedStatus = (isEdit && copy != null) ? copy.getStatus() : "AVAILABLE";
     }
 %>
 
@@ -167,21 +163,43 @@
                 </div>
 
                 <div class="form-row">
-                    <!-- Area -->
+                    <!-- Shelf (Select) -->
+                    <div class="form-group">
+                        <label for="shelfSelect" class="form-label">Kệ (Shelf) <span class="required">*</span></label>
+                        <select id="shelfSelect" name="shelf" class="form-select">
+                            <option value="">-- Chọn kệ sách --</option>
+                            <% 
+                                if (shelvesList != null) {
+                                    for (Shelf s : shelvesList) {
+                                        boolean isActive = "ACTIVE".equalsIgnoreCase(s.getStatus());
+                                        boolean isCurrent = s.getCode().equals(shelf);
+                                        if (isActive || isCurrent) {
+                            %>
+                                <option value="<%= s.getCode() %>" data-area="<%= s.getArea() %>" <%= isCurrent ? "selected" : "" %> <%= !isActive ? "style='color: var(--text-muted);'" : "" %>>
+                                    <%= s.getName() %> (<%= s.getCode() %>) <%= !isActive ? "[Ngưng hoạt động]" : "" %>
+                                </option>
+                            <% 
+                                        } else {
+                            %>
+                                <option value="<%= s.getCode() %>" data-area="<%= s.getArea() %>" disabled style="color: var(--text-muted); opacity: 0.6;">
+                                    <%= s.getName() %> (<%= s.getCode() %>) [Ngưng hoạt động]
+                                </option>
+                            <%
+                                        }
+                                    }
+                                }
+                            %>
+                        </select>
+                    </div>
+
+                    <!-- Area (Read-only) -->
                     <div class="form-group">
                         <label for="areaInput" class="form-label">Khu vực / Tầng</label>
                         <input type="text" id="areaInput" name="area" class="form-control"
-                               value="<%= area %>" placeholder="VD: Tầng 1"
-                               maxlength="50">
-                        <span class="form-hint">Tầng 1, Tầng 2, Khu A...</span>
-                    </div>
-
-                    <!-- Shelf -->
-                    <div class="form-group">
-                        <label for="shelfInput" class="form-label">Kệ (Shelf)</label>
-                        <input type="text" id="shelfInput" name="shelf" class="form-control"
-                               value="<%= shelf %>" placeholder="VD: K01"
-                               maxlength="20">
+                               value="<%= area %>" readonly
+                               style="background: var(--bg-surface); cursor: not-allowed; opacity: 0.8;"
+                               placeholder="Tự động chọn theo Kệ...">
+                        <span class="form-hint">Xác định tự động theo Kệ sách</span>
                     </div>
 
                     <!-- Slot -->
@@ -223,10 +241,23 @@
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
 
 <script>
+// Lắng nghe sự kiện thay đổi trên dropdown chọn kệ để tự động điền thông tin khu vực
+document.getElementById('shelfSelect').addEventListener('change', function() {
+    var selectedOption = this.options[this.selectedIndex];
+    var areaInput = document.getElementById('areaInput');
+    if (selectedOption && selectedOption.value) {
+        areaInput.value = selectedOption.getAttribute('data-area') || '';
+    } else {
+        areaInput.value = '';
+    }
+});
+
+// Kiểm tra tính hợp lệ của dữ liệu biểu mẫu (client-side validation) trước khi submit
 document.getElementById('copyForm').addEventListener('submit', function(e) {
     var barcodeVal = document.getElementById('barcodeInput').value.trim();
+    var shelfSelect = document.getElementById('shelfSelect');
+    var shelfVal = shelfSelect ? shelfSelect.value.trim() : '';
     var areaVal = document.getElementById('areaInput').value.trim();
-    var shelfVal = document.getElementById('shelfInput').value.trim();
     var slotVal = document.getElementById('slotInput').value.trim();
     var noteVal = document.getElementById('noteInput').value.trim();
     var errors = [];
@@ -237,11 +268,14 @@ document.getElementById('copyForm').addEventListener('submit', function(e) {
         errors.push('Mã bản sao (Barcode) không được vượt quá 50 ký tự.');
     }
 
+    if (!shelfVal) {
+        errors.push('Vui lòng chọn kệ sách.');
+    } else if (shelfVal.length > 20) {
+        errors.push('Ký hiệu kệ không được vượt quá 20 ký tự.');
+    }
+
     if (areaVal.length > 50) {
         errors.push('Tên khu vực không được vượt quá 50 ký tự.');
-    }
-    if (shelfVal.length > 20) {
-        errors.push('Ký hiệu kệ không được vượt quá 20 ký tự.');
     }
     if (slotVal.length > 20) {
         errors.push('Ký hiệu ngăn không được vượt quá 20 ký tự.');
