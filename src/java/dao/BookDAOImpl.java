@@ -9,9 +9,20 @@ import java.util.List;
 
 public class BookDAOImpl implements BookDAO {
 
+    /** Truy vấn con tính số bản tốt và không bị một lượt mượn hiện hành chiếm giữ. */
+    private static final String AVAILABLE_COPY_COUNT_SQL = "(SELECT COUNT(*) FROM book_copies bc "
+            + "WHERE bc.book_id = b.id AND bc.is_deleted = 0 "
+            + "AND bc.book_condition IN ('GOOD', 'WORN') "
+            + "AND NOT EXISTS (SELECT 1 FROM borrow_records br WHERE br.copy_id = bc.id "
+            + "AND ((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
+            + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
+
     @Override
     public Book findById(int id) throws Exception {
-        String sql = "SELECT id, isbn, title, category, category_id, publisher, publish_year, price, quantity, available, description, cover_image, subject, is_deleted FROM books WHERE id = ? AND is_deleted = 0";
+        String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
+                + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
+                + " AS available, b.description, b.cover_image, b.subject, b.is_deleted "
+                + "FROM books b WHERE b.id = ? AND b.is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -28,7 +39,8 @@ public class BookDAOImpl implements BookDAO {
     public List<Book> searchBooks(String keyword, String category, String sort, String order, int page, int pageSize) throws Exception {
         List<Book> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject ")
+        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, ")
+          .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, b.description, b.cover_image, b.subject ")
           .append("FROM books b ")
           .append("LEFT JOIN book_authors ba ON b.id = ba.book_id ")
           .append("LEFT JOIN authors a ON ba.author_id = a.id AND a.is_deleted = 0 ")
@@ -44,7 +56,7 @@ public class BookDAOImpl implements BookDAO {
         // Sorting
         String sortCol = "b.title";
         if ("publish_year".equals(sort)) sortCol = "b.publish_year";
-        else if ("available".equals(sort)) sortCol = "b.available";
+        else if ("available".equals(sort)) sortCol = "available";
         else if ("price".equals(sort)) sortCol = "b.price";
         else if ("created_at".equals(sort)) sortCol = "b.created_at";
         else if ("id".equals(sort)) sortCol = "b.id";
@@ -346,7 +358,8 @@ public class BookDAOImpl implements BookDAO {
         List<Book> list = new ArrayList<>();
         // Truy vấn danh sách sách được mượn nhiều nhất dựa trên bảng borrow_records
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
-                   + "b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject, "
+                   + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
+                   + " AS available, b.description, b.cover_image, b.subject, "
                    + "COUNT(br.id) AS borrow_count "
                    + "FROM books b "
                    + "LEFT JOIN borrow_records br ON b.id = br.book_id "
@@ -371,7 +384,8 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> getLatestBooks(int days, int limit) throws Exception {
         List<Book> list = new ArrayList<>();
-        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, b.available, b.description, b.cover_image, b.subject "
+        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, "
+                   + AVAILABLE_COPY_COUNT_SQL + " AS available, b.description, b.cover_image, b.subject "
                    + "FROM books b "
                    + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
                    + "WHERE b.is_deleted = 0 AND b.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) "

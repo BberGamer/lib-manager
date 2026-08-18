@@ -3,6 +3,7 @@ package service;
 
 import dao.BookDAO;
 import dao.BookDAOImpl;
+import dao.BorrowRecordDAO;
 import dao.ReservationDAO;
 import java.util.List;
 import model.Book;
@@ -13,9 +14,11 @@ public class ReservationService {
     public static final int READY_HOLD_HOURS=24;
     private final ReservationDAO reservationDao=new ReservationDAO();
     private final BookDAO bookDao=new BookDAOImpl();
+    private final BorrowRecordDAO borrowRecordDao=new BorrowRecordDAO();
 
     /** Lấy thông tin xác nhận đặt trước sau khi kiểm tra các điều kiện đọc. */
     public CreationInfo getCreationInfo(int userId,int bookId)throws Exception{
+        expireExpiredReadyReservations();
         Book book=bookDao.findById(bookId);if(book==null||book.getAvailable()>0)return null;
         if(reservationDao.findActive(userId,bookId)!=null)return null;
         int waiting=reservationDao.countActiveByBook(bookId);
@@ -23,16 +26,30 @@ public class ReservationService {
     }
     /** Tạo reservation; DAO kiểm tra lại mọi điều kiện trong transaction. */
     public boolean createReservation(int userId,int bookId)throws Exception{
+        expireExpiredReadyReservations();
         return userId>0&&bookId>0&&reservationDao.createWaiting(userId,bookId);
     }
     /** Lấy lịch sử và hàng chờ thuộc user. */
-    public List<ReservationRecord> getMyReservations(int userId)throws Exception{return reservationDao.findByUserId(userId);}
+    public List<ReservationRecord> getMyReservations(int userId)throws Exception{
+        expireExpiredReadyReservations();
+        return reservationDao.findByUserId(userId);
+    }
     /** Hủy reservation active thuộc user. */
     public boolean cancelReservation(int reservationId,int userId)throws Exception{
         return reservationId>0&&reservationDao.cancelOwned(reservationId,userId);
     }
     /** Kích hoạt người chờ đầu tiên khi sách vừa có bản sao khả dụng. */
     public boolean activateNextReservation(int bookId)throws Exception{return reservationDao.activateNext(bookId,READY_HOLD_HOURS);}
+
+    /**
+     * Đóng đồng thời các lượt chờ nhận và reservation đã quá hạn giữ.
+     *
+     * @return số lượt chờ nhận đã hết hạn
+     * @throws Exception khi tầng lưu trữ không thể cập nhật dữ liệu
+     */
+    public int expireExpiredReadyReservations() throws Exception {
+        return borrowRecordDao.expirePendingRequests();
+    }
 
     /** DTO thông tin trang xác nhận. */
     public static final class CreationInfo{

@@ -134,7 +134,7 @@
                         <span class="badge <%= book.getAvailable() > 0 ? "badge-success" : (book.getQuantity() > 0 ? "badge-warning" : "badge-danger") %>"
                               style="font-size:0.85rem; padding:6px 16px;">
                             <i class="fa-solid <%= book.getAvailable() > 0 ? "fa-circle-check" : "fa-circle-xmark" %>"></i>
-                            <%= book.getStatusLabel() %>
+                            <%= book.getAvailabilityLabel() %>
                         </span>
                     </div>
 
