@@ -46,15 +46,6 @@ ALTER TABLE borrow_records
         'OVERDUE'
     ) NOT NULL DEFAULT 'PENDING_PICKUP';
 
-ALTER TABLE book_copies
-    MODIFY status ENUM(
-        'AVAILABLE',
-        'RESERVED',
-        'BORROWED',
-        'MAINTENANCE',
-        'LOST'
-    ) NOT NULL DEFAULT 'AVAILABLE';
-
 CREATE INDEX idx_borrow_user_book_status
     ON borrow_records (user_id, book_id, status);
 
@@ -63,6 +54,4 @@ CREATE INDEX idx_borrow_pickup_expiration
 
 -- Kiểm tra nhanh sau migration.
 DESCRIBE borrow_records;
-DESCRIBE book_copies;
 SELECT DISTINCT status FROM borrow_records ORDER BY status;
-SELECT DISTINCT status FROM book_copies ORDER BY status;

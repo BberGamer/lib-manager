@@ -104,19 +104,21 @@ public class Book {
     public void setUpdatedBy(String v)       { this.updatedBy = v; }
 
     /**
-     * Trả về nhãn trạng thái sách.
+     * Trả về nhãn khả dụng được tổng hợp từ số bản có thể cho mượn.
      * @return "Còn sách" | "Đặt trước" | "Hết sách"
      */
-    public String getStatusLabel() {
+    public String getAvailabilityLabel() {
         if (available > 0)                   return "Còn sách";
         if (quantity > 0 && available == 0)  return "Đặt trước";
         return "Hết sách";
     }
 
     /**
-     * CSS class tương ứng trạng thái.
+     * Trả về CSS class tương ứng với mức khả dụng, không đại diện tình trạng vật lý.
+     *
+     * @return CSS class dùng để trình bày mức khả dụng
      */
-    public String getStatusClass() {
+    public String getAvailabilityClass() {
         if (available > 0)                   return "status-available";
         if (quantity > 0 && available == 0)  return "status-reserve";
         return "status-unavailable";

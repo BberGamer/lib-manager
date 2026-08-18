@@ -328,7 +328,7 @@
                             <td><%= b.getPublishYear() != null ? b.getPublishYear() : "—" %></td>
                             <td>
                                 <span class="badge <%= b.getAvailable() > 0 ? "badge-success" : (b.getQuantity() > 0 ? "badge-warning" : "badge-danger") %>">
-                                    <%= b.getStatusLabel() %>
+                                    <%= b.getAvailabilityLabel() %>
                                 </span>
                                 <% if (loggedUser != null) { %>
                                     <span style="font-size:0.75rem;color:var(--text-muted);display:block;margin-top:2px;">
@@ -396,8 +396,8 @@
                                 <span><%= b.getTitle() %></span>
                             </div>
                         <% } %>
-                        <span class="book-status-tag <%= b.getStatusClass() %>">
-                            <%= b.getStatusLabel() %>
+                        <span class="book-status-tag <%= b.getAvailabilityClass() %>">
+                            <%= b.getAvailabilityLabel() %>
                         </span>
                     </a>
                     <div class="book-body">

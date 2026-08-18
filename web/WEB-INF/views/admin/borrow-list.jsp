@@ -375,7 +375,8 @@
                                     <span>Tình trạng cuốn sách</span>
                                     <select name="condition">
                                         <option value="GOOD">Bình thường (GOOD)</option>
-                                        <option value="DAMAGED">Hỏng nhẹ (DAMAGED)</option>
+                                        <option value="WORN">Hao mòn/Hỏng nhẹ (WORN)</option>
+                                        <option value="DAMAGED">Hỏng nặng (DAMAGED)</option>
                                         <option value="LOST">Mất hoàn toàn (LOST)</option>
                                     </select>
                                 </label>

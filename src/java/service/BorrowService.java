@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import model.BorrowRecord;
 
 /**
@@ -22,6 +24,8 @@ public class BorrowService {
     public static final int RENEWAL_EXTENSION_DAYS = 7;
     public static final int UPCOMING_DUE_DAYS = 7;
     public static final int PICKUP_HOLD_HOURS = 24;
+    /** Các tình trạng vật lý được chấp nhận khi nhận lại bản sao. */
+    private static final Set<String> BOOK_CONDITIONS = Set.of("GOOD", "WORN", "DAMAGED", "LOST");
 
     private final BorrowRecordDAO borrowRecordDao;
     private final BookDAO bookDao;
@@ -119,6 +123,28 @@ public class BorrowService {
         return borrowId > 0 && borrowRecordDao.confirmPickup(borrowId, operator);
     }
 
+    /**
+     * Xác nhận trả sách sau khi chuẩn hóa và kiểm tra tình trạng vật lý được phép.
+     *
+     * @param borrowId mã lượt mượn
+     * @param operator tài khoản nhân viên nhận trả
+     * @param condition tình trạng vật lý khi nhận lại
+     * @param note ghi chú kiểm tra sách
+     * @return kết quả trả sách và reservation vừa được kích hoạt nếu có
+     * @throws IllegalArgumentException khi tình trạng vật lý không hợp lệ
+     * @throws Exception khi tầng lưu trữ không thể cập nhật dữ liệu
+     */
+    public BorrowRecordDAO.ReturnResult confirmReturn(int borrowId, String operator,
+            String condition, String note) throws Exception {
+        String normalizedCondition = condition == null
+                ? "GOOD" : condition.trim().toUpperCase(Locale.ROOT);
+        if (!BOOK_CONDITIONS.contains(normalizedCondition)) {
+            throw new IllegalArgumentException("Tình trạng bản sao không hợp lệ.");
+        }
+        String normalizedNote = note == null ? null : note.trim();
+        return borrowRecordDao.confirmReturn(borrowId, operator, normalizedCondition, normalizedNote);
+    }
+
     /** Giải phóng mọi yêu cầu đã quá hạn nhận sách. */
     public int expirePendingBorrowRequests() throws Exception {
         return borrowRecordDao.expirePendingRequests();
@@ -128,7 +154,7 @@ public class BorrowService {
      * Xác định lượt mượn vẫn đang hoạt động theo trạng thái lưu trữ.
      *
      * @param record lượt mượn cần kiểm tra
-     * @return {@code true} với trạng thái BORROWING hoặc OVERDUE
+     * @return {@code true} với lượt chờ nhận, đang mượn hoặc quá hạn
      */
     private boolean isActive(BorrowRecord record) {
         return "PENDING_PICKUP".equalsIgnoreCase(record.getStatus())

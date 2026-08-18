@@ -171,7 +171,9 @@ public class BorrowManagementServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        if (!"GOOD".equals(targetCopy.getBookCondition()) || isBorrowedOrReserved) {
+        boolean hasBorrowableCondition = "GOOD".equals(targetCopy.getBookCondition())
+                || "WORN".equals(targetCopy.getBookCondition());
+        if (!hasBorrowableCondition || isBorrowedOrReserved) {
             session.setAttribute("errorMsg", "Bản sao sách này hiện không khả dụng cho mượn (đang mượn/giữ hoặc tình trạng không tốt)!");
             response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
@@ -196,7 +198,7 @@ public class BorrowManagementServlet extends HttpServlet {
             condition = "GOOD";
         }
 
-        dao.BorrowRecordDAO.ReturnResult result = borrowRecordDAO.confirmReturn(id, operator, condition, note);
+        dao.BorrowRecordDAO.ReturnResult result = borrowService.confirmReturn(id, operator, condition, note);
         if (result.success) {
             session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
             
