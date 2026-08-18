@@ -149,7 +149,7 @@ public class BorrowManagementServlet extends HttpServlet {
             return;
         }
 
-        List<BookCopy> copies = bookCopyDAO.searchCopies(record.getBookId(), barcode.trim(), null, null, 1, 10);
+        List<BookCopy> copies = bookCopyDAO.searchCopies(record.getBookId(), barcode.trim(), null, 1, 10);
         BookCopy targetCopy = null;
         for (BookCopy c : copies) {
             if (barcode.trim().equalsIgnoreCase(c.getBarcode())) {
@@ -164,8 +164,15 @@ public class BorrowManagementServlet extends HttpServlet {
             return;
         }
 
-        if (!"AVAILABLE".equalsIgnoreCase(targetCopy.getStatus())) {
-            session.setAttribute("errorMsg", "Bản sao sách này hiện đang có trạng thái '" + targetCopy.getStatus() + "' và không khả dụng cho mượn!");
+        boolean isBorrowedOrReserved = false;
+        try {
+            isBorrowedOrReserved = bookCopyDAO.isCopyBorrowedOrReserved(targetCopy.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (!"GOOD".equals(targetCopy.getBookCondition()) || isBorrowedOrReserved) {
+            session.setAttribute("errorMsg", "Bản sao sách này hiện không khả dụng cho mượn (đang mượn/giữ hoặc tình trạng không tốt)!");
             response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
             return;
         }
