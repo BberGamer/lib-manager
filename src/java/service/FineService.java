@@ -128,6 +128,47 @@ public class FineService {
     }
 
     /**
+     * Thực hiện kiểm tra và validate toàn bộ các quy tắc nghiệp vụ cho khoản phạt trước khi thanh toán.
+     * <p>Nghiệp vụ bao gồm các bước kiểm tra:</p>
+     * <ol>
+     *   <li>Kiểm tra sự tồn tại và quyền sở hữu khoản phạt của độc giả.</li>
+     *   <li>Kiểm tra trạng thái khoản phạt (phải ở trạng thái chưa thanh toán {@code UNPAID}).</li>
+     *   <li>Kiểm tra ngày trả sách (bắt buộc phải có ngày trả {@code returnDate != null}).</li>
+     *   <li>Kiểm tra số tiền phạt (phải lớn hơn 0).</li>
+     * </ol>
+     *
+     * @param fineId mã khoản phạt
+     * @param userId mã độc giả đăng nhập
+     * @return đối tượng khoản phạt đã được xác thực hợp lệ
+     * @throws IllegalArgumentException khi bất kỳ quy tắc validate nghiệp vụ nào bị vi phạm
+     * @throws Exception khi xảy ra lỗi trong quá trình truy vấn cơ sở dữ liệu
+     */
+    public Fine validateFineForPayment(int fineId, int userId) throws Exception {
+        // Step 1: Validate sự tồn tại và quyền sở hữu khoản phạt (chính chủ)
+        Fine fine = getOwnedFine(fineId, userId);
+        if (fine == null) {
+            throw new IllegalArgumentException("Khoản phạt không tồn tại hoặc bạn không có quyền truy cập.");
+        }
+
+        // Step 2: Validate trạng thái khoản phạt (phải là UNPAID)
+        if (!"UNPAID".equalsIgnoreCase(fine.getStatus())) {
+            throw new IllegalArgumentException("Khoản phạt này đã được thanh toán hoặc được miễn.");
+        }
+
+        // Step 3: Validate ngày trả sách (bắt buộc độc giả phải trả sách trước khi nộp phạt)
+        if (fine.getBorrowRecord() == null || fine.getBorrowRecord().getReturnDate() == null) {
+            throw new IllegalArgumentException("Bạn cần phải trả sách cho thư viện trước khi thực hiện thanh toán khoản phạt này.");
+        }
+
+        // Step 4: Validate số tiền phạt (phải lớn hơn 0)
+        if (fine.getAmount() == null || fine.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Số tiền phạt không hợp lệ để thanh toán.");
+        }
+
+        return fine;
+    }
+
+    /**
      * Lấy khoản phạt theo ID.
      *
      * @param fineId mã khoản phạt

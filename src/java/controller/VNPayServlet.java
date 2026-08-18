@@ -99,26 +99,16 @@ public class VNPayServlet extends HttpServlet {
             return;
         }
 
-        Fine fine = fineService.getOwnedFine(fineId, user.getId());
-        if (fine == null || !"UNPAID".equalsIgnoreCase(fine.getStatus())) {
-            setFlashMessage(request, "fineErrorMessage", "Khoản phạt không tồn tại hoặc đã được thanh toán.");
-            response.sendRedirect(request.getContextPath() + "/fine/my");
-            return;
-        }
-
-        if (fine.getBorrowRecord() == null || fine.getBorrowRecord().getReturnDate() == null) {
-            setFlashMessage(request, "fineErrorMessage", "Bạn cần phải trả sách cho thư viện trước khi thực hiện thanh toán khoản phạt này.");
+        Fine fine;
+        try {
+            fine = fineService.validateFineForPayment(fineId, user.getId());
+        } catch (IllegalArgumentException e) {
+            setFlashMessage(request, "fineErrorMessage", e.getMessage());
             response.sendRedirect(request.getContextPath() + "/fine/my");
             return;
         }
 
         BigDecimal amount = fine.getAmount();
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            setFlashMessage(request, "fineErrorMessage", "Số tiền phạt không hợp lệ để thanh toán.");
-            response.sendRedirect(request.getContextPath() + "/fine/my");
-            return;
-        }
-
         long amountInCents = amount.multiply(new BigDecimal(100)).longValue();
         String txnRef = fine.getId() + "_" + System.currentTimeMillis();
         String orderInfo = "Thanh toan khoan phat F" + fine.getId();

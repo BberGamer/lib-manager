@@ -117,24 +117,14 @@
                                     </div>
                                 </c:if>
                                 <c:if test="${fine.status eq 'UNPAID'}">
-                                    <c:choose>
-                                        <c:when test="${not empty fine.borrowRecord.returnDate}">
-                                            <div class="fine-detail-pay-box">
-                                                <c:url var="payUrl" value="/vnpay-pay">
-                                                    <c:param name="fineId" value="${fine.id}" />
-                                                </c:url>
-                                                <a class="fine-vnpay-btn fine-vnpay-btn-lg" href="${payUrl}">
-                                                    <i class="fa-solid fa-credit-card"></i> Thanh toán khoản phạt qua VNPay
-                                                </a>
-                                            </div>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="fine-alert fine-alert-warning" style="margin-top: 20px;">
-                                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                                <span>Bạn cần trả sách cho thư viện trước khi có thể thực hiện thanh toán khoản phạt này.</span>
-                                            </div>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <div class="fine-detail-pay-box">
+                                        <c:url var="payUrl" value="/vnpay-pay">
+                                            <c:param name="fineId" value="${fine.id}" />
+                                        </c:url>
+                                        <a class="fine-vnpay-btn fine-vnpay-btn-lg" href="${payUrl}">
+                                            <i class="fa-solid fa-credit-card"></i> Thanh toán khoản phạt qua VNPay
+                                        </a>
+                                    </div>
                                 </c:if>
                             </section>
                         </div>
