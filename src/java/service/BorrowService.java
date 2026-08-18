@@ -57,6 +57,7 @@ public class BorrowService {
      */
     public BorrowPageData getBorrowPage(int userId) throws Exception {
         borrowRecordDao.expirePendingRequests();
+        borrowRecordDao.markOverdueBorrows();
         List<BorrowRecord> activeRecords = new ArrayList<>();
         List<BorrowRecord> historyRecords = new ArrayList<>();
         int upcomingDueCount = 0;
