@@ -6,6 +6,8 @@ import dao.BookDAOImpl;
 import model.Book;
 import model.BookCopy;
 import model.User;
+import model.Shelf;
+import service.ShelfService;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -37,6 +39,24 @@ public class BookCopyServlet extends HttpServlet {
             request.setAttribute("isManagePageAttr", true);
             request.setAttribute("activePage", "books");
             request.setAttribute("rolePath", path.startsWith("/admin") ? "/admin" : "/librarian");
+        }
+    }
+
+    /**
+     * Nạp danh sách tất cả các kệ từ database vào request attributes 
+     * để hiển thị trên dropdown của form bản sao.
+     * Nếu xảy ra lỗi, gán danh sách rỗng để tránh gây lỗi JSP compilation.
+     * 
+     * @param request đối tượng HttpServletRequest cần gắn thuộc tính
+     */
+    private void loadShelvesList(HttpServletRequest request) {
+        try {
+            ShelfService shelfService = new ShelfService();
+            List<Shelf> shelves = shelfService.getAllShelvesForSelection();
+            request.setAttribute("shelvesList", shelves);
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("shelvesList", new ArrayList<Shelf>());
         }
     }
 
@@ -127,6 +147,7 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         setSidebarAttributes(request);
+        loadShelvesList(request);
         request.setAttribute("formMode", "add");
         request.setAttribute("book", book);
         request.setAttribute("pageTitle", "Thêm bản sao mới – FPT Library");
@@ -155,6 +176,7 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         setSidebarAttributes(request);
+        loadShelvesList(request);
         request.setAttribute("formMode", "edit");
         request.setAttribute("copy", copy);
         request.setAttribute("book", copy.getBook());
@@ -209,7 +231,9 @@ public class BookCopyServlet extends HttpServlet {
         if (area != null && area.length() > 50) {
             errors.add("Khu vực không được vượt quá 50 ký tự.");
         }
-        if (shelf != null && shelf.length() > 20) {
+        if (shelf == null || shelf.trim().isEmpty()) {
+            errors.add("Vui lòng chọn kệ sách.");
+        } else if (shelf.length() > 20) {
             errors.add("Kệ không được vượt quá 20 ký tự.");
         }
         if (slot != null && slot.length() > 20) {
@@ -223,6 +247,7 @@ public class BookCopyServlet extends HttpServlet {
 
         if (!errors.isEmpty()) {
             setSidebarAttributes(request);
+            loadShelvesList(request);
             request.setAttribute("formMode", "add");
             request.setAttribute("book", book);
             request.setAttribute("errors", errors);
@@ -255,6 +280,7 @@ public class BookCopyServlet extends HttpServlet {
         } else {
             errors.add("Thêm bản sao thất bại do lỗi hệ thống.");
             setSidebarAttributes(request);
+            loadShelvesList(request);
             request.setAttribute("formMode", "add");
             request.setAttribute("book", book);
             request.setAttribute("errors", errors);
@@ -309,7 +335,9 @@ public class BookCopyServlet extends HttpServlet {
         if (area != null && area.length() > 50) {
             errors.add("Khu vực không được vượt quá 50 ký tự.");
         }
-        if (shelf != null && shelf.length() > 20) {
+        if (shelf == null || shelf.trim().isEmpty()) {
+            errors.add("Vui lòng chọn kệ sách.");
+        } else if (shelf.length() > 20) {
             errors.add("Kệ không được vượt quá 20 ký tự.");
         }
         if (slot != null && slot.length() > 20) {
@@ -323,6 +351,7 @@ public class BookCopyServlet extends HttpServlet {
 
         if (!errors.isEmpty()) {
             setSidebarAttributes(request);
+            loadShelvesList(request);
             request.setAttribute("formMode", "edit");
             request.setAttribute("copy", existingCopy);
             request.setAttribute("book", existingCopy.getBook());
@@ -355,6 +384,7 @@ public class BookCopyServlet extends HttpServlet {
         } else {
             errors.add("Cập nhật bản sao thất bại do lỗi hệ thống.");
             setSidebarAttributes(request);
+            loadShelvesList(request);
             request.setAttribute("formMode", "edit");
             request.setAttribute("copy", existingCopy);
             request.setAttribute("book", existingCopy.getBook());

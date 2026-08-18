@@ -56,6 +56,20 @@ public class ShelfService {
             throw new ShelfException("Không thể tải bản đồ kệ", e);
         }
     }
+    /**
+     * Lấy toàn bộ danh sách kệ (bao gồm cả kệ hoạt động và ngưng hoạt động) 
+     * để hiển thị trên dropdown của form thêm/sửa bản sao sách.
+     * 
+     * @return danh sách tất cả các kệ không bị xóa mềm
+     * @throws ShelfException nếu xảy ra lỗi truy vấn cơ sở dữ liệu
+     */
+    public List<Shelf> getAllShelvesForSelection() throws ShelfException {
+        try {
+            return dao.findMap();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new ShelfException("Không thể tải danh sách kệ cho form lựa chọn", e);
+        }
+    }
     /** Tìm chi tiết. */
     public Optional<Shelf> find(int id) throws ShelfException {
         try {
