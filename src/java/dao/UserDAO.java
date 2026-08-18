@@ -297,11 +297,11 @@ public class UserDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    User u = mapRow(rs);
+//                    User u = mapRow(rs);
                     // Chỉ thêm vào danh sách nếu là READER VÀ có ID là 12, 13, hoặc 14
-                    if ("READER".equalsIgnoreCase(u.getRole()) && (u.getId() == 12 || u.getId() == 13 || u.getId() == 14)) {
-                        list.add(u);
-                    }
+//                    if ("READER".equalsIgnoreCase(u.getRole()) && (u.getId() == 12 || u.getId() == 13 || u.getId() == 14)) {
+//                        list.add(u);
+                   list.add(mapRow(rs));
                 }
             }
             return list;
