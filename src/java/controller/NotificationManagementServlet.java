@@ -47,6 +47,15 @@ public class NotificationManagementServlet extends HttpServlet {
         }
 
         String filterType = request.getParameter("filterType");
+        String tab = request.getParameter("tab");
+        if (tab == null || (!tab.equals("reminders") && !tab.equals("compose"))) {
+            tab = "compose";
+        }
+        String sub = request.getParameter("sub");
+        if (sub == null || (!sub.equals("due") && !sub.equals("overdue") && !sub.equals("fines"))) {
+            sub = "due";
+        }
+
         int page = 1;
         try {
             String p = request.getParameter("page");
@@ -64,6 +73,8 @@ public class NotificationManagementServlet extends HttpServlet {
         request.setAttribute("totalPages", 1);
         request.setAttribute("currentPageNum", page);
         request.setAttribute("selectedFilterType", filterType != null ? filterType : "");
+        request.setAttribute("activeTab", tab);
+        request.setAttribute("activeSubTab", sub);
         request.setAttribute("isManagePageAttr", true);
         request.setAttribute("activePage", "notifications");
         request.setAttribute("pageTitle", "Quản lý nhắc nhở & thông báo – FPT Library");
@@ -86,6 +97,10 @@ public class NotificationManagementServlet extends HttpServlet {
             request.setAttribute("sentHistory", sentHistory);
             request.setAttribute("totalSent", totalSent);
             request.setAttribute("totalPages", totalPages);
+
+            service.AutoReminderService autoReminderService = new service.AutoReminderService();
+            request.setAttribute("autoJobEnabled", autoReminderService.isAutoJobEnabled());
+            request.setAttribute("autoEmailEnabled", autoReminderService.isAutoEmailEnabled());
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "Lỗi tải dữ liệu thông báo: " + e.getMessage());
@@ -210,11 +225,44 @@ public class NotificationManagementServlet extends HttpServlet {
                     }
                     session.setAttribute("successMsg", "Đã gửi thông báo thành công tới " + successCount + " người nhận!");
                 }
+            } else if ("run-auto-job".equals(action)) {
+                service.AutoReminderService autoReminderService = new service.AutoReminderService();
+                service.AutoReminderService.BatchResult res = autoReminderService.runBatchReminder(loggedUser.getUsername());
+                if (res.success) {
+                    session.setAttribute("successMsg", "⚡ Đã hoàn thành quét tự động: Đã gửi " 
+                            + res.nearDueSent + " thông báo sắp đến hạn, " 
+                            + res.overdueSent + " cảnh báo quá hạn, giải phóng " 
+                            + res.expiredPickups + " yêu cầu hết hạn nhận sách!");
+                } else {
+                    session.setAttribute("errorMsg", "Lỗi khi chạy quét tự động: " + res.message);
+                }
+            } else if ("toggle-automation".equals(action)) {
+                boolean enableJob = "true".equalsIgnoreCase(request.getParameter("enableJob"));
+                boolean enableEmail = "true".equalsIgnoreCase(request.getParameter("enableEmail"));
+                service.AutoReminderService autoReminderService = new service.AutoReminderService();
+                autoReminderService.updateAutomationSettings(enableJob, enableEmail, loggedUser.getUsername());
+                session.setAttribute("successMsg", "Đã cập nhật cấu hình tự động: Lập lịch quét = " 
+                        + (enableJob ? "BẬT" : "TẮT") + " | Tự động gửi email = " + (enableEmail ? "BẬT" : "TẮT"));
             }
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("errorMsg", "Lỗi: " + e.getMessage());
         }
-        response.sendRedirect(request.getContextPath() + prefix + "/notification/manage");
+
+        String redirectUrl = request.getContextPath() + prefix + "/notification/manage";
+        if ("send-due".equals(action)) {
+            redirectUrl += "?tab=reminders&sub=due";
+        } else if ("send-overdue".equals(action)) {
+            redirectUrl += "?tab=reminders&sub=overdue";
+        } else if ("send-fine".equals(action)) {
+            redirectUrl += "?tab=reminders&sub=fines";
+        } else if ("run-auto-job".equals(action) || "toggle-automation".equals(action)) {
+            String currentSub = request.getParameter("sub");
+            redirectUrl += "?tab=reminders" + (currentSub != null ? "&sub=" + currentSub : "");
+        } else if ("create-notification".equals(action)) {
+            redirectUrl += "?tab=compose";
+        }
+
+        response.sendRedirect(redirectUrl);
     }
 }

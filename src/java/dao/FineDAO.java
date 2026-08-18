@@ -273,7 +273,12 @@ public class FineDAO {
         // 3. If borrow record status is OVERDUE and fine is paid/waived, trigger return
         if (borrowRecordId != -1 && "OVERDUE".equalsIgnoreCase(borrowStatus)
                 && ("PAID".equalsIgnoreCase(status) || "WAIVED".equalsIgnoreCase(status))) {
-            new BorrowRecordDAO().confirmReturn(borrowRecordId, operator, "GOOD", "Trả tự động khi thanh toán phạt");
+            try {
+                new BorrowRecordDAO().confirmReturn(borrowRecordId, operator, "GOOD", "Trả tự động khi thanh toán phạt");
+            } catch (Exception e) {
+                java.util.logging.Logger.getLogger(FineDAO.class.getName())
+                        .log(java.util.logging.Level.WARNING, "Không thể tự động trả sách khi thanh toán khoản phạt id=" + id, e);
+            }
         }
 
         return true;

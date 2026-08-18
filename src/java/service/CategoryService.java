@@ -20,7 +20,7 @@ public class CategoryService {
 
     public static final int NAME_MAX_LENGTH = 100;
     public static final int DESCRIPTION_MAX_LENGTH = 500;
-    public static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 4;
 
     private final CategoryDao categoryDao;
 

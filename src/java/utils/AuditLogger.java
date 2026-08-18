@@ -52,43 +52,45 @@ public class AuditLogger {
     // Convenience methods cho từng loại hành động
     // -------------------------------------------------------------------------
 
-    /** §1.2, §4.3 Override cảnh báo vượt ngưỡng số lượng mượn */
+    /** Override cảnh báo vượt ngưỡng số lượng mượn */
     public static void logOverrideBorrowLimit(String performedBy, int targetUserId, int currentCount, int maxLimit) {
         log("OVERRIDE_BORROW_LIMIT", performedBy, targetUserId,
-                "userId=" + targetUserId + ", currentCount=" + currentCount + ", maxLimit=" + maxLimit
-                + " — Override approved by " + performedBy);
+                "Đang mượn: " + currentCount + "/" + maxLimit + " cuốn — Thủ thư " + performedBy + " đã duyệt vượt hạn mức");
     }
 
-    /** §2.3 Tạo phạt hư hỏng */
+    /** Tạo phạt hư hỏng */
     public static void logDamageFine(String performedBy, int targetUserId, int borrowRecordId, String amount) {
         log("APPLY_DAMAGE_FINE", performedBy, targetUserId,
-                "borrowRecordId=" + borrowRecordId + ", amount=" + amount + " VND");
+                "Mã mượn #" + borrowRecordId + " | Phạt tiền hư hỏng sách: " + amount + " ₫");
     }
 
-    /** §2.3 Tạo phạt mất sách */
+    /** Tạo phạt mất sách */
     public static void logLostFine(String performedBy, int targetUserId, int borrowRecordId, String amount) {
         log("APPLY_LOST_FINE", performedBy, targetUserId,
-                "borrowRecordId=" + borrowRecordId + ", amount=" + amount + " VND");
+                "Mã mượn #" + borrowRecordId + " | Phạt tiền mất sách: " + amount + " ₫");
     }
 
     /** Admin miễn giảm phạt */
     public static void logWaiveFine(String performedBy, int targetUserId, int fineId, String note) {
         log("WAIVE_FINE", performedBy, targetUserId,
-                "fineId=" + fineId + ", note=" + note);
+                "Mã phạt #" + fineId + " | Lý do miễn giảm: " + (note != null && !note.isEmpty() ? note : "Đã duyệt miễn phạt"));
     }
 
     /** Khóa tài khoản */
     public static void logLockAccount(String performedBy, int targetUserId, String reason) {
-        log("LOCK_ACCOUNT", performedBy, targetUserId, "reason=" + reason);
+        log("LOCK_ACCOUNT", performedBy, targetUserId,
+                "Đã khóa tài khoản | Lý do: " + (reason != null && !reason.isEmpty() ? reason : "Khóa bởi Quản trị viên"));
     }
 
     /** Mở khóa tài khoản */
     public static void logUnlockAccount(String performedBy, int targetUserId) {
-        log("UNLOCK_ACCOUNT", performedBy, targetUserId, "unlocked by admin");
+        log("UNLOCK_ACCOUNT", performedBy, targetUserId,
+                "Đã mở khóa tài khoản hoạt động trở lại");
     }
 
     /** Xác nhận phiếu đặt trước */
     public static void logConfirmReservation(String performedBy, int targetUserId, int reservationId) {
-        log("CONFIRM_RESERVATION", performedBy, targetUserId, "reservationId=" + reservationId);
+        log("CONFIRM_RESERVATION", performedBy, targetUserId,
+                "Mã đặt trước #" + reservationId + " | Đã duyệt giữ sách tại quầy cho độc giả");
     }
 }
