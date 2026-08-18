@@ -39,7 +39,7 @@ public class BorrowRecordDAO {
             + "br.pickup_date, br.borrow_date, br.due_date, "
             + "br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
             + "u.username, u.full_name, u.email, u.phone, b.title, b.isbn, b.price, "
-            + "bc.barcode, bc.book_condition, bc.status AS copy_status "
+            + "bc.barcode, bc.book_condition, 'AVAILABLE' AS copy_status "
             + "FROM borrow_records br "
             + "INNER JOIN users u ON br.user_id = u.id "
             + "INNER JOIN books b ON br.book_id = b.id "
@@ -167,7 +167,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status, ")
+                .append("bc.barcode, bc.book_condition, 'AVAILABLE' AS copy_status, ")
                 .append("EXISTS (SELECT 1 FROM fines f WHERE f.borrow_record_id = br.id ")
                 .append("AND f.fine_type = 'BOOK_CONDITION') AS has_fine ")
                 .append("FROM borrow_records br ")
@@ -267,7 +267,7 @@ public class BorrowRecordDAO {
         String sql = "SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, "
                 + "u.username, u.full_name, u.email, u.phone, "
                 + "b.title, b.isbn, b.price, "
-                + "bc.barcode, bc.book_condition, bc.status AS copy_status "
+                + "bc.barcode, bc.book_condition, 'AVAILABLE' AS copy_status "
                 + "FROM borrow_records br "
                 + "INNER JOIN users u ON br.user_id = u.id "
                 + "INNER JOIN books b ON br.book_id = b.id "
@@ -567,7 +567,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+                .append("bc.barcode, bc.book_condition, 'AVAILABLE' AS copy_status ")
                 .append("FROM borrow_records br ")
                 .append("INNER JOIN users u ON br.user_id = u.id ")
                 .append("INNER JOIN books b ON br.book_id = b.id ")
@@ -598,7 +598,7 @@ public class BorrowRecordDAO {
         sb.append("SELECT br.id, br.user_id, br.book_id, br.copy_id, br.request_date, br.pickup_deadline, br.pickup_date, br.borrow_date, br.due_date, br.return_date, br.renewal_count, br.status, br.note, br.created_at, br.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
                 .append("b.title, b.isbn, b.price, ")
-                .append("bc.barcode, bc.book_condition, bc.status AS copy_status ")
+                .append("bc.barcode, bc.book_condition, 'AVAILABLE' AS copy_status ")
                 .append("FROM borrow_records br ")
                 .append("INNER JOIN users u ON br.user_id = u.id ")
                 .append("INNER JOIN books b ON br.book_id = b.id ")
@@ -788,7 +788,7 @@ public class BorrowRecordDAO {
      */
     public int expirePendingRequests() throws Exception {
         String copiesSql = "UPDATE book_copies bc INNER JOIN borrow_records br ON br.copy_id=bc.id "
-                + "SET bc.status='AVAILABLE', bc.updated_at=NOW() WHERE br.status='PENDING_PICKUP' "
+                + "SET bc.updated_at=NOW() WHERE br.status='PENDING_PICKUP' "
                 + "AND br.pickup_deadline < NOW()";
         String recordsSql = "UPDATE borrow_records SET status='EXPIRED', updated_at=NOW() "
                 + "WHERE status='PENDING_PICKUP' AND pickup_deadline < NOW()";
