@@ -8,25 +8,30 @@
 <c:set var="activePage" value="audit-logs" scope="request" />
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
-<main class="page-wrapper">
-    <div class="container db-container">
-        <!-- Section Header -->
-        <div class="section-header db-section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
-            <div>
-                <h1 class="section-title">
-                    <i class="fa-solid fa-shield-halved" style="color: var(--primary, #e67e22);"></i> Nhật ký kiểm toán hệ thống (Audit Logs)
-                </h1>
-                <p class="section-subtitle">
-                    Theo dõi toàn bộ lịch sử can thiệp đặc biệt, miễn giảm phạt, override giới hạn và quản trị tài khoản
-                </p>
-            </div>
-            <div style="background: white; padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border-color, #e2e8f0); text-align: right; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.8rem; color: var(--text-muted, #718096); font-weight: 500;">Tổng số bản ghi</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary, #2d3748);">
-                    <c:out value="${totalLogs}" />
+<main class="page-wrapper audit-logs-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-clipboard-list"></i> Kiểm toán
+                    </div>
+                    <h1 class="books-page-title">Nhật ký kiểm toán (Audit Log)</h1>
+                    <p class="books-page-subtitle">
+                        Theo dõi toàn bộ lịch sử can thiệp đặc biệt, cấu hình và quản trị tài khoản
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số bản ghi kiểm toán">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalLogs}" /></span>
+                        <span class="bps-lbl">Nhật ký</span>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
+
+    <div class="container db-container" style="padding-top: 28px; padding-bottom: 48px;">
 
         <!-- Alert messages -->
         <c:if test="${not empty error}">
@@ -55,6 +60,8 @@
                                     <c:when test="${act eq 'APPLY_DAMAGE_FINE'}">Phạt hỏng sách (DAMAGE_FINE)</c:when>
                                     <c:when test="${act eq 'APPLY_LOST_FINE'}">Phạt mất sách (LOST_FINE)</c:when>
                                     <c:when test="${act eq 'CONFIRM_RESERVATION'}">Xác nhận đặt trước (RESERVATION)</c:when>
+                                    <c:when test="${act eq 'AUTO_BATCH_REMINDER'}">Quét tự động hàng loạt (BATCH_REMINDER)</c:when>
+                                    <c:when test="${act eq 'UPDATE_AUTOMATION_SETTING'}">Cập nhật cấu hình tự động (SETTING)</c:when>
                                     <c:otherwise><c:out value="${act}" /></c:otherwise>
                                 </c:choose>
                             </option>
@@ -172,6 +179,16 @@
                                                         <i class="fa-solid fa-bookmark"></i> Xác nhận đặt trước
                                                     </span>
                                                 </c:when>
+                                                <c:when test="${log.action eq 'AUTO_BATCH_REMINDER'}">
+                                                    <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-robot"></i> Quét tự động hàng loạt
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'UPDATE_AUTOMATION_SETTING'}">
+                                                    <span style="background: #fef9c3; color: #854d0e; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-sliders"></i> Cập nhật cấu hình tự động
+                                                    </span>
+                                                </c:when>
                                                 <c:otherwise>
                                                     <span style="background: #f1f5f9; color: #475569; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                                                         <i class="fa-solid fa-shield"></i> <c:out value="${log.action}" />
@@ -226,48 +243,111 @@
 
         <!-- Pagination -->
         <c:if test="${totalPages > 1}">
+            <c:set var="cp" value="${currentPageNum}" />
+            <c:set var="tp" value="${totalPages}" />
+            <c:set var="winStart" value="${cp - 2 > 2 ? cp - 2 : 2}" />
+            <c:set var="winEnd" value="${cp + 2 < tp - 1 ? cp + 2 : tp - 1}" />
             <nav aria-label="Phân trang nhật ký" style="margin-top: 24px; display: flex; justify-content: center;">
-                <ul class="pagination" style="display: flex; gap: 4px; list-style: none; padding: 0;">
-                    <li class="page-item ${currentPageNum <= 1 ? 'disabled' : ''}">
-                        <c:url var="prevUrl" value="/admin/audit-logs">
-                            <c:param name="action" value="${selectedAction}" />
-                            <c:param name="performedBy" value="${keywordPerformedBy}" />
-                            <c:param name="fromDate" value="${selectedFromDate}" />
-                            <c:param name="toDate" value="${selectedToDate}" />
-                            <c:param name="page" value="${currentPageNum - 1}" />
-                        </c:url>
-                        <a class="page-link btn btn-secondary" href="${prevUrl}" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; ${currentPageNum <= 1 ? 'pointer-events: none; opacity: 0.5;' : ''}">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </a>
+                <ul class="pagination" style="display: flex; gap: 4px; list-style: none; padding: 0; flex-wrap: wrap;">
+
+                    <%-- Prev --%>
+                    <li class="page-item ${cp <= 1 ? 'disabled' : ''}">
+                        <c:choose>
+                            <c:when test="${cp > 1}">
+                                <c:url var="auditPrevUrl" value="/admin/audit-logs">
+                                    <c:param name="action" value="${selectedAction}" />
+                                    <c:param name="performedBy" value="${keywordPerformedBy}" />
+                                    <c:param name="fromDate" value="${selectedFromDate}" />
+                                    <c:param name="toDate" value="${selectedToDate}" />
+                                    <c:param name="page" value="${cp - 1}" />
+                                </c:url>
+                                <a class="page-link btn btn-secondary" href="${auditPrevUrl}" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-chevron-left fa-xs"></i>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link btn btn-secondary" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; pointer-events: none; opacity: 0.45; cursor: not-allowed;">
+                                    <i class="fa-solid fa-chevron-left fa-xs"></i>
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
                     </li>
 
-                    <c:forEach begin="1" end="${totalPages}" var="p">
-                        <c:url var="pUrl" value="/admin/audit-logs">
+                    <%-- Page 1 --%>
+                    <li class="page-item ${cp == 1 ? 'active' : ''}">
+                        <c:url var="auditP1" value="/admin/audit-logs">
                             <c:param name="action" value="${selectedAction}" />
                             <c:param name="performedBy" value="${keywordPerformedBy}" />
                             <c:param name="fromDate" value="${selectedFromDate}" />
                             <c:param name="toDate" value="${selectedToDate}" />
-                            <c:param name="page" value="${p}" />
+                            <c:param name="page" value="1" />
                         </c:url>
-                        <li class="page-item ${p == currentPageNum ? 'active' : ''}">
-                            <a class="page-link btn ${p == currentPageNum ? 'btn-primary' : 'btn-secondary'}" href="${pUrl}" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
-                                <c:out value="${p}" />
-                            </a>
+                        <a class="page-link btn ${cp == 1 ? 'btn-primary' : 'btn-secondary'}" href="${auditP1}" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">1</a>
+                    </li>
+
+                    <%-- Left ellipsis --%>
+                    <c:if test="${winStart > 2}">
+                        <li class="page-item disabled"><span class="page-link btn btn-secondary" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">…</span></li>
+                    </c:if>
+
+                    <%-- Window pages --%>
+                    <c:if test="${winStart <= winEnd}">
+                        <c:forEach begin="${winStart}" end="${winEnd}" var="p">
+                            <li class="page-item ${p == cp ? 'active' : ''}">
+                                <c:url var="auditPUrl" value="/admin/audit-logs">
+                                    <c:param name="action" value="${selectedAction}" />
+                                    <c:param name="performedBy" value="${keywordPerformedBy}" />
+                                    <c:param name="fromDate" value="${selectedFromDate}" />
+                                    <c:param name="toDate" value="${selectedToDate}" />
+                                    <c:param name="page" value="${p}" />
+                                </c:url>
+                                <a class="page-link btn ${p == cp ? 'btn-primary' : 'btn-secondary'}" href="${auditPUrl}" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;"><c:out value="${p}" /></a>
+                            </li>
+                        </c:forEach>
+                    </c:if>
+
+                    <%-- Right ellipsis --%>
+                    <c:if test="${winEnd < tp - 1}">
+                        <li class="page-item disabled"><span class="page-link btn btn-secondary" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">…</span></li>
+                    </c:if>
+
+                    <%-- Last page --%>
+                    <c:if test="${tp > 1}">
+                        <li class="page-item ${cp == tp ? 'active' : ''}">
+                            <c:url var="auditPLast" value="/admin/audit-logs">
+                                <c:param name="action" value="${selectedAction}" />
+                                <c:param name="performedBy" value="${keywordPerformedBy}" />
+                                <c:param name="fromDate" value="${selectedFromDate}" />
+                                <c:param name="toDate" value="${selectedToDate}" />
+                                <c:param name="page" value="${tp}" />
+                            </c:url>
+                            <a class="page-link btn ${cp == tp ? 'btn-primary' : 'btn-secondary'}" href="${auditPLast}" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;"><c:out value="${tp}" /></a>
                         </li>
-                    </c:forEach>
+                    </c:if>
 
-                    <li class="page-item ${currentPageNum >= totalPages ? 'disabled' : ''}">
-                        <c:url var="nextUrl" value="/admin/audit-logs">
-                            <c:param name="action" value="${selectedAction}" />
-                            <c:param name="performedBy" value="${keywordPerformedBy}" />
-                            <c:param name="fromDate" value="${selectedFromDate}" />
-                            <c:param name="toDate" value="${selectedToDate}" />
-                            <c:param name="page" value="${currentPageNum + 1}" />
-                        </c:url>
-                        <a class="page-link btn btn-secondary" href="${nextUrl}" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; ${currentPageNum >= totalPages ? 'pointer-events: none; opacity: 0.5;' : ''}">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </a>
+                    <%-- Next --%>
+                    <li class="page-item ${cp >= tp ? 'disabled' : ''}">
+                        <c:choose>
+                            <c:when test="${cp < tp}">
+                                <c:url var="auditNextUrl" value="/admin/audit-logs">
+                                    <c:param name="action" value="${selectedAction}" />
+                                    <c:param name="performedBy" value="${keywordPerformedBy}" />
+                                    <c:param name="fromDate" value="${selectedFromDate}" />
+                                    <c:param name="toDate" value="${selectedToDate}" />
+                                    <c:param name="page" value="${cp + 1}" />
+                                </c:url>
+                                <a class="page-link btn btn-secondary" href="${auditNextUrl}" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-chevron-right fa-xs"></i>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link btn btn-secondary" style="padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; pointer-events: none; opacity: 0.45; cursor: not-allowed;">
+                                    <i class="fa-solid fa-chevron-right fa-xs"></i>
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
                     </li>
+
                 </ul>
             </nav>
         </c:if>

@@ -15,24 +15,30 @@
 <c:url var="listUrl" value="/admin/policies" />
 <c:url var="newUrl" value="/admin/policies/new" />
 
-<main class="policy-page">
-    <section class="policy-hero">
-        <div class="policy-container policy-hero-inner">
-            <div>
-                <span class="policy-eyebrow">
-                    <i class="fa-solid fa-scale-balanced"></i> Điều lệ
-                </span>
-                <h1>Quản lý điều lệ</h1>
-                <p>Soạn thảo, xuất bản và theo dõi các quy định của thư viện.</p>
-            </div>
-            <div class="policy-stat">
-                <strong><c:out value="${totalPolicies}" /></strong>
-                <span>Bản ghi</span>
+<main class="page-wrapper policy-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-scale-balanced"></i> Điều lệ
+                    </div>
+                    <h1 class="books-page-title">Quản lý Điều lệ</h1>
+                    <p class="books-page-subtitle">
+                        Soạn thảo, xuất bản và theo dõi các quy định của Thư viện FPT University
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số điều lệ">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalPolicies}" /></span>
+                        <span class="bps-lbl">Điều lệ</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="policy-container policy-body">
+    <div class="container policy-body" style="padding-top: 28px;">
         <c:if test="${not empty flashSuccess}">
             <div class="policy-alert success"><c:out value="${flashSuccess}" /></div>
         </c:if>

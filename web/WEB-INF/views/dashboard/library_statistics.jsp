@@ -24,14 +24,30 @@
     int lost = conditionCount != null && conditionCount.containsKey("LOST") ? conditionCount.get("LOST") : 0;
 %>
 
-<main class="page-wrapper">
-    <div class="container db-container">
-        <div class="section-header db-section-header">
-            <div>
-                <h1 class="section-title"><i class="fa-solid fa-chart-pie"></i> Thống kê hoạt động Thư viện</h1>
-                <p class="section-subtitle">Chỉ số vận hành kho sách, lượt mượn trả và kiểm kê tài sản</p>
+<main class="page-wrapper dashboard-library-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-chart-pie"></i> Báo cáo &amp; Thống kê
+                    </div>
+                    <h1 class="books-page-title">Thống kê hoạt động Thư viện</h1>
+                    <p class="books-page-subtitle">
+                        Chỉ số vận hành kho sách, tình trạng lưu thông, chất lượng sách và kiểm kê tài sản
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số đầu sách">
+                    <div class="bps-item">
+                        <span class="bps-num"><%= booksVal %></span>
+                        <span class="bps-lbl">Đầu sách</span>
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
+
+    <div class="container db-container" style="padding-top: 28px; padding-bottom: 48px;">
 
         <c:if test="${not empty error}">
             <div class="alert alert-error db-error-alert">

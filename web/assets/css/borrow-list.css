@@ -42,8 +42,11 @@
 .borrow-empty-state i, .borrow-empty-state span { display: block; }
 .borrow-empty-state i { margin-bottom: 14px; font-size: 2.5rem; }
 .borrow-pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 30px; }
-.borrow-pagination a { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dce4ec; border-radius: 8px; background: #fff; color: #536278; text-decoration: none; }
+.borrow-pagination a, .borrow-pagination span { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #dce4ec; border-radius: 8px; background: #fff; color: #536278; text-decoration: none; }
+.borrow-pagination a:hover { border-color: var(--primary); color: var(--primary); }
 .borrow-pagination a.current { border-color: var(--primary); background: var(--primary); color: #fff; }
+.borrow-pagination span.disabled, .borrow-pagination a.disabled { pointer-events: none !important; cursor: not-allowed !important; opacity: 0.45 !important; background: #f8fafc !important; color: #94a3b8 !important; border-color: #e2e8f0 !important; }
+.borrow-pagination .borrow-page-ellipsis { border: none; background: transparent; color: #94a3b8; font-weight: bold; }
 .borrow-modal[hidden] { display: none; }
 .borrow-modal { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .52); }
 .borrow-modal-dialog { width: min(500px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 30px; border-radius: 12px; background: #fff; box-shadow: 0 10px 28px rgba(0, 0, 0, .18); }

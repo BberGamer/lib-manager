@@ -63,7 +63,8 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("roleCount", dashboardDao.getUsersCountByRole());
                 request.setAttribute("finesStats", dashboardDao.getFinesStats());
-                request.setAttribute("recentLogs", dashboardDao.getRecentAuditLogs(10));
+                request.setAttribute("recentLogs", dashboardDao.getRecentAuditLogs(5));
+                request.setAttribute("auditActionCounts", dashboardDao.getAuditLogActionCounts());
                 
                 request.setAttribute("currentPage", "dashboard-admin");
                 request.setAttribute("pageTitle", "Thống kê hệ thống Admin – FPT Library");

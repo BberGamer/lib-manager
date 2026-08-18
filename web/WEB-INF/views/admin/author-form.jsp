@@ -12,25 +12,27 @@
 <c:url var="authorListUrl" value="/admin/authors" />
 <c:set var="formAction" value="${formMode == 'create' ? '/admin/authors/create' : '/admin/authors/update'}" />
 
-<main class="author-management author-editor">
-    <section class="author-hero">
-        <div class="author-content author-hero-inner">
-            <div>
-                <span class="author-eyebrow">
-                    <i class="fa-solid fa-user-pen"></i> Tác giả
-                </span>
-                <h1>${formMode == 'create' ? 'Thêm tác giả mới' : 'Cập nhật tác giả'}</h1>
-                <p>Nhập thông tin hồ sơ tác giả trong thư viện.</p>
-            </div>
-            <div class="author-stat author-form-stat">
-                <strong>
-                    <i class="fa-solid fa-${formMode == 'create' ? 'user-plus' : 'user-pen'}"></i>
-                </strong>
-                <span>${formMode == 'create' ? 'Thêm mới' : 'Chỉnh sửa'}</span>
+<main class="page-wrapper author-management author-editor" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-user-pen"></i> Tác giả
+                    </div>
+                    <h1 class="books-page-title">${formMode == 'create' ? 'Thêm tác giả mới' : 'Cập nhật tác giả'}</h1>
+                    <p class="books-page-subtitle">Nhập thông tin hồ sơ tác giả trong Thư viện FPT</p>
+                </div>
+                <div class="books-page-stats" aria-label="Trạng thái">
+                    <div class="bps-item">
+                        <span class="bps-num"><i class="fa-solid fa-${formMode == 'create' ? 'user-plus' : 'user-pen'}"></i></span>
+                        <span class="bps-lbl">${formMode == 'create' ? 'Thêm mới' : 'Chỉnh sửa'}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
-    <div class="author-form-content author-form-body">
+    <div class="container author-form-content author-form-body" style="padding-top: 28px;">
         <a class="author-back" href="${authorListUrl}">
             <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách tác giả
         </a>

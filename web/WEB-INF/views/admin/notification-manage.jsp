@@ -17,22 +17,186 @@
 <c:set var="manageUrl" value="${pageContext.request.contextPath}${rolePath}/notification/manage" />
 <c:set var="sendUrl" value="${pageContext.request.contextPath}${rolePath}/notification/send" />
 
-<main class="page-wrapper">
-    <div class="container notification-manage-container">
-        <div class="notification-manage-header">
-            <div>
-                <h1 class="section-title">
-                    <i class="fa-solid fa-bullhorn"></i> Quản lý Thông báo
-                </h1>
-                <p class="section-subtitle">
-                    Soạn và gửi thông báo đến người dùng trong hệ thống
-                </p>
-            </div>
-            <div class="notification-manage-stat">
-                <div class="stat-number"><c:out value="${totalSent}" /></div>
-                <div class="stat-label">Đã gửi</div>
+<style>
+/* Modern Automation Control Styles */
+.automation-banner-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    padding: 22px 26px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
+}
+.automation-top-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+    padding-bottom: 18px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+.automation-title-group h4 {
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.automation-title-group p {
+    margin: 4px 0 0 0 !important;
+    font-size: 0.85rem !important;
+    color: #64748b !important;
+}
+.automation-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 16px !important;
+    margin-top: 18px !important;
+}
+.toggle-control-card {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+.toggle-control-card:hover {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
+.toggle-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+}
+.toggle-icon-wrap {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2rem !important;
+    flex-shrink: 0 !important;
+}
+.toggle-icon-wrap.icon-blue {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+.toggle-icon-wrap.icon-emerald {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+}
+.toggle-title {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    line-height: 1.2 !important;
+}
+.toggle-desc {
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+    margin-top: 3px !important;
+}
+.toggle-right-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+.toggle-state-text {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    min-width: 32px !important;
+    text-align: right !important;
+    transition: color 0.2s ease !important;
+}
+.toggle-state-text.active {
+    color: #10b981 !important;
+}
+/* iOS Toggle Switch */
+.ios-switch {
+    position: relative !important;
+    display: inline-block !important;
+    width: 48px !important;
+    height: 26px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+}
+.ios-switch input {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    position: absolute !important;
+}
+.ios-slider {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: #cbd5e1 !important;
+    border-radius: 34px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.ios-slider:before {
+    position: absolute !important;
+    content: "" !important;
+    height: 20px !important;
+    width: 20px !important;
+    left: 3px !important;
+    bottom: 3px !important;
+    background-color: #ffffff !important;
+    border-radius: 50% !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+.ios-switch input:checked + .ios-slider {
+    background-color: #10b981 !important;
+}
+.ios-switch input:focus + .ios-slider {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+.ios-switch input:checked + .ios-slider:before {
+    transform: translateX(22px) !important;
+}
+</style>
+
+<main class="page-wrapper notification-manage-page" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-bullhorn"></i> Thông báo
+                    </div>
+                    <h1 class="books-page-title">Quản lý &amp; Gửi thông báo</h1>
+                    <p class="books-page-subtitle">
+                        Soạn thông báo tùy chỉnh đến độc giả hoặc thiết lập tự động gửi nhắc nhở
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số thông báo đã gửi">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalSent != null ? totalSent : totalRecords}" /></span>
+                        <span class="bps-lbl">Đã gửi</span>
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
+
+    <div class="container notification-manage-container" style="padding-top: 28px;">
 
         <!-- Alert messages -->
         <c:if test="${not empty sessionScope.successMsg}">
@@ -246,39 +410,83 @@
 
             <!-- Pagination for Sent History -->
             <c:if test="${totalPages > 1}">
+                <c:set var="cp" value="${currentPageNum}" />
+                <c:set var="tp" value="${totalPages}" />
+                <c:set var="winStart" value="${cp - 2 > 2 ? cp - 2 : 2}" />
+                <c:set var="winEnd" value="${cp + 2 < tp - 1 ? cp + 2 : tp - 1}" />
                 <nav aria-label="Phân trang thông báo" style="margin-top: 24px;">
-                    <ul class="pagination">
-                        <li class="page-item ${currentPageNum <= 1 ? 'disabled' : ''}">
-                            <c:url var="prevUrl" value="${rolePath}/notification/manage">
-                                <c:param name="tab" value="compose" />
-                                <c:param name="filterType" value="${selectedFilterType}" />
-                                <c:param name="page" value="${currentPageNum - 1}" />
-                            </c:url>
-                            <a class="page-link" href="${prevUrl}">
-                                <i class="fa-solid fa-chevron-left fa-xs"></i>
-                            </a>
+                    <ul class="pagination" style="flex-wrap: wrap;">
+                        <li class="page-item ${cp <= 1 ? 'disabled' : ''}">
+                            <c:choose>
+                                <c:when test="${cp > 1}">
+                                    <c:url var="notifPrev" value="${rolePath}/notification/manage">
+                                        <c:param name="tab" value="compose" />
+                                        <c:param name="filterType" value="${selectedFilterType}" />
+                                        <c:param name="page" value="${cp - 1}" />
+                                    </c:url>
+                                    <a class="page-link" href="${notifPrev}"><i class="fa-solid fa-chevron-left fa-xs"></i></a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="page-link"><i class="fa-solid fa-chevron-left fa-xs"></i></span>
+                                </c:otherwise>
+                            </c:choose>
                         </li>
-                        <c:forEach begin="1" end="${totalPages}" var="p">
-                            <c:url var="pUrl" value="${rolePath}/notification/manage">
+
+                        <li class="page-item ${cp == 1 ? 'active' : ''}">
+                            <c:url var="notifP1" value="${rolePath}/notification/manage">
                                 <c:param name="tab" value="compose" />
                                 <c:param name="filterType" value="${selectedFilterType}" />
-                                <c:param name="page" value="${p}" />
+                                <c:param name="page" value="1" />
                             </c:url>
-                            <li class="page-item ${p == currentPageNum ? 'active' : ''}">
-                                <a class="page-link" href="${pUrl}">
-                                    <c:out value="${p}" />
-                                </a>
+                            <a class="page-link" href="${notifP1}">1</a>
+                        </li>
+
+                        <c:if test="${winStart > 2}">
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        </c:if>
+
+                        <c:if test="${winStart <= winEnd}">
+                            <c:forEach begin="${winStart}" end="${winEnd}" var="p">
+                                <li class="page-item ${p == cp ? 'active' : ''}">
+                                    <c:url var="notifPUrl" value="${rolePath}/notification/manage">
+                                        <c:param name="tab" value="compose" />
+                                        <c:param name="filterType" value="${selectedFilterType}" />
+                                        <c:param name="page" value="${p}" />
+                                    </c:url>
+                                    <a class="page-link" href="${notifPUrl}"><c:out value="${p}" /></a>
+                                </li>
+                            </c:forEach>
+                        </c:if>
+
+                        <c:if test="${winEnd < tp - 1}">
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        </c:if>
+
+                        <c:if test="${tp > 1}">
+                            <li class="page-item ${cp == tp ? 'active' : ''}">
+                                <c:url var="notifPLast" value="${rolePath}/notification/manage">
+                                    <c:param name="tab" value="compose" />
+                                    <c:param name="filterType" value="${selectedFilterType}" />
+                                    <c:param name="page" value="${tp}" />
+                                </c:url>
+                                <a class="page-link" href="${notifPLast}"><c:out value="${tp}" /></a>
                             </li>
-                        </c:forEach>
-                        <li class="page-item ${currentPageNum >= totalPages ? 'disabled' : ''}">
-                            <c:url var="nextUrl" value="${rolePath}/notification/manage">
-                                <c:param name="tab" value="compose" />
-                                <c:param name="filterType" value="${selectedFilterType}" />
-                                <c:param name="page" value="${currentPageNum + 1}" />
-                            </c:url>
-                            <a class="page-link" href="${nextUrl}">
-                                <i class="fa-solid fa-chevron-right fa-xs"></i>
-                            </a>
+                        </c:if>
+
+                        <li class="page-item ${cp >= tp ? 'disabled' : ''}">
+                            <c:choose>
+                                <c:when test="${cp < tp}">
+                                    <c:url var="notifNext" value="${rolePath}/notification/manage">
+                                        <c:param name="tab" value="compose" />
+                                        <c:param name="filterType" value="${selectedFilterType}" />
+                                        <c:param name="page" value="${cp + 1}" />
+                                    </c:url>
+                                    <a class="page-link" href="${notifNext}"><i class="fa-solid fa-chevron-right fa-xs"></i></a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="page-link"><i class="fa-solid fa-chevron-right fa-xs"></i></span>
+                                </c:otherwise>
+                            </c:choose>
                         </li>
                     </ul>
                 </nav>
@@ -289,21 +497,21 @@
         <div class="tab-content" id="reminders-tab" style="${activeTab eq 'reminders' ? 'display: block;' : 'display: none;'}">
             
             <!-- Automated Scheduler Control Banner -->
-            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.08rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+            <div class="automation-banner-card">
+                <div class="automation-top-row">
+                    <div class="automation-title-group">
+                        <h4>
                             <i class="fa-solid fa-robot" style="color: #3b82f6;"></i> Hệ thống quét tự động &amp; Lập lịch gửi thông báo (Batch Job)
-                        </div>
-                        <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
-                            Tự động đồng bộ tiền phạt và quét gửi thông báo hạn mượn sách lúc <b>07:00 sáng</b> mỗi ngày.
-                        </div>
+                        </h4>
+                        <p>
+                            Tự động đồng bộ tiền phạt và quét gửi thông báo nhắc hạn / quá hạn mượn sách lúc <b>07:00 sáng</b> mỗi ngày.
+                        </p>
                     </div>
                     <div>
                         <form action="${sendUrl}" method="post" onsubmit="showNotificationLoading(this)" style="margin: 0;">
                             <input type="hidden" name="action" value="run-auto-job">
                             <input type="hidden" name="sub" value="${empty activeSubTab ? 'due' : activeSubTab}">
-                            <button type="submit" class="btn btn-primary" style="padding: 9px 18px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(230,126,34,0.3);">
+                            <button type="submit" class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(230,126,34,0.25);">
                                 <i class="fa-solid fa-bolt"></i> Chạy quét &amp; Gửi hàng loạt ngay
                             </button>
                         </form>
@@ -311,34 +519,58 @@
                 </div>
 
                 <!-- Toggle Controls Form -->
-                <form action="${sendUrl}" method="post" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 14px; border-top: 1px dashed #e2e8f0; margin: 0;">
+                <form id="toggleAutomationForm" action="${sendUrl}" method="post" style="margin: 0;">
                     <input type="hidden" name="action" value="toggle-automation">
                     <input type="hidden" name="sub" value="${empty activeSubTab ? 'due' : activeSubTab}">
-                    
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">
-                            <i class="fa-regular fa-clock"></i> Lập lịch quét (Cron Job 07:00):
-                        </span>
-                        <input type="hidden" name="enableJob" id="enableJobInput" value="${autoJobEnabled}">
-                        <button type="button" onclick="document.getElementById('enableJobInput').value = '${not autoJobEnabled}'; this.form.submit();"
-                                class="btn btn-sm ${autoJobEnabled ? 'btn-success' : 'btn-secondary'}"
-                                style="padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; ${autoJobEnabled ? 'background: #16a34a; border-color: #16a34a; color: white;' : 'background: #94a3b8; border-color: #94a3b8; color: white;'}">
-                            <i class="fa-solid ${autoJobEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
-                            ${autoJobEnabled ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
-                        </button>
-                    </div>
+                    <input type="hidden" name="enableJob" id="enableJobInput" value="${autoJobEnabled}">
+                    <input type="hidden" name="enableEmail" id="enableEmailInput" value="${autoEmailEnabled}">
 
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">
-                            <i class="fa-regular fa-envelope"></i> Tự động gửi Email (SMTP):
-                        </span>
-                        <input type="hidden" name="enableEmail" id="enableEmailInput" value="${autoEmailEnabled}">
-                        <button type="button" onclick="document.getElementById('enableEmailInput').value = '${not autoEmailEnabled}'; this.form.submit();"
-                                class="btn btn-sm ${autoEmailEnabled ? 'btn-success' : 'btn-secondary'}"
-                                style="padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; ${autoEmailEnabled ? 'background: #16a34a; border-color: #16a34a; color: white;' : 'background: #94a3b8; border-color: #94a3b8; color: white;'}">
-                            <i class="fa-solid ${autoEmailEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
-                            ${autoEmailEnabled ? 'ĐANG BẬT' : 'ĐÃ TẮT'}
-                        </button>
+                    <div class="automation-grid">
+                        <!-- Setting 1: Cron Job -->
+                        <div class="toggle-control-card">
+                            <div class="toggle-info">
+                                <div class="toggle-icon-wrap icon-blue">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Lập lịch quét định kỳ</div>
+                                    <div class="toggle-desc">Tự động kích hoạt lúc 07:00 sáng</div>
+                                </div>
+                            </div>
+                            <div class="toggle-right-group">
+                                <span class="toggle-state-text ${autoJobEnabled ? 'active' : ''}">
+                                    ${autoJobEnabled ? 'BẬT' : 'TẮT'}
+                                </span>
+                                <label class="ios-switch">
+                                    <input type="checkbox" ${autoJobEnabled ? 'checked' : ''}
+                                           onchange="document.getElementById('enableJobInput').value = this.checked; document.getElementById('toggleAutomationForm').submit();">
+                                    <span class="ios-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Setting 2: Email SMTP -->
+                        <div class="toggle-control-card">
+                            <div class="toggle-info">
+                                <div class="toggle-icon-wrap icon-emerald">
+                                    <i class="fa-solid fa-envelope-circle-check"></i>
+                                </div>
+                                <div>
+                                    <div class="toggle-title">Tự động gửi Email (SMTP)</div>
+                                    <div class="toggle-desc">Bắn email thông báo tới hòm thư độc giả</div>
+                                </div>
+                            </div>
+                            <div class="toggle-right-group">
+                                <span class="toggle-state-text ${autoEmailEnabled ? 'active' : ''}">
+                                    ${autoEmailEnabled ? 'BẬT' : 'TẮT'}
+                                </span>
+                                <label class="ios-switch">
+                                    <input type="checkbox" ${autoEmailEnabled ? 'checked' : ''}
+                                           onchange="document.getElementById('enableEmailInput').value = this.checked; document.getElementById('toggleAutomationForm').submit();">
+                                    <span class="ios-slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

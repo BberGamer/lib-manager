@@ -15,22 +15,30 @@
 <c:url var="newCategoryUrl" value="/admin/categories/new" />
 <c:url var="categoryScriptUrl" value="/assets/js/category-list.js" />
 
-<main class="category-management">
-    <section class="category-hero">
-        <div class="category-content category-hero-inner">
-            <div>
-                <span class="category-eyebrow"><i class="fa-solid fa-tags"></i> Danh mục</span>
-                <h1>Danh mục sách</h1>
-                <p>Phân loại và tổ chức các chủ đề sách trong hệ thống</p>
-            </div>
-            <div class="category-stat" aria-label="Tổng số danh mục">
-                <strong><c:out value="${totalCategories}" /></strong>
-                <span>Danh mục</span>
+<main class="page-wrapper category-management" style="margin: 0; padding: 0;">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-tags"></i> Danh mục
+                    </div>
+                    <h1 class="books-page-title">Quản lý Danh mục sách</h1>
+                    <p class="books-page-subtitle">
+                        Phân loại và tổ chức các chủ đề sách trong Thư viện FPT University
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số danh mục">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalCategories}" /></span>
+                        <span class="bps-lbl">Danh mục</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="category-content category-body">
+    <div class="container category-body" style="padding-top: 28px;">
         <c:if test="${not empty flashSuccess}">
             <div class="category-alert category-alert-success">
                 <i class="fa-solid fa-circle-check"></i> <c:out value="${flashSuccess}" />
