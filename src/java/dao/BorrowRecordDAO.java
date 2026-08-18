@@ -310,6 +310,22 @@ public class BorrowRecordDAO {
     }
 
     /**
+     * Đồng bộ các lượt chưa trả đã qua hạn từ trạng thái đang mượn sang quá hạn.
+     *
+     * @return số lượt mượn được chuyển sang trạng thái {@code OVERDUE}
+     * @throws Exception khi không thể cập nhật cơ sở dữ liệu
+     */
+    public int markOverdueBorrows() throws Exception {
+        String sql = "UPDATE borrow_records "
+                + "SET status = 'OVERDUE', updated_at = NOW() "
+                + "WHERE status = 'BORROWED' AND due_date < CURDATE()";
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            return statement.executeUpdate();
+        }
+    }
+
+    /**
      * Gia hạn một lượt mượn thuộc đúng độc giả và vẫn còn ở trạng thái đang
      * mượn. Điều kiện số lần gia hạn được kiểm tra nguyên tử trong câu lệnh cập
      * nhật.
