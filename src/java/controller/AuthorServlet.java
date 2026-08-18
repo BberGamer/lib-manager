@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import exception.AuthorException;
+import exception.AuthorValidationException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -19,9 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Author;
 import model.User;
-import service.AuthorException;
 import service.AuthorService;
-import service.AuthorValidationException;
 import utils.RoleGuard;
 
 /**
