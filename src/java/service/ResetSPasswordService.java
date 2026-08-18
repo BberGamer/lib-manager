@@ -36,7 +36,7 @@ public class ResetSPasswordService {
         return LocalDateTime.now().isAfter(time);
     }
     
-    
+
     public boolean sendEmail(String to, String link, String name) {
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -58,7 +58,7 @@ public class ResetSPasswordService {
         
         try {
             msg.addHeader("Content-type", "text/html; charset=UTF-8");
-            msg.setFrom(from);
+            msg.setFrom(new InternetAddress(from));
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
             msg.setSubject("Reset Password", "UTF-8");
             String content = "<h1>Hello"+name+"</h1>"+"<p>Click the link to reset password "
