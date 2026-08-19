@@ -17,6 +17,7 @@ import java.util.List;
 public class ReservationManagementServlet extends HttpServlet {
 
     private final ReservationDAO reservationDAO = new ReservationDAO();
+    private final service.ReservationService reservationService = new service.ReservationService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -45,6 +46,7 @@ public class ReservationManagementServlet extends HttpServlet {
 
         int pageSize = 15;
         try {
+            reservationService.expireExpiredReadyReservations();
             List<ReservationRecord> list = reservationDAO.searchReservations(status, keyword, page, pageSize);
             int totalRecords = reservationDAO.countReservations(status, keyword);
             int totalPages = (int) Math.ceil((double) totalRecords / pageSize);

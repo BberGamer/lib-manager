@@ -328,7 +328,7 @@
                             <td><%= b.getPublishYear() != null ? b.getPublishYear() : "—" %></td>
                             <td>
                                 <span class="badge <%= b.getAvailable() > 0 ? "badge-success" : (b.getQuantity() > 0 ? "badge-warning" : "badge-danger") %>">
-                                    <%= b.getStatusLabel() %>
+                                    <%= b.getAvailabilityLabel() %>
                                 </span>
                                 <% if (loggedUser != null) { %>
                                     <span style="font-size:0.75rem;color:var(--text-muted);display:block;margin-top:2px;">
@@ -349,12 +349,14 @@
                                        class="btn btn-outline btn-sm" title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i> 
                                     </a>
+                                    <% if (isAdmin) { %>
                                     <button type="button"
                                             class="btn btn-danger btn-sm"
                                             title="Xóa sách"
                                             onclick="confirmDelete(<%= b.getId() %>, '<%= b.getTitle().replace("'", "\\'") %>')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
+                                    <% } %>
                                     <% } else { %>
                                     <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">
@@ -396,8 +398,8 @@
                                 <span><%= b.getTitle() %></span>
                             </div>
                         <% } %>
-                        <span class="book-status-tag <%= b.getStatusClass() %>">
-                            <%= b.getStatusLabel() %>
+                        <span class="book-status-tag <%= b.getAvailabilityClass() %>">
+                            <%= b.getAvailabilityLabel() %>
                         </span>
                     </a>
                     <div class="book-body">

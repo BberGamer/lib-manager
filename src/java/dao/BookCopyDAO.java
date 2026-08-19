@@ -9,10 +9,16 @@ import java.util.List;
 
 public class BookCopyDAO {
 
+    /** Đếm lượt giữ hoặc mượn chưa kết thúc của bản sao hiện tại. */
+    private static final String ACTIVE_BORROW_COUNT_SQL = "(SELECT COUNT(*) FROM borrow_records br "
+            + "WHERE br.copy_id=bc.id AND ((br.status='PENDING_PICKUP' "
+            + "AND br.pickup_deadline>=NOW()) OR (br.status IN ('BORROWED','OVERDUE') "
+            + "AND br.return_date IS NULL)))";
+
     public BookCopy findById(int id) throws Exception {
         String sql = "SELECT bc.id, bc.book_id, bc.barcode, bc.book_condition, bc.note, bc.area, bc.shelf, bc.slot, " +
                      "b.title, b.isbn, b.category, b.publisher, b.publish_year, b.price, b.quantity, b.available, " +
-                     "(SELECT COUNT(*) FROM borrow_records br WHERE br.copy_id = bc.id AND br.status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) AS borrowed_or_reserved " +
+                     ACTIVE_BORROW_COUNT_SQL + " AS borrowed_or_reserved " +
                      "FROM book_copies bc " +
                      "INNER JOIN books b ON bc.book_id = b.id " +
                      "WHERE bc.id = ? AND bc.is_deleted = 0";
@@ -33,7 +39,7 @@ public class BookCopyDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT bc.id, bc.book_id, bc.barcode, bc.book_condition, bc.note, bc.area, bc.shelf, bc.slot, ")
           .append("b.title, b.isbn, b.category, b.publisher, b.publish_year, b.price, b.quantity, b.available, ")
-          .append("(SELECT COUNT(*) FROM borrow_records br WHERE br.copy_id = bc.id AND br.status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) AS borrowed_or_reserved ")
+          .append(ACTIVE_BORROW_COUNT_SQL).append(" AS borrowed_or_reserved ")
           .append("FROM book_copies bc ")
           .append("INNER JOIN books b ON bc.book_id = b.id ")
           .append("WHERE bc.book_id = ? AND bc.is_deleted = 0 ");
@@ -175,17 +181,17 @@ public class BookCopyDAO {
     }
 
     public boolean updateCopy(BookCopy copy) {
-        String sql = "UPDATE book_copies SET barcode = ?, book_condition = ?, status = ?, note = ?, area = ?, shelf = ?, slot = ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
+        String sql = "UPDATE book_copies SET barcode = ?, book_condition = ?, note = ?, area = ?, shelf = ?, slot = ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, copy.getBarcode());
             ps.setString(2, copy.getBookCondition());
-            ps.setString(4, copy.getNote());
-            ps.setString(5, copy.getArea());
-            ps.setString(6, copy.getShelf());
-            ps.setString(7, copy.getSlot());
-            ps.setString(8, copy.getUpdatedBy());
-            ps.setInt(9, copy.getId());
+            ps.setString(3, copy.getNote());
+            ps.setString(4, copy.getArea());
+            ps.setString(5, copy.getShelf());
+            ps.setString(6, copy.getSlot());
+            ps.setString(7, copy.getUpdatedBy());
+            ps.setInt(8, copy.getId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -226,7 +232,8 @@ public class BookCopyDAO {
                 }
                 
                 // Update Book counts
-                boolean wasAvailable = "GOOD".equals(condition) && !isCopyBorrowedOrReserved(id);
+                boolean wasAvailable = ("GOOD".equals(condition) || "WORN".equals(condition))
+                        && !isCopyBorrowedOrReserved(id);
                 int availSub = wasAvailable ? 1 : 0;
                 try (PreparedStatement ps = conn.prepareStatement(updateBookQtySql)) {
                     ps.setInt(1, availSub);
@@ -270,7 +277,7 @@ public class BookCopyDAO {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT bc.id, bc.book_id, bc.barcode, bc.book_condition, bc.note, bc.area, bc.shelf, bc.slot, ")
           .append("b.title, b.isbn, b.category, b.publisher, b.publish_year, b.price, b.quantity, b.available, ")
-          .append("(SELECT COUNT(*) FROM borrow_records br WHERE br.copy_id = bc.id AND br.status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) AS borrowed_or_reserved ")
+          .append(ACTIVE_BORROW_COUNT_SQL).append(" AS borrowed_or_reserved ")
           .append("FROM book_copies bc ")
           .append("INNER JOIN books b ON bc.book_id = b.id ")
           .append("WHERE bc.is_deleted = 0 ");
@@ -342,7 +349,9 @@ public class BookCopyDAO {
     }
 
     public boolean isCopyBorrowedOrReserved(int copyId) throws Exception {
-        String sql = "SELECT COUNT(*) FROM borrow_records WHERE copy_id = ? AND status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')";
+        String sql = "SELECT COUNT(*) FROM borrow_records br WHERE br.copy_id=? AND "
+                + "((br.status='PENDING_PICKUP' AND br.pickup_deadline>=NOW()) OR "
+                + "(br.status IN ('BORROWED','OVERDUE') AND br.return_date IS NULL))";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, copyId);

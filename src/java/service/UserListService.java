@@ -8,15 +8,7 @@ import java.security.MessageDigest;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Toàn bộ business logic cho quản lý User.
- * Servlet chỉ gọi các hàm ở đây; UserDAO khai báo "throws Exception" ở mọi hàm
- * nên Service bọc mọi lỗi DAO thành IllegalArgumentException/IllegalStateException
- * (unchecked) để servlet chỉ cần catch 2 loại đó, không cần "throws Exception".
- *
- * Ghi chú: student_id trong DB là NULL-able + UNIQUE (xem schema), nên KHÔNG ép
- * buộc phải nhập — chỉ kiểm tra định dạng + trùng nếu người dùng có nhập.
- */
+
 public class UserListService {
 
     private static final int PAGE_SIZE = 15;
@@ -66,7 +58,6 @@ public class UserListService {
         return r;
     }
 
-    /** Ném IllegalArgumentException với message thân thiện nếu dữ liệu không hợp lệ. */
     public int createUser(User u, String rawPassword) {
         try {
             // 1. Validate Username (tên đăng nhập: Regex kiểm tra chữ/số/gạch dưới + Check trùng lặp DB)
@@ -131,7 +122,7 @@ public class UserListService {
         }
     }
 
-    /** Load user hiện có trong DB rồi mới áp field mới lên, tránh NPE và tránh ghi đè username/password. */
+
     public void updateUser(int id, String fullName, String email, String phone,
                             String studentId, String avatar, String role,
                             Integer active, String newPassword) {
@@ -199,11 +190,36 @@ public class UserListService {
         }
     }
 
-    public void setActive(int id, int active) {
+    /**
+     * Tự động chuyển đổi trạng thái Khóa (0) / Mở khóa (1) của tài khoản.
+     * Không cho phép khóa tài khoản của chính mình (Admin) hoặc tài khoản Thủ thư (Librarian).
+     */
+    public void setActive(int id, int active, User operator) {
         try {
+            User target = dao.getUserById(id);
+            if (target == null) {
+                throw new IllegalArgumentException("Không tìm thấy người dùng với ID = " + id + ".");
+            }
+
+            // Nếu là thao tác KHÓA tài khoản (active == 0)
+            if (active == 0) {
+                // Validate 1: Không cho phép Admin tự khóa tài khoản của chính mình
+                if (operator != null && target.getId() == operator.getId()) {
+                    throw new IllegalArgumentException("Không thể khóa tài khoản của chính bạn.");
+                }
+                // Validate 2: Không cho phép khóa tài khoản có vai trò Thủ thư (Librarian)
+                if ("LIBRARIAN".equalsIgnoreCase(target.getRole())) {
+                    throw new IllegalArgumentException("Không thể khóa tài khoản Thủ thư (Librarian).");
+                }
+                // Validate 3: Không cho phép khóa tài khoản có vai trò Quản trị viên (Admin)
+                if ("ADMIN".equalsIgnoreCase(target.getRole())) {
+                    throw new IllegalArgumentException("Không thể khóa tài khoản Quản trị viên (Admin).");
+                }
+            }
+
             boolean ok = dao.setActive(id, active);
             if (!ok) throw new IllegalStateException("Thao tác thất bại.");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException("Thao tác thất bại: " + e.getMessage(), e);
@@ -212,11 +228,32 @@ public class UserListService {
 
     /**
      * Xóa người dùng (Xóa mềm - Chuyển active = 0).
-     * Bổ sung bước 1 kiểm tra dữ liệu liên quan dở dang (sách đang mượn, nợ tiền phạt, sách đang đặt).
-     * Nếu có giao dịch dở dang, hệ thống từ chối xóa và ném thông báo chi tiết.
+     * Bổ sung kiểm tra không cho phép xóa tài khoản của chính mình (Admin) hoặc tài khoản Thủ thư (Librarian).
+     * Bổ sung bước kiểm tra dữ liệu liên quan dở dang (sách đang mượn, nợ tiền phạt, sách đang đặt).
+     *
+     * @param id ID người dùng cần xóa
+     * @param operator Người dùng (Admin) đang thực hiện thao tác
      */
-    public void deleteUser(int id) {
+    public void deleteUser(int id, User operator) {
         try {
+            User target = dao.getUserById(id);
+            if (target == null) {
+                throw new IllegalArgumentException("Không tìm thấy người dùng với ID = " + id + ".");
+            }
+
+            // Validate 1: Không cho phép Admin tự xóa tài khoản của chính mình
+            if (operator != null && target.getId() == operator.getId()) {
+                throw new IllegalArgumentException("Không thể xóa tài khoản của chính bạn.");
+            }
+            // Validate 2: Không cho phép xóa tài khoản có vai trò Thủ thư (Librarian)
+            if ("LIBRARIAN".equalsIgnoreCase(target.getRole())) {
+                throw new IllegalArgumentException("Không thể xóa tài khoản Thủ thư (Librarian).");
+            }
+            // Validate 3: Không cho phép xóa tài khoản có vai trò Quản trị viên (Admin)
+            if ("ADMIN".equalsIgnoreCase(target.getRole())) {
+                throw new IllegalArgumentException("Không thể xóa tài khoản Quản trị viên (Admin).");
+            }
+
             // Bước 1: Kiểm tra các giao dịch dở dang (sách mượn chưa trả, phạt chưa thanh toán, phiếu đặt sách)
             String pendingErr = dao.checkUserPendingTransactions(id);
             if (pendingErr != null) {
@@ -226,7 +263,7 @@ public class UserListService {
             // Bước 2: Thực hiện Xóa mềm (UPDATE users SET active = 0)
             boolean ok = dao.deleteUser(id);
             if (!ok) throw new IllegalStateException("Xóa thất bại: không tìm thấy người dùng.");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e.getMessage(), e);

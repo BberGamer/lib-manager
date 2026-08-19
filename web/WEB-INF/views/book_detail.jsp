@@ -75,6 +75,12 @@
             <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> Thêm sách thành công!</div>
         <% } else if ("updated".equals(success)) { %>
             <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> Cập nhật sách thành công!</div>
+        <% } else if ("review_added".equals(success)) { %>
+            <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> Đánh giá sách thành công!</div>
+        <% } else if ("review_updated".equals(success)) { %>
+            <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> Cập nhật đánh giá thành công!</div>
+        <% } else if ("review_deleted".equals(success)) { %>
+            <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> Xóa đánh giá thành công!</div>
         <% } %>
 
         <% if ("has_copies".equals(error)) { %>
@@ -82,7 +88,11 @@
         <% } else if ("has_active".equals(error)) { %>
             <div class="alert alert-danger"><i class="fa-solid fa-circle-xmark"></i> Không thể xóa sách: đang có lượt mượn hoặc đặt trước.</div>
         <% } else if ("delete_failed".equals(error) || "exception".equals(error)) { %>
-            <div class="alert alert-danger"><i class="fa-solid fa-circle-xmark"></i> Xóa sách thất bại do lỗi hệ thống hoặc dữ liệu liên kết.</div>
+            <div class="alert alert-danger"><i class="fa-solid fa-circle-xmark"></i> Thao tác thất bại do lỗi hệ thống hoặc dữ liệu liên kết.</div>
+        <% } else if ("edit_expired".equals(error)) { %>
+            <div class="alert alert-danger"><i class="fa-solid fa-circle-xmark"></i> Đã quá hạn 7 ngày kể từ lúc tạo, không thể chỉnh sửa đánh giá này.</div>
+        <% } else if ("not_found".equals(error)) { %>
+            <div class="alert alert-danger"><i class="fa-solid fa-circle-xmark"></i> Không tìm thấy đánh giá.</div>
         <% } %>
 
         <% if (errorMsg != null) { %>
@@ -124,7 +134,7 @@
                         <span class="badge <%= book.getAvailable() > 0 ? "badge-success" : (book.getQuantity() > 0 ? "badge-warning" : "badge-danger") %>"
                               style="font-size:0.85rem; padding:6px 16px;">
                             <i class="fa-solid <%= book.getAvailable() > 0 ? "fa-circle-check" : "fa-circle-xmark" %>"></i>
-                            <%= book.getStatusLabel() %>
+                            <%= book.getAvailabilityLabel() %>
                         </span>
                     </div>
 
@@ -146,16 +156,18 @@
                         </div>
                     <% } %>
 
-                    <!-- Admin Actions -->
-                    <% if (isAdmin) { %>
+                    <!-- Admin & Librarian Actions -->
+                    <% if (loggedUser != null && loggedUser.isAdminOrLibrarian()) { %>
                         <div class="book-detail-actions">
                             <a href="<%= ctx %><%= rolePath != null ? rolePath : "" %>/book/edit?id=<%= book.getId() %>"
                                class="btn btn-primary" style="flex:1;">
                                 <i class="fa-solid fa-pen"></i> Chỉnh sửa
                             </a>
+                            <% if (loggedUser.isAdmin()) { %>
                             <button type="button" class="btn btn-danger" style="flex:1;" onclick="confirmDeleteBook()">
                                 <i class="fa-solid fa-trash"></i> Xóa sách
                             </button>
+                            <% } %>
                         </div>
                     <% } %>
                 </div>
@@ -308,6 +320,12 @@
                                     <form method="post" action="<%= ctx %>/book-review">
                                         <input type="hidden" name="bookId" value="<%= book.getId() %>">
                                         <input type="hidden" name="action" value="add">
+                                        <%
+                                            Integer unreviewedBorrowId = (Integer) request.getAttribute("unreviewedBorrowId");
+                                            if (unreviewedBorrowId != null) {
+                                        %>
+                                            <input type="hidden" name="borrowId" value="<%= unreviewedBorrowId %>">
+                                        <% } %>
 
                                         <div style="margin-bottom: 20px;">
                                             <label style="font-weight: 600; margin-bottom: 12px; display: block; color: var(--text-primary);">
@@ -411,13 +429,35 @@
                                                     <% if (rev.getUserStudentId() != null && !rev.getUserStudentId().isEmpty()) { %>
                                                         <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 5px;">(<%= rev.getUserStudentId() %>)</span>
                                                     <% } %>
+                                                    <% if (rev.getBorrowDate() != null) { %>
+                                                        <div style="color: #2e7d32; font-size: 0.8rem; font-weight: 600; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+                                                            <i class="fa-solid fa-circle-check" style="font-size: 0.85rem;"></i> Xác thực đã mượn ngày <%= rev.getBorrowDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) %>
+                                                        </div>
+                                                    <% } %>
                                                 </div>
                                             </div>
                                             <div style="display: flex; align-items: center; gap: 10px;">
                                                 <span style="color: var(--text-muted); font-size: 0.85rem; background: var(--bg-hover); padding: 4px 10px; border-radius: 20px;">
                                                     <%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(rev.getCreatedAt()) %>
                                                 </span>
-                                                <% if (loggedUser != null && loggedUser.getId() == rev.getUserId()) { %>
+                                                <%
+                                                    boolean isOwnReview = loggedUser != null && loggedUser.getId() == rev.getUserId();
+                                                    boolean canEdit = false;
+                                                    if (isOwnReview) {
+                                                        long diff = System.currentTimeMillis() - rev.getCreatedAt().getTime();
+                                                        canEdit = diff <= 7L * 24 * 60 * 60 * 1000;
+                                                    }
+                                                %>
+                                                <% if (canEdit) { %>
+                                                    <button type="button" title="Sửa đánh giá"
+                                                            onclick="openEditReviewModal('<%= rev.getId() %>', '<%= rev.getRating() %>', '<%= rev.getComment() != null ? rev.getComment().replace("'", "\\'").replace("\n", "\\n").replace("\r", "") : "" %>')"
+                                                            style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;"
+                                                            onmouseover="this.style.background='rgba(0,0,0,0.05)'"
+                                                            onmouseout="this.style.background='none'">
+                                                        <i class="fa-solid fa-pen"></i>
+                                                    </button>
+                                                <% } %>
+                                                <% if (isOwnReview || (loggedUser != null && loggedUser.isAdmin())) { %>
                                                     <form method="post" action="<%= ctx %>/book-review" style="margin: 0;" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="bookId" value="<%= book.getId() %>">
@@ -458,6 +498,107 @@
         <% } %>
     </div><!-- /container -->
 </main>
+
+    <!-- ===== EDIT REVIEW MODAL ===== -->
+    <div id="editReviewModal"
+         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:30px; max-width:480px; width:90%; box-shadow:var(--shadow-lg); position:relative;">
+            <h3 style="font-size:1.2rem; font-weight:700; color:var(--text-primary); margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-pen-to-square" style="color:#f5a623;"></i> Chỉnh sửa đánh giá
+            </h3>
+            <form method="post" action="<%= ctx %>/book-review" id="editReviewForm">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="bookId" value="<%= book != null ? book.getId() : "" %>">
+                <input type="hidden" name="reviewId" id="editReviewId">
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 12px; display: block; color: var(--text-primary);">
+                        Số sao <span style="color:var(--danger)">*</span>
+                    </label>
+                    <div style="display: flex; gap: 8px;" class="edit-star-rating-group">
+                        <% for (int star = 1; star <= 5; star++) { %>
+                            <i class="fa-regular fa-star edit-rating-star"
+                               data-value="<%= star %>"
+                               style="cursor:pointer; font-size:2.2rem; color:#f5a623; transition: transform 0.1s;"></i>
+                        <% } %>
+                        <input type="hidden" name="rating" id="editRatingInput" required>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 10px; display: block; color: var(--text-primary);">Nhận xét</label>
+                    <textarea name="comment" id="editCommentInput" rows="3"
+                              style="width:100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical;"
+                              placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:flex-end;">
+                    <button type="button" onclick="closeEditReviewModal()" class="btn btn-outline">Hủy</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #f5a623, #f18d00); border: none; font-weight: 600;">
+                        Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditReviewModal(reviewId, rating, comment) {
+            document.getElementById('editReviewId').value = reviewId;
+            document.getElementById('editRatingInput').value = rating;
+            document.getElementById('editCommentInput').value = comment;
+            
+            updateEditStars(rating);
+            
+            document.getElementById('editReviewModal').style.display = 'flex';
+        }
+
+        function closeEditReviewModal() {
+            document.getElementById('editReviewModal').style.display = 'none';
+        }
+
+        function updateEditStars(rating) {
+            document.querySelectorAll('.edit-rating-star').forEach(s => {
+                if (s.getAttribute('data-value') <= rating) {
+                    s.classList.remove('fa-regular');
+                    s.classList.add('fa-solid');
+                } else {
+                    s.classList.add('fa-regular');
+                    s.classList.remove('fa-solid');
+                }
+            });
+        }
+
+        document.querySelectorAll('.edit-rating-star').forEach(star => {
+            star.addEventListener('mouseover', function () {
+                let val = this.getAttribute('data-value');
+                document.querySelectorAll('.edit-rating-star').forEach(s => {
+                    if (s.getAttribute('data-value') <= val) {
+                        s.classList.remove('fa-regular');
+                        s.classList.add('fa-solid');
+                    } else {
+                        s.classList.add('fa-regular');
+                        s.classList.remove('fa-solid');
+                    }
+                });
+            });
+
+            star.addEventListener('click', function () {
+                document.getElementById('editRatingInput').value = this.getAttribute('data-value');
+                this.style.transform = 'scale(1.2)';
+                setTimeout(() => this.style.transform = 'scale(1)', 150);
+            });
+        });
+
+        document.querySelector('.edit-star-rating-group').addEventListener('mouseleave', function () {
+            let selectedVal = document.getElementById('editRatingInput').value;
+            updateEditStars(selectedVal);
+        });
+
+        document.getElementById('editReviewModal').addEventListener('click', function (e) {
+            if (e.target === this) closeEditReviewModal();
+        });
+    </script>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
 

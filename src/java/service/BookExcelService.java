@@ -147,11 +147,11 @@ public class BookExcelService {
     }
 
     // =========================================================================
-    // 3. IMPORT BOOKS FROM CSV
+    // =========================================================================
+    // 3. IMPORT BOOKS FROM CSV (TỰ ĐỘNG THÊM MỚI HOẶC BỔ SUNG BẢN SAO KHI TRÙNG ISBN)
     // =========================================================================
     public ImportResult importBooksFromCsv(InputStream in, String operatorUsername) {
         ImportResult result = new ImportResult();
-        Set<String> processedIsbns = new HashSet<>();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
@@ -193,29 +193,6 @@ public class BookExcelService {
                     result.errorList.add("Dòng " + lineNumber + ": Thiếu mã ISBN.");
                     continue;
                 }
-                if (processedIsbns.contains(isbn)) {
-                    result.failureCount++;
-                    result.errorList.add("Dòng " + lineNumber + ": Trùng mã ISBN \"" + isbn + "\" với dòng trước đó trong file.");
-                    continue;
-                }
-                try {
-                    if (bookDAO.isIsbnExists(isbn)) {
-                        result.failureCount++;
-                        result.errorList.add("Dòng " + lineNumber + ": Mã ISBN \"" + isbn + "\" đã tồn tại trong CSDL thư viện.");
-                        continue;
-                    }
-                } catch (Exception e) {
-                    result.failureCount++;
-                    result.errorList.add("Dòng " + lineNumber + ": Lỗi kiểm tra ISBN: " + e.getMessage());
-                    continue;
-                }
-
-                // Validate Title
-                if (title.isEmpty()) {
-                    result.failureCount++;
-                    result.errorList.add("Dòng " + lineNumber + " (ISBN: " + isbn + "): Thiếu tên sách.");
-                    continue;
-                }
 
                 // Parse numeric fields
                 Integer publishYear = null;
@@ -242,12 +219,17 @@ public class BookExcelService {
                     }
                 }
 
-                // Import single book transaction
+                // Import hoặc bổ sung bản sao
                 try {
-                    importSingleBook(isbn, title, authorsStr, categoryName, publisher, publishYear, price, quantity, subject, description, operatorUsername);
-                    processedIsbns.add(isbn);
+                    int[] res = importOrUpdateBook(isbn, title, authorsStr, categoryName, publisher, publishYear, price, quantity, subject, description, operatorUsername);
+                    boolean isNew = res[1] == 1;
+                    int totalQty = res[2];
                     result.successCount++;
-                    result.successList.add("Dòng " + lineNumber + ": Nhập thành công \"" + title + "\" (" + quantity + " bản sao).");
+                    if (isNew) {
+                        result.successList.add("Dòng " + lineNumber + ": Thêm mới sách \"" + (title.isEmpty() ? isbn : title) + "\" (" + quantity + " bản sao).");
+                    } else {
+                        result.successList.add("Dòng " + lineNumber + ": Đã bổ sung +" + quantity + " bản sao cho sách \"" + (title.isEmpty() ? isbn : title) + "\" (ISBN: " + isbn + ") — Tổng bản sao hiện có: " + totalQty + ".");
+                    }
                 } catch (Exception ex) {
                     result.failureCount++;
                     result.errorList.add("Dòng " + lineNumber + " (ISBN: " + isbn + "): Lỗi lưu dữ liệu: " + ex.getMessage());
@@ -257,7 +239,7 @@ public class BookExcelService {
             // Ghi audit log nếu có sách được import thành công
             if (result.successCount > 0) {
                 AuditLogger.log("IMPORT_BOOKS", operatorUsername, 0,
-                        "Nhập thành công " + result.successCount + "/" + result.totalRows + " đầu sách mới từ file Excel/CSV");
+                        "Xử lý thành công " + result.successCount + "/" + result.totalRows + " dòng từ file Excel/CSV (Thêm mới & bổ sung bản sao)");
             }
 
         } catch (Exception e) {
@@ -267,51 +249,111 @@ public class BookExcelService {
         return result;
     }
 
-    private void importSingleBook(String isbn, String title, String authorsStr, String categoryName,
-                                  String publisher, Integer publishYear, Integer price, int quantity,
-                                  String subject, String description, String operator) throws Exception {
+    private int[] importOrUpdateBook(String isbn, String title, String authorsStr, String categoryName,
+                                     String publisher, Integer publishYear, Integer price, int quantity,
+                                     String subject, String description, String operator) throws Exception {
 
         try (Connection conn = DBContext.getInstance().getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // 1. Category resolution
+                // 1. Kiểm tra sách đã tồn tại theo ISBN chưa
+                String findBookSql = "SELECT id, title, category, category_id, publisher, publish_year, price, quantity, available FROM books WHERE isbn = ? AND is_deleted = 0 LIMIT 1";
+                int bookId = -1;
+                String existingTitle = title;
+                int currentQty = 0;
+                int currentAvailable = 0;
+                boolean isNew = true;
+
+                try (PreparedStatement ps = conn.prepareStatement(findBookSql)) {
+                    ps.setString(1, isbn);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            bookId = rs.getInt("id");
+                            existingTitle = rs.getString("title");
+                            currentQty = rs.getInt("quantity");
+                            currentAvailable = rs.getInt("available");
+                            isNew = false;
+                        }
+                    }
+                }
+
+                // 2. Tìm hoặc tạo danh mục
                 int categoryId = 0;
                 if (!categoryName.isEmpty()) {
                     categoryId = findOrCreateCategory(conn, categoryName, operator);
                 }
 
-                // 2. Insert into books table
-                String insertBookSql = "INSERT INTO books (isbn, title, category, category_id, publisher, publish_year, price, quantity, available, description, cover_image, subject, is_deleted, created_at, updated_at, created_by, updated_by) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 0, NOW(), NOW(), ?, ?)";
-                int bookId = -1;
-                try (PreparedStatement ps = conn.prepareStatement(insertBookSql, Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setString(1, isbn);
-                    ps.setString(2, title);
-                    ps.setString(3, categoryName);
-                    if (categoryId > 0) ps.setInt(4, categoryId); else ps.setNull(4, Types.INTEGER);
-                    ps.setString(5, publisher);
-                    if (publishYear != null) ps.setInt(6, publishYear); else ps.setNull(6, Types.INTEGER);
-                    if (price != null) ps.setInt(7, price); else ps.setNull(7, Types.INTEGER);
-                    ps.setInt(8, quantity);
-                    ps.setInt(9, quantity); // available = quantity
-                    ps.setString(10, description);
-                    ps.setString(11, subject);
-                    ps.setString(12, operator != null ? operator : "admin");
-                    ps.setString(13, operator != null ? operator : "admin");
+                if (isNew) {
+                    // Nếu là sách mới thì bắt buộc phải có tên sách
+                    if (title.isEmpty()) {
+                        throw new IllegalArgumentException("Sách mới cần phải có tên sách.");
+                    }
 
-                    ps.executeUpdate();
-                    try (ResultSet rs = ps.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            bookId = rs.getInt(1);
+                    String insertBookSql = "INSERT INTO books (isbn, title, category, category_id, publisher, publish_year, price, quantity, available, description, cover_image, subject, is_deleted, created_at, updated_at, created_by, updated_by) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 0, NOW(), NOW(), ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(insertBookSql, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, isbn);
+                        ps.setString(2, title);
+                        ps.setString(3, categoryName);
+                        if (categoryId > 0) ps.setInt(4, categoryId); else ps.setNull(4, Types.INTEGER);
+                        ps.setString(5, publisher);
+                        if (publishYear != null) ps.setInt(6, publishYear); else ps.setNull(6, Types.INTEGER);
+                        if (price != null) ps.setInt(7, price); else ps.setNull(7, Types.INTEGER);
+                        ps.setInt(8, quantity);
+                        ps.setInt(9, quantity);
+                        ps.setString(10, description);
+                        ps.setString(11, subject);
+                        ps.setString(12, operator != null ? operator : "admin");
+                        ps.setString(13, operator != null ? operator : "admin");
+
+                        ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) {
+                                bookId = rs.getInt(1);
+                            }
                         }
                     }
+
+                    if (bookId <= 0) {
+                        throw new SQLException("Không thể tạo bản ghi sách mới");
+                    }
+                    currentQty = quantity;
+                } else {
+                    // Nếu đã có sách: Cập nhật thêm bản sao và thông tin nếu có truyền vào
+                    StringBuilder updateSql = new StringBuilder("UPDATE books SET quantity = quantity + ?, available = available + ?, updated_by = ?, updated_at = NOW()");
+                    if (!title.isEmpty()) updateSql.append(", title = ?");
+                    if (!categoryName.isEmpty()) updateSql.append(", category = ?, category_id = ?");
+                    if (!publisher.isEmpty()) updateSql.append(", publisher = ?");
+                    if (publishYear != null) updateSql.append(", publish_year = ?");
+                    if (price != null) updateSql.append(", price = ?");
+                    if (!subject.isEmpty()) updateSql.append(", subject = ?");
+                    if (!description.isEmpty()) updateSql.append(", description = ?");
+                    updateSql.append(" WHERE id = ?");
+
+                    try (PreparedStatement ps = conn.prepareStatement(updateSql.toString())) {
+                        int paramIdx = 1;
+                        ps.setInt(paramIdx++, quantity);
+                        ps.setInt(paramIdx++, quantity);
+                        ps.setString(paramIdx++, operator != null ? operator : "admin");
+
+                        if (!title.isEmpty()) ps.setString(paramIdx++, title);
+                        if (!categoryName.isEmpty()) {
+                            ps.setString(paramIdx++, categoryName);
+                            if (categoryId > 0) ps.setInt(paramIdx++, categoryId); else ps.setNull(paramIdx++, Types.INTEGER);
+                        }
+                        if (!publisher.isEmpty()) ps.setString(paramIdx++, publisher);
+                        if (publishYear != null) ps.setInt(paramIdx++, publishYear);
+                        if (price != null) ps.setInt(paramIdx++, price);
+                        if (!subject.isEmpty()) ps.setString(paramIdx++, subject);
+                        if (!description.isEmpty()) ps.setString(paramIdx++, description);
+                        ps.setInt(paramIdx++, bookId);
+
+                        ps.executeUpdate();
+                    }
+                    currentQty = currentQty + quantity;
                 }
 
-                if (bookId <= 0) {
-                    throw new SQLException("Không thể tạo bản ghi sách mới");
-                }
-
-                // 3. Authors resolution & linkage
+                // 3. Liên kết tác giả
                 if (!authorsStr.isEmpty()) {
                     String[] authorArray = authorsStr.split("[;,]");
                     for (String aName : authorArray) {
@@ -330,22 +372,38 @@ public class BookExcelService {
                     }
                 }
 
-                // 4. Generate quantity book_copies
-                String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, status, note, is_deleted, created_by, updated_by, created_at, updated_at) "
-                        + "VALUES (?, ?, 'GOOD', 'AVAILABLE', 'Khởi tạo từ Import Excel', 0, ?, ?, NOW(), NOW())";
+                // 4. Xác định số bản sao hiện tại để đánh mã barcode tiếp theo
+                int existingCopiesCount = 0;
+                String countCopiesSql = "SELECT COUNT(*) FROM book_copies WHERE book_id = ?";
+                try (PreparedStatement psCount = conn.prepareStatement(countCopiesSql)) {
+                    psCount.setInt(1, bookId);
+                    try (ResultSet rsCount = psCount.executeQuery()) {
+                        if (rsCount.next()) {
+                            existingCopiesCount = rsCount.getInt(1);
+                        }
+                    }
+                }
+
+                // 5. Sinh đúng `quantity` bản sao mới
+                String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, note, is_deleted, created_by, updated_by, created_at, updated_at) "
+                        + "VALUES (?, ?, 'GOOD', ?, 0, ?, ?, NOW(), NOW())";
+                String copyNote = isNew ? "Khởi tạo từ Import Excel" : "Bổ sung từ Import Excel";
                 try (PreparedStatement psCopy = conn.prepareStatement(insertCopySql)) {
                     for (int i = 1; i <= quantity; i++) {
-                        String barcode = generateUniqueBarcode(conn, bookId, i);
+                        int copyIndex = existingCopiesCount + i;
+                        String barcode = generateUniqueBarcode(conn, bookId, copyIndex);
                         psCopy.setInt(1, bookId);
                         psCopy.setString(2, barcode);
-                        psCopy.setString(3, operator != null ? operator : "admin");
+                        psCopy.setString(3, copyNote);
                         psCopy.setString(4, operator != null ? operator : "admin");
+                        psCopy.setString(5, operator != null ? operator : "admin");
                         psCopy.addBatch();
                     }
                     psCopy.executeBatch();
                 }
 
                 conn.commit();
+                return new int[]{bookId, isNew ? 1 : 0, currentQty};
             } catch (Exception ex) {
                 conn.rollback();
                 throw ex;

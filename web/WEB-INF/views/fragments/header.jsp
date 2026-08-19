@@ -24,6 +24,7 @@
 <c:url var="booksUrl" value="/books" />
 <c:url var="aboutUrl" value="/about" />
 <c:url var="policiesPublicUrl" value="/policies" />
+<c:url var="eventsUrl" value="/events" />
 <c:url var="myBorrowsUrl" value="/borrow/my" />
 <c:url var="myReservationsUrl" value="/reservation/my" />
 <c:url var="myFinesUrl" value="/fine/my" />
@@ -128,6 +129,12 @@
                             <a href="${policiesPublicUrl}"
                                class="nav-link ${navCurrentPage eq 'policies' ? 'active' : ''}">
                                 <i class="fa-solid fa-scale-balanced"></i> Điều lệ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${eventsUrl}"
+                               class="nav-link ${navCurrentPage eq 'events' ? 'active' : ''}">
+                                <i class="fa-solid fa-calendar-days"></i> Sự kiện
                             </a>
                         </li>
 

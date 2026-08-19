@@ -19,15 +19,15 @@ import java.util.List;
  * BookDetailServlet – xử lý CRUD sách.
  *
  * URL patterns:
- *   /book/detail?id=X  – Xem chi tiết (mọi người)
- *   /book/add          – Form thêm sách (Admin only)
- *   /book/edit?id=X    – Form sửa sách (Admin only)
- *   /book/delete?id=X  – Xóa sách (Admin only)
+ *   /book/detail?id=X          – Xem chi tiết (Tất cả người dùng)
+ *   /admin/book/add, /book/add – Form thêm sách (Admin only)
+ *   /librarian/book/edit, /admin/book/edit – Form sửa sách (Admin & Librarian)
+ *   /admin/book/delete, /book/delete – Xóa sách (Admin only)
  */
 @WebServlet(name = "BookDetailServlet", urlPatterns = {
     "/book/detail", "/librarian/book/detail", "/admin/book/detail",
     "/book/add", "/admin/book/add",
-    "/book/edit", "/admin/book/edit",
+    "/book/edit", "/librarian/book/edit", "/admin/book/edit",
     "/book/delete", "/admin/book/delete"
 })
 @MultipartConfig(
@@ -75,6 +75,7 @@ public class BookDetailServlet extends HttpServlet {
                 showAddForm(request, response);
                 break;
             case "/book/edit":
+            case "/librarian/book/edit":
             case "/admin/book/edit":
                 showEditForm(request, response);
                 break;
@@ -152,7 +153,32 @@ public class BookDetailServlet extends HttpServlet {
             User loggedUser = (session != null) ? (User) session.getAttribute("loggedUser") : null;
             
             if (loggedUser != null && "READER".equals(loggedUser.getRole())) {
-                canReview = reviewDAO.hasBorrowedBook(id, loggedUser.getId());
+                Integer borrowIdParam = null;
+                String borrowIdStr = request.getParameter("borrowId");
+                if (borrowIdStr != null && !borrowIdStr.trim().isEmpty()) {
+                    try {
+                        borrowIdParam = Integer.parseInt(borrowIdStr);
+                    } catch (NumberFormatException e) {
+                        // Bỏ qua
+                    }
+                }
+
+                Integer targetBorrowId = null;
+                if (borrowIdParam != null) {
+                    boolean isValid = reviewDAO.isBorrowEligibleForReview(borrowIdParam, id, loggedUser.getId());
+                    if (isValid) {
+                        targetBorrowId = borrowIdParam;
+                    }
+                }
+
+                if (targetBorrowId == null) {
+                    targetBorrowId = reviewDAO.getUnreviewedBorrowId(id, loggedUser.getId());
+                }
+
+                if (targetBorrowId != null) {
+                    canReview = true;
+                    request.setAttribute("unreviewedBorrowId", targetBorrowId);
+                }
             }
 
             request.setAttribute("reviews", reviews);
@@ -165,7 +191,7 @@ public class BookDetailServlet extends HttpServlet {
             request.setAttribute("pageTitle", book.getTitle() + " – FPT Library");
             request.setAttribute("pageDesc", "Chi tiết sách: " + book.getTitle());
 
-            // Check if user is admin (for showing edit/delete buttons)
+            // Check if user is admin (for showing delete buttons)
             request.setAttribute("isAdmin", loggedUser != null && loggedUser.isAdmin());
 
         } catch (Exception e) {
@@ -176,7 +202,7 @@ public class BookDetailServlet extends HttpServlet {
     }
 
     // ============================================================
-    //  SHOW ADD FORM
+    //  SHOW ADD FORM (ADMIN ONLY)
     // ============================================================
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -201,7 +227,7 @@ public class BookDetailServlet extends HttpServlet {
     // ============================================================
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (!requireAdmin(request, response)) return;
+        if (!requireAdminOrLibrarian(request, response)) return;
 
         setSidebarAttributes(request);
         request.setAttribute("currentPage", "books");
@@ -240,7 +266,7 @@ public class BookDetailServlet extends HttpServlet {
     }
 
     // ============================================================
-    //  PROCESS CREATE
+    //  PROCESS CREATE (ADMIN ONLY)
     // ============================================================
     private void processCreate(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -310,7 +336,7 @@ public class BookDetailServlet extends HttpServlet {
     // ============================================================
     private void processUpdate(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (!requireAdmin(request, response)) return;
+        if (!requireAdminOrLibrarian(request, response)) return;
 
         String redirectBase = getRedirectBase(request);
         int id = parseId(request.getParameter("id"));
@@ -350,10 +376,10 @@ public class BookDetailServlet extends HttpServlet {
                 setSidebarAttributes(request);
                 request.setAttribute("formMode", "edit");
                 request.setAttribute("book", book);
-                request.setAttribute("errors", errors);
                 request.setAttribute("hasCopies", hasCopies);
+                request.setAttribute("errors", errors);
                 request.setAttribute("currentPage", "books");
-                request.setAttribute("pageTitle", "Sửa sách – FPT Library");
+                request.setAttribute("pageTitle", "Sửa sách: " + book.getTitle() + " – FPT Library");
                 request.setAttribute("selectedAuthorIds", authorIds);
                 loadFormData(request);
                 request.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(request, response);
@@ -367,11 +393,13 @@ public class BookDetailServlet extends HttpServlet {
                 response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&success=updated");
             } else {
                 setSidebarAttributes(request);
-                request.setAttribute("errorMsg", "Cập nhật thất bại.");
                 request.setAttribute("formMode", "edit");
                 request.setAttribute("book", book);
+                request.setAttribute("hasCopies", hasCopies);
+                request.setAttribute("errorMsg", "Cập nhật sách thất bại.");
                 request.setAttribute("currentPage", "books");
-                request.setAttribute("pageTitle", "Sửa sách – FPT Library");
+                request.setAttribute("pageTitle", "Sửa sách: " + book.getTitle() + " – FPT Library");
+                request.setAttribute("selectedAuthorIds", authorIds);
                 loadFormData(request);
                 request.getRequestDispatcher("/WEB-INF/views/book_form.jsp").forward(request, response);
             }
@@ -388,7 +416,7 @@ public class BookDetailServlet extends HttpServlet {
     }
 
     // ============================================================
-    //  DELETE
+    //  DELETE (ADMIN ONLY)
     // ============================================================
     private void processDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -451,6 +479,25 @@ public class BookDetailServlet extends HttpServlet {
         }
         User user = (User) session.getAttribute("loggedUser");
         if (!user.isAdmin()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ Quản trị viên (Admin) mới có quyền xóa sách.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Kiểm tra quyền Admin hoặc Librarian. Redirect nếu không đủ quyền.
+     * @return true nếu user là Admin hoặc Librarian
+     */
+    private boolean requireAdminOrLibrarian(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("loggedUser") == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return false;
+        }
+        User user = (User) session.getAttribute("loggedUser");
+        if (!user.isAdminOrLibrarian()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác này.");
             return false;
         }

@@ -12,6 +12,12 @@ import java.util.List;
 
 public class ReservationDAO {
 
+    /** Điều kiện loại bản sao đang được giữ hoặc chưa được hoàn trả. */
+    private static final String ACTIVE_BORROW_CONFLICT_SQL = "SELECT 1 FROM borrow_records br "
+            + "WHERE br.copy_id = bc.id AND ((br.status = 'PENDING_PICKUP' "
+            + "AND br.pickup_deadline >= NOW()) OR (br.status IN ('BORROWED', 'OVERDUE') "
+            + "AND br.return_date IS NULL))";
+
     private ReservationRecord mapRow(ResultSet rs) throws SQLException {
         ReservationRecord record = new ReservationRecord();
         record.setId(rs.getInt("id"));
@@ -149,11 +155,46 @@ public class ReservationDAO {
     }
 
     public boolean updateStatus(int id, String status) throws Exception {
-        String sql = "UPDATE book_reservations SET status = ?, updated_at = NOW() WHERE id = ?";
-        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setInt(2, id);
-            return ps.executeUpdate() > 0;
+        String selectSql = "SELECT user_id,book_id FROM book_reservations WHERE id=? FOR UPDATE";
+        String reservationSql = "UPDATE book_reservations SET status=?,updated_at=NOW() WHERE id=?";
+        String borrowSql = "UPDATE borrow_records SET status='CANCELLED',updated_at=NOW() "
+                + "WHERE user_id=? AND book_id=? AND status='PENDING_PICKUP'";
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int userId;
+                int bookId;
+                try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
+                    statement.setInt(1, id);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        userId = result.getInt("user_id");
+                        bookId = result.getInt("book_id");
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement(reservationSql)) {
+                    statement.setString(1, status);
+                    statement.setInt(2, id);
+                    statement.executeUpdate();
+                }
+                if (!"READY_FOR_PICKUP".equals(status)) {
+                    try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
+                        statement.setInt(1, userId);
+                        statement.setInt(2, bookId);
+                        statement.executeUpdate();
+                    }
+                }
+                connection.commit();
+                return true;
+            } catch (Exception exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         }
     }
 
@@ -241,13 +282,14 @@ public class ReservationDAO {
      */
     public boolean createWaiting(int userId, int bookId) throws Exception {
         String lockBook = "SELECT id FROM books WHERE id=? AND is_deleted=0 FOR UPDATE";
-        String available = "SELECT id FROM book_copies WHERE book_id=? AND is_deleted=0 "
-                + "AND book_condition='GOOD' AND id NOT IN (SELECT COALESCE(copy_id, 0) FROM borrow_records WHERE status IN ('PENDING_PICKUP','BORROWED','OVERDUE')) "
-                + "LIMIT 1 FOR UPDATE";
+        String available = "SELECT bc.id FROM book_copies bc WHERE bc.book_id=? AND bc.is_deleted=0 "
+                + "AND bc.book_condition IN ('GOOD','WORN') AND NOT EXISTS ("
+                + ACTIVE_BORROW_CONFLICT_SQL + ") LIMIT 1 FOR UPDATE";
         String duplicate = "SELECT id FROM book_reservations WHERE user_id=? AND book_id=? "
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
-        String activeBorrow = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? "
-                + "AND status IN ('PENDING_PICKUP','BORROWED','OVERDUE') FOR UPDATE";
+        String activeBorrow = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? AND "
+                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
+                + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL)) FOR UPDATE";
         String insert = "INSERT INTO book_reservations(user_id,book_id,reserve_date,status,created_at,updated_at) "
                 + "VALUES(?,?,NOW(),'WAITING',NOW(),NOW())";
         try (Connection connection = DBContext.getInstance().getConnection()) {
@@ -303,43 +345,111 @@ public class ReservationDAO {
      * Hủy reservation active thuộc user.
      */
     public boolean cancelOwned(int reservationId, int userId) throws Exception {
-        String sql = "UPDATE book_reservations SET status='CANCELLED',updated_at=NOW() WHERE id=? "
-                + "AND user_id=? AND status IN ('WAITING','READY_FOR_PICKUP')";
-        try (Connection c = DBContext.getInstance().getConnection(); PreparedStatement s = c.prepareStatement(sql)) {
-            s.setInt(1, reservationId);
-            s.setInt(2, userId);
-            return s.executeUpdate() == 1;
+        String selectSql = "SELECT book_id FROM book_reservations WHERE id=? AND user_id=? "
+                + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
+        String reservationSql = "UPDATE book_reservations SET status='CANCELLED',updated_at=NOW() WHERE id=?";
+        String borrowSql = "UPDATE borrow_records SET status='CANCELLED',updated_at=NOW() "
+                + "WHERE user_id=? AND book_id=? AND status='PENDING_PICKUP'";
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int bookId;
+                try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
+                    statement.setInt(1, reservationId);
+                    statement.setInt(2, userId);
+                    try (ResultSet result = statement.executeQuery()) {
+                        if (!result.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                        bookId = result.getInt("book_id");
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement(reservationSql)) {
+                    statement.setInt(1, reservationId);
+                    statement.executeUpdate();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
+                    statement.setInt(1, userId);
+                    statement.setInt(2, bookId);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return true;
+            } catch (Exception exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         }
     }
 
     /**
-     * Đưa reservation WAITING cũ nhất sang trạng thái sẵn sàng trong 24 giờ.
+     * Giữ một bản sao cho reservation WAITING cũ nhất trong thời lượng chỉ định.
+     *
+     * @param bookId mã đầu sách
+     * @param readyHours số giờ giữ bản sao
+     * @return {@code true} khi reservation được gán bản sao thành công
+     * @throws Exception khi thao tác dữ liệu thất bại
      */
     public boolean activateNext(int bookId, int readyHours) throws Exception {
-        String sql = "UPDATE book_reservations SET status='READY_FOR_PICKUP',notified_at=NOW(),"
-                + "expiry_date=DATE_ADD(NOW(),INTERVAL ? HOUR),updated_at=NOW() WHERE id=(SELECT id FROM "
-                + "(SELECT id FROM book_reservations WHERE book_id=? AND status='WAITING' "
-                + "ORDER BY created_at,id LIMIT 1) next_reservation)";
-        try (Connection c = DBContext.getInstance().getConnection(); PreparedStatement s = c.prepareStatement(sql)) {
-            s.setInt(1, readyHours);
-            s.setInt(2, bookId);
-            return s.executeUpdate() == 1;
+        String sql = "SELECT id FROM book_reservations WHERE book_id=? AND status='WAITING' "
+                + "ORDER BY created_at,id LIMIT 1";
+        int reservationId = -1;
+        try (Connection connection = DBContext.getInstance().getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, bookId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    reservationId = result.getInt("id");
+                }
+            }
         }
+        return reservationId > 0
+                && manuallyReadyReservation(reservationId, "SYSTEM", readyHours) != null;
     }
 
+    /**
+     * Kích hoạt thủ công một reservation với thời gian giữ mặc định 24 giờ.
+     *
+     * @param reservationId mã reservation đang chờ
+     * @param operator tài khoản thực hiện
+     * @return reservation đã được gán bản sao, hoặc {@code null} nếu không còn hợp lệ
+     * @throws Exception khi thao tác dữ liệu thất bại
+     */
     public ReservationRecord manuallyReadyReservation(int reservationId, String operator) throws Exception {
+        return manuallyReadyReservation(reservationId, operator, 24);
+    }
+
+    /**
+     * Khóa reservation và một bản sao có thể mượn, sau đó tạo lượt chờ nhận trong cùng transaction.
+     *
+     * @param reservationId mã reservation đang chờ
+     * @param operator tài khoản thực hiện
+     * @param readyHours số giờ giữ bản sao
+     * @return reservation đã được gán bản sao, hoặc {@code null} nếu không còn hợp lệ
+     * @throws Exception khi thao tác dữ liệu thất bại
+     */
+    private ReservationRecord manuallyReadyReservation(int reservationId, String operator,
+            int readyHours) throws Exception {
         String selectRes = "SELECT r.book_id, r.user_id, r.status, b.title, u.email, u.full_name "
                 + "FROM book_reservations r "
                 + "INNER JOIN books b ON r.book_id = b.id "
                 + "INNER JOIN users u ON r.user_id = u.id "
-                + "WHERE r.id = ? FOR UPDATE";
-        String copySql = "SELECT id FROM book_copies WHERE book_id = ? AND is_deleted = 0 AND book_condition = 'GOOD' "
-                + "AND id NOT IN (SELECT COALESCE(copy_id, 0) FROM borrow_records WHERE status IN ('PENDING_PICKUP', 'BORROWED', 'OVERDUE')) "
-                + "ORDER BY id LIMIT 1 FOR UPDATE";
-        String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
+                + "WHERE r.id=? AND NOT EXISTS (SELECT 1 FROM fines f WHERE f.user_id=r.user_id "
+                + "AND f.status='UNPAID') AND (SELECT COUNT(*) FROM borrow_records br "
+                + "WHERE br.user_id=r.user_id AND ((br.status='PENDING_PICKUP' "
+                + "AND br.pickup_deadline>=NOW()) OR (br.status IN ('BORROWED','OVERDUE') "
+                + "AND br.return_date IS NULL)))<3 FOR UPDATE";
+        String copySql = "SELECT bc.id FROM book_copies bc WHERE bc.book_id = ? AND bc.is_deleted = 0 "
+                + "AND bc.book_condition IN ('GOOD', 'WORN') AND NOT EXISTS ("
+                + ACTIVE_BORROW_CONFLICT_SQL + ") ORDER BY bc.id LIMIT 1 FOR UPDATE";
+        String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), "
+                + "expiry_date = DATE_ADD(NOW(), INTERVAL ? HOUR), updated_at = NOW() WHERE id = ?";
         String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
-                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), NULL, NULL, 0, 'PENDING_PICKUP', NOW(), NOW())";
-        String updateBook = "UPDATE books SET available = GREATEST(0, available - 1) WHERE id = ?";
+                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
+                + "'PENDING_PICKUP', NOW(), NOW())";
 
         try (Connection conn = DBContext.getInstance().getConnection()) {
             conn.setAutoCommit(false);
@@ -388,7 +498,8 @@ public class ReservationDAO {
 
                 // 1. Update reservation
                 try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
-                    ps.setInt(1, reservationId);
+                    ps.setInt(1, readyHours);
+                    ps.setInt(2, reservationId);
                     ps.executeUpdate();
                 }
 
@@ -397,12 +508,7 @@ public class ReservationDAO {
                     ps.setInt(1, userId);
                     ps.setInt(2, bookId);
                     ps.setInt(3, copyId);
-                    ps.executeUpdate();
-                }
-
-                // 4. Update book available count
-                try (PreparedStatement ps = conn.prepareStatement(updateBook)) {
-                    ps.setInt(1, bookId);
+                    ps.setInt(4, readyHours);
                     ps.executeUpdate();
                 }
 

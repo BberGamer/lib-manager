@@ -21,6 +21,7 @@
                 <c:url var="sidebarAuthorsUrl" value="${rolePath}/authors" />
                 <c:url var="sidebarCategoriesUrl" value="${rolePath}/categories" />
                 <c:url var="sidebarPoliciesUrl" value="/admin/policies" />
+                <c:url var="sidebarEventsUrl" value="/events" />
                 <c:url var="sidebarUsersUrl" value="${rolePath}/users" />
                 <c:url var="sidebarLogoutUrl" value="/logout" />
                 <c:url var="sidebarLibraryStatsUrl" value="${rolePath}/dashboard/library" />
@@ -105,6 +106,10 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'found-items' ? 'active' : ''}">
                                         <i class="fa-solid fa-box-open"></i>
                                         <span>Đồ để quên</span>
+                                    <a href="${sidebarEventsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'events' ? 'active' : ''}">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <span>Quản lý sự kiện</span>
                                     </a>
                                 </nav>
                             </div>
@@ -120,7 +125,7 @@
                                     <a href="${sidebarBooksUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'books' ? 'active' : ''}">
                                         <i class="fa-solid fa-boxes-stacked"></i>
-                                        <span>Quản lý bản sao</span>
+                                        <span>Quản lý sách</span>
                                     </a>
                                 </nav>
                             </div>
@@ -155,7 +160,7 @@
                                     <a href="${sidebarBooksUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'books' ? 'active' : ''}">
                                         <i class="fa-solid fa-book"></i>
-                                        <span>Kho sách</span>
+                                        <span>Quản lý sách</span>
                                     </a>
                                     <a href="${sidebarAuthorsUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'authors' ? 'active' : ''}">
@@ -171,6 +176,11 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'policies' ? 'active' : ''}">
                                         <i class="fa-solid fa-scale-balanced"></i>
                                         <span>Quản lý điều lệ</span>
+                                    </a>
+                                    <a href="${sidebarEventsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'events' ? 'active' : ''}">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <span>Quản lý sự kiện</span>
                                     </a>
                                 </nav>
                             </div>

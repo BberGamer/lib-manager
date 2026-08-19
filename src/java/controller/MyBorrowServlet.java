@@ -51,6 +51,12 @@ public class MyBorrowServlet extends HttpServlet {
             request.setAttribute("maximumActiveBorrows", BorrowService.MAXIMUM_ACTIVE_BORROWS);
             request.setAttribute("maximumRenewals", BorrowService.MAXIMUM_RENEWALS);
             request.setAttribute("activePage", "borrows");
+            
+            // Lấy các borrow_id đã đánh giá
+            dao.BookReviewDAO reviewDAO = new dao.BookReviewDAO();
+            java.util.Set<Integer> reviewedBorrowIds = reviewDAO.getReviewedBorrowIds(reader.getId());
+            request.setAttribute("reviewedBorrowIds", reviewedBorrowIds);
+
             request.getRequestDispatcher("/WEB-INF/views/reader/my-borrows.jsp").forward(request, response);
         } catch (Exception exception) {
             LOGGER.log(Level.SEVERE, "Không thể tải trang mượn sách của userId=" + reader.getId(), exception);
