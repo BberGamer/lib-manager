@@ -5,10 +5,14 @@ import jakarta.servlet.http.Part;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
+import java.util.UUID;
 
 public class UploadUtility {
 
+    private static final long MAX_IMAGE_SIZE = 5L * 1024L * 1024L;
     private static String cachedUploadDir;
     private static String cachedBaseUrl;
 
@@ -95,6 +99,86 @@ public class UploadUtility {
         
         // Store in DB under relative path format "uploads/uniqueFileName"
         return "uploads/" + uniqueFileName;
+    }
+
+    /**
+     * Lưu ảnh JPEG hoặc PNG bằng tên do server sinh để dùng cho đồ để quên.
+     * Phương thức xác thực MIME, kích thước và chữ ký tệp trước khi ghi vào thư mục cấu hình.
+     *
+     * @param filePart tệp ảnh lấy từ multipart request, có thể rỗng
+     * @param context ServletContext của ứng dụng hiện tại
+     * @return đường dẫn tương đối để lưu DB, hoặc null khi người dùng không chọn ảnh
+     * @throws IOException khi ảnh không hợp lệ hoặc không thể lưu tệp
+     */
+    public static String saveSecureImage(Part filePart, ServletContext context) throws IOException {
+        if (filePart == null || filePart.getSize() == 0) {
+            return null;
+        }
+        if (filePart.getSize() > MAX_IMAGE_SIZE) {
+            throw new IOException("Ảnh không được vượt quá 5 MB.");
+        }
+
+        String contentType = filePart.getContentType();
+        String extension = getImageExtension(contentType);
+        if (extension == null || !hasValidImageSignature(filePart, contentType)) {
+            throw new IOException("Chỉ chấp nhận ảnh JPEG hoặc PNG hợp lệ.");
+        }
+
+        Path uploadDirectory = Path.of(getUploadDir(context)).toAbsolutePath().normalize();
+        Files.createDirectories(uploadDirectory);
+        String generatedFileName = UUID.randomUUID().toString().replace("-", "") + extension;
+        Path targetPath = uploadDirectory.resolve(generatedFileName).normalize();
+        if (!targetPath.getParent().equals(uploadDirectory)) {
+            throw new IOException("Đường dẫn lưu ảnh không hợp lệ.");
+        }
+
+        filePart.write(targetPath.toString());
+        return "uploads/" + generatedFileName;
+    }
+
+    /**
+     * Xác định phần mở rộng an toàn từ MIME type được phép.
+     *
+     * @param contentType MIME type do container cung cấp
+     * @return phần mở rộng do server quyết định, hoặc null nếu không được phép
+     */
+    private static String getImageExtension(String contentType) {
+        if ("image/jpeg".equalsIgnoreCase(contentType)) {
+            return ".jpg";
+        }
+        if ("image/png".equalsIgnoreCase(contentType)) {
+            return ".png";
+        }
+        return null;
+    }
+
+    /**
+     * Kiểm tra chữ ký nhị phân để tránh chỉ tin MIME type do client khai báo.
+     *
+     * @param filePart tệp cần kiểm tra
+     * @param contentType MIME type đã được allowlist
+     * @return true khi chữ ký phù hợp JPEG hoặc PNG
+     * @throws IOException khi không đọc được tệp tải lên
+     */
+    private static boolean hasValidImageSignature(Part filePart, String contentType) throws IOException {
+        try (InputStream inputStream = filePart.getInputStream()) {
+            byte[] header = inputStream.readNBytes(8);
+            if ("image/jpeg".equalsIgnoreCase(contentType)) {
+                return header.length >= 3
+                        && (header[0] & 0xFF) == 0xFF
+                        && (header[1] & 0xFF) == 0xD8
+                        && (header[2] & 0xFF) == 0xFF;
+            }
+            return header.length == 8
+                    && (header[0] & 0xFF) == 0x89
+                    && header[1] == 0x50
+                    && header[2] == 0x4E
+                    && header[3] == 0x47
+                    && header[4] == 0x0D
+                    && header[5] == 0x0A
+                    && header[6] == 0x1A
+                    && header[7] == 0x0A;
+        }
     }
 
     /**

@@ -57,6 +57,44 @@ public class RoleGuard {
     }
 
     /**
+     * Yêu cầu role Thủ thư, không cho phép Admin thay thế trong nghiệp vụ chỉ dành cho Thủ thư.
+     *
+     * @param request request HTTP hiện tại
+     * @param response response dùng để trả 403 khi không đủ quyền
+     * @param user người dùng đã đăng nhập
+     * @return true khi người dùng là Thủ thư; false khi đã trả lỗi quyền
+     * @throws IOException khi không thể gửi response lỗi
+     */
+    public static boolean requireLibrarian(HttpServletRequest request, HttpServletResponse response, User user)
+            throws IOException {
+        if (user == null || !user.isLibrarian()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền thực hiện thao tác này. Yêu cầu quyền Thủ thư.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Yêu cầu role Reader cho các chức năng tự phục vụ của độc giả.
+     *
+     * @param request request HTTP hiện tại
+     * @param response response dùng để trả 403 khi không đủ quyền
+     * @param user người dùng đã đăng nhập
+     * @return true khi người dùng là Reader; false khi đã trả lỗi quyền
+     * @throws IOException khi không thể gửi response lỗi
+     */
+    public static boolean requireReader(HttpServletRequest request, HttpServletResponse response, User user)
+            throws IOException {
+        if (user == null || !user.isReader()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền thực hiện thao tác này. Yêu cầu quyền Độc giả.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Yêu cầu role Admin.
      * Nếu không phải Admin → 403 Forbidden.
      * @return true nếu là Admin, false nếu không (đã gửi error response)
