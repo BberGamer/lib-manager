@@ -29,11 +29,13 @@
 <c:url var="myReservationsUrl" value="/reservation/my" />
 <c:url var="myFinesUrl" value="/fine/my" />
 <c:url var="myNotificationsUrl" value="/notification/my" />
+<c:url var="readerFoundItemsUrl" value="/found-items" />
 <c:set var="rolePath" value="${navUser.admin ? '/admin' : '/librarian'}" />
 <c:url var="borrowManagementUrl" value="${rolePath}/borrow/list" />
 <c:url var="reservationManagementUrl" value="${rolePath}/reservation/list" />
 <c:url var="fineManagementUrl" value="${rolePath}/fine/list" />
 <c:url var="notificationManagementUrl" value="${rolePath}/notification/manage" />
+<c:url var="foundItemsUrl" value="/librarian/found-items" />
 <c:url var="shelfManagementUrl" value="${rolePath}/shelf" />
 <c:url var="authorsUrl" value="${rolePath}/authors" />
 <c:url var="categoriesUrl" value="${rolePath}/categories" />
@@ -143,30 +145,35 @@
                                     <i class="fa-solid fa-book-open"></i> Mượn sách
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="${myReservationsUrl}"
-                                   class="nav-link ${navCurrentPage eq 'reservations' ? 'active' : ''}">
-                                    <i class="fa-solid fa-bookmark"></i> Đặt trước
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link ${navCurrentPage eq 'reservations'
+                                        or navCurrentPage eq 'fines'
+                                        or navCurrentPage eq 'found-items'
+                                        or navCurrentPage eq 'notifications' ? 'active' : ''}">
+                                    <i class="fa-solid fa-ellipsis"></i> Tiện ích
+                                    <i class="fa-solid fa-chevron-down fa-xs nav-chevron"></i>
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="${myFinesUrl}"
-                                   class="nav-link ${navCurrentPage eq 'fines' ? 'active' : ''}">
-                                    <i class="fa-solid fa-coins"></i> Phạt
-                                </a>
-                            </li>
-                            <li class="nav-item notification-nav-item">
-                                <a href="${myNotificationsUrl}"
-                                   class="nav-link notification-nav-link ${navCurrentPage eq 'notifications' ? 'active' : ''}">
-                                    <i class="fa-solid fa-bell"></i> Thông báo
-                                    <c:if test="${headerUnreadCount gt 0}">
-                                        <span class="notification-unread-dot">
-                                            <span class="visually-hidden">
-                                                <c:out value="${headerUnreadCount}" /> thông báo chưa đọc
-                                            </span>
-                                        </span>
-                                    </c:if>
-                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="${myReservationsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'reservations' ? 'active' : ''}">
+                                            <i class="fa-solid fa-bookmark"></i> Đặt trước
+                                        </a></li>
+                                    <li><a href="${myFinesUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'fines' ? 'active' : ''}">
+                                            <i class="fa-solid fa-coins"></i> Phạt
+                                        </a></li>
+                                    <li><a href="${readerFoundItemsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'found-items' ? 'active' : ''}">
+                                            <i class="fa-solid fa-box-open"></i> Đồ để quên
+                                        </a></li>
+                                    <li><a href="${myNotificationsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'notifications' ? 'active' : ''}">
+                                            <i class="fa-solid fa-bell"></i> Thông báo
+                                            <c:if test="${headerUnreadCount gt 0}">
+                                                (<c:out value="${headerUnreadCount}" />)
+                                            </c:if>
+                                        </a></li>
+                                </ul>
                             </li>
                         </c:if>
 
@@ -176,6 +183,7 @@
                                        or navCurrentPage eq 'reservations'
                                        or navCurrentPage eq 'fines'
                                        or navCurrentPage eq 'notifications'
+                                       or navCurrentPage eq 'found-items'
                                        or navCurrentPage eq 'shelf'
                                        or navCurrentPage eq 'authors'
                                        or navCurrentPage eq 'categories'
@@ -206,6 +214,12 @@
                                            class="dropdown-item ${navCurrentPage eq 'notifications' ? 'active' : ''}">
                                             <i class="fa-solid fa-bullhorn"></i> Thông báo
                                         </a></li>
+                                    <c:if test="${navUser.librarian}">
+                                        <li><a href="${foundItemsUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'found-items' ? 'active' : ''}">
+                                                <i class="fa-solid fa-box-open"></i> Đồ để quên
+                                            </a></li>
+                                    </c:if>
                                     <li class="dropdown-divider"></li>
                                     <li><a href="${shelfManagementUrl}"
                                            class="dropdown-item ${navCurrentPage eq 'shelf' ? 'active' : ''}">

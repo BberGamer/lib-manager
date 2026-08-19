@@ -1,0 +1,26 @@
+/* Hỗ trợ trang Reader xem và gửi yêu cầu nhận lại đồ để quên. */
+.reader-found-items-page { padding: 40px 0 64px; }
+.reader-found-items-heading { margin-bottom: 24px; }
+.reader-found-items-heading h1 { margin-bottom: 8px; }
+.reader-found-items-heading p, .reader-found-item-date { color: #64748b; }
+.reader-found-items-search, .reader-found-item-card, .reader-found-items-alert, .reader-found-items-empty {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+}
+.reader-found-items-search { margin-bottom: 24px; }
+.reader-found-items-search label, .reader-found-item-claim-form label { display: block; font-weight: 600; margin-bottom: 8px; }
+.reader-found-items-search div { display: flex; gap: 12px; }
+.reader-found-items-search input, .reader-found-item-claim-form textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; }
+.reader-found-items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.reader-found-item-card h2 { font-size: 1.2rem; margin: 14px 0 8px; }
+.reader-found-item-image { width: 100%; height: 190px; object-fit: cover; border-radius: 8px; }
+.reader-found-item-claim-form { border-top: 1px solid #e2e8f0; margin-top: 18px; padding-top: 16px; }
+.reader-found-item-claim-form textarea { min-height: 92px; margin-bottom: 12px; resize: vertical; }
+.reader-found-items-alert { margin-bottom: 16px; }
+.reader-found-items-alert.success { border-color: #86efac; color: #166534; }
+.reader-found-items-alert.error { border-color: #fca5a5; color: #b91c1c; }
+.reader-found-items-empty { color: #64748b; }
+.reader-my-claims { margin: 24px 0; }
+.reader-my-claims h2 { margin-bottom: 12px; }
+.reader-my-claim-card { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.reader-my-claim-card p { margin: 8px 0 12px; color: #64748b; }
+@media (max-width: 576px) { .reader-found-items-search div { flex-direction: column; } }
