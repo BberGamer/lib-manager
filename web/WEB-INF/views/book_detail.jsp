@@ -156,16 +156,18 @@
                         </div>
                     <% } %>
 
-                    <!-- Admin Actions -->
-                    <% if (isAdmin) { %>
+                    <!-- Admin & Librarian Actions -->
+                    <% if (loggedUser != null && loggedUser.isAdminOrLibrarian()) { %>
                         <div class="book-detail-actions">
                             <a href="<%= ctx %><%= rolePath != null ? rolePath : "" %>/book/edit?id=<%= book.getId() %>"
                                class="btn btn-primary" style="flex:1;">
                                 <i class="fa-solid fa-pen"></i> Chỉnh sửa
                             </a>
+                            <% if (loggedUser.isAdmin()) { %>
                             <button type="button" class="btn btn-danger" style="flex:1;" onclick="confirmDeleteBook()">
                                 <i class="fa-solid fa-trash"></i> Xóa sách
                             </button>
+                            <% } %>
                         </div>
                     <% } %>
                 </div>
