@@ -349,12 +349,14 @@
                                        class="btn btn-outline btn-sm" title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i> 
                                     </a>
+                                    <% if (isAdmin) { %>
                                     <button type="button"
                                             class="btn btn-danger btn-sm"
                                             title="Xóa sách"
                                             onclick="confirmDelete(<%= b.getId() %>, '<%= b.getTitle().replace("'", "\\'") %>')">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
+                                    <% } %>
                                     <% } else { %>
                                     <a href="<%= ctx %>/book/detail?id=<%= b.getId() %>"
                                        class="btn btn-outline btn-sm" title="Xem chi tiết">

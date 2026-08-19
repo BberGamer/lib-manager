@@ -120,7 +120,7 @@
                                     <a href="${sidebarBooksUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'books' ? 'active' : ''}">
                                         <i class="fa-solid fa-boxes-stacked"></i>
-                                        <span>Quản lý bản sao</span>
+                                        <span>Quản lý sách</span>
                                     </a>
                                 </nav>
                             </div>
@@ -155,7 +155,7 @@
                                     <a href="${sidebarBooksUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'books' ? 'active' : ''}">
                                         <i class="fa-solid fa-book"></i>
-                                        <span>Kho sách</span>
+                                        <span>Quản lý sách</span>
                                     </a>
                                     <a href="${sidebarAuthorsUrl}"
                                         class="admin-nav-item ${sidebarCurrentPage eq 'authors' ? 'active' : ''}">
