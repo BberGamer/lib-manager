@@ -196,7 +196,9 @@
                             <th class="user-th">Thời gian bắt đầu</th>
                             <th class="user-th">Thời gian kết thúc</th>
                             <th class="user-th">Trạng thái</th>
-                            <th class="user-th">Người tạo</th>
+                            <c:if test="${canManage}">
+                                <th class="user-th">Người tạo</th>
+                            </c:if>
                             <th class="user-th-action">Thao tác</th>
                         </tr>
                     </thead>
@@ -204,7 +206,7 @@
                         <c:choose>
                             <c:when test="${empty events}">
                                 <tr>
-                                    <td colspan="7" class="user-empty-td">
+                                    <td colspan="${canManage ? 7 : 6}" class="user-empty-td">
                                         <div class="user-empty-icon">
                                             <i class="fa-solid fa-calendar-xmark" style="color: #cbd5e1;"></i>
                                         </div>
@@ -241,7 +243,9 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td class="user-td-email"><c:out value="${item.createdBy}" /></td>
+                                        <c:if test="${canManage}">
+                                            <td class="user-td-email"><c:out value="${item.createdBy}" /></td>
+                                        </c:if>
                                         <td class="user-td-actions">
                                             <div class="user-row-actions">
                                                 <!-- Nút Xem chi tiết -->
@@ -470,16 +474,18 @@
                 <div class="detail-label">Mô tả sự kiện</div>
                 <div id="viewDescription" class="detail-value" style="white-space: pre-wrap;"></div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
-                <div class="detail-group" style="margin:0;">
-                    <div class="detail-label">Tài khoản tạo</div>
-                    <div id="viewCreatedBy" class="detail-value"></div>
+            <c:if test="${canManage}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+                    <div class="detail-group" style="margin:0;">
+                        <div class="detail-label">Tài khoản tạo</div>
+                        <div id="viewCreatedBy" class="detail-value"></div>
+                    </div>
+                    <div class="detail-group" style="margin:0;">
+                        <div class="detail-label">Cập nhật gần nhất</div>
+                        <div id="viewUpdatedBy" class="detail-value"></div>
+                    </div>
                 </div>
-                <div class="detail-group" style="margin:0;">
-                    <div class="detail-label">Cập nhật gần nhất</div>
-                    <div id="viewUpdatedBy" class="detail-value"></div>
-                </div>
-            </div>
+            </c:if>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline" data-action="close-modal">Đóng</button>
