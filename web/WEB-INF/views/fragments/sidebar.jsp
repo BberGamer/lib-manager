@@ -15,6 +15,7 @@
                 <c:url var="sidebarReservationUrl" value="${rolePath}/reservation/list" />
                 <c:url var="sidebarFineUrl" value="${rolePath}/fine/list" />
                 <c:url var="sidebarNotificationUrl" value="${rolePath}/notification/manage" />
+                <c:url var="sidebarFoundItemsUrl" value="/librarian/found-items" />
                 <c:url var="sidebarShelfUrl" value="${rolePath}/shelf" />
                 <c:url var="sidebarBooksUrl" value="${rolePath}/books" />
                 <c:url var="sidebarAuthorsUrl" value="${rolePath}/authors" />
@@ -99,6 +100,11 @@
                                         class="admin-nav-item ${sidebarCurrentPage eq 'notifications' ? 'active' : ''}">
                                         <i class="fa-solid fa-bullhorn"></i>
                                         <span>Gửi thông báo</span>
+                                    </a>
+                                    <a href="${sidebarFoundItemsUrl}"
+                                        class="admin-nav-item ${sidebarCurrentPage eq 'found-items' ? 'active' : ''}">
+                                        <i class="fa-solid fa-box-open"></i>
+                                        <span>Đồ để quên</span>
                                     </a>
                                 </nav>
                             </div>
