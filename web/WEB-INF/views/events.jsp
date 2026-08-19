@@ -57,6 +57,8 @@
 
         <!-- ===== SEARCH & FILTER BAR ===== -->
         <form id="searchForm" action="${eventsUrl}" method="get">
+            <input type="hidden" name="sort" value="${fn:escapeXml(sortBy)}">
+            <input type="hidden" name="order" value="${fn:escapeXml(sortOrder)}">
             <input type="hidden" name="page" value="1">
 
             <div class="search-bar-wrapper">
@@ -80,23 +82,6 @@
                             <option value="ONGOING" ${statusFilter eq 'ONGOING' ? 'selected' : ''}>Đang diễn ra</option>
                             <option value="ENDED" ${statusFilter eq 'ENDED' ? 'selected' : ''}>Đã kết thúc</option>
                             <option value="CANCELLED" ${statusFilter eq 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
-                        </select>
-                    </div>
-
-                    <div class="search-field select-field">
-                        <label for="sortSelect">Sắp xếp theo</label>
-                        <select id="sortSelect" name="sort" class="form-select">
-                            <option value="start_time" ${sortBy eq 'start_time' ? 'selected' : ''}>Thời gian bắt đầu</option>
-                            <option value="title" ${sortBy eq 'title' ? 'selected' : ''}>Tiêu đề sự kiện</option>
-                            <option value="status" ${sortBy eq 'status' ? 'selected' : ''}>Trạng thái</option>
-                        </select>
-                    </div>
-
-                    <div class="search-field select-field" style="max-width: 130px;">
-                        <label for="orderSelect">Thứ tự</label>
-                        <select id="orderSelect" name="order" class="form-select">
-                            <option value="ASC" ${sortOrder eq 'ASC' ? 'selected' : ''}>Tăng dần</option>
-                            <option value="DESC" ${sortOrder eq 'DESC' ? 'selected' : ''}>Giảm dần</option>
                         </select>
                     </div>
 
@@ -143,6 +128,50 @@
             </div>
 
             <div class="user-topbar-actions">
+                <!-- Sort Group giống user_list.jsp -->
+                <div class="sort-group">
+                    <span class="sort-label"><i class="fa-solid fa-arrow-up-wide-short"></i> Sắp xếp:</span>
+
+                    <c:set var="isStartActive" value="${sortBy eq 'start_time' or empty sortBy}" />
+                    <c:set var="startNextOrder" value="${isStartActive and sortOrder eq 'ASC' ? 'DESC' : 'ASC'}" />
+                    <c:url var="sortStartUrl" value="${eventsUrl}">
+                        <c:param name="q" value="${q}" />
+                        <c:param name="status" value="${statusFilter}" />
+                        <c:param name="sort" value="start_time" />
+                        <c:param name="order" value="${startNextOrder}" />
+                        <c:param name="page" value="1" />
+                    </c:url>
+                    <a href="${sortStartUrl}" class="sort-btn ${isStartActive ? 'sort-btn-active' : ''}">
+                        Thời gian bắt đầu<c:if test="${isStartActive}"><c:out value="${sortOrder eq 'ASC' ? ' ▲' : ' ▼'}" /></c:if>
+                    </a>
+
+                    <c:set var="isTitleActive" value="${sortBy eq 'title'}" />
+                    <c:set var="titleNextOrder" value="${isTitleActive and sortOrder eq 'ASC' ? 'DESC' : 'ASC'}" />
+                    <c:url var="sortTitleUrl" value="${eventsUrl}">
+                        <c:param name="q" value="${q}" />
+                        <c:param name="status" value="${statusFilter}" />
+                        <c:param name="sort" value="title" />
+                        <c:param name="order" value="${titleNextOrder}" />
+                        <c:param name="page" value="1" />
+                    </c:url>
+                    <a href="${sortTitleUrl}" class="sort-btn ${isTitleActive ? 'sort-btn-active' : ''}">
+                        Tiêu đề sự kiện<c:if test="${isTitleActive}"><c:out value="${sortOrder eq 'ASC' ? ' ▲' : ' ▼'}" /></c:if>
+                    </a>
+
+                    <c:set var="isStatusActive" value="${sortBy eq 'status'}" />
+                    <c:set var="statusNextOrder" value="${isStatusActive and sortOrder eq 'ASC' ? 'DESC' : 'ASC'}" />
+                    <c:url var="sortStatusUrl" value="${eventsUrl}">
+                        <c:param name="q" value="${q}" />
+                        <c:param name="status" value="${statusFilter}" />
+                        <c:param name="sort" value="status" />
+                        <c:param name="order" value="${statusNextOrder}" />
+                        <c:param name="page" value="1" />
+                    </c:url>
+                    <a href="${sortStatusUrl}" class="sort-btn ${isStatusActive ? 'sort-btn-active' : ''}">
+                        Trạng thái<c:if test="${isStatusActive}"><c:out value="${sortOrder eq 'ASC' ? ' ▲' : ' ▼'}" /></c:if>
+                    </a>
+                </div>
+
                 <c:if test="${canManage}">
                     <button type="button" class="btn btn-primary" data-action="open-add-modal">
                         <i class="fa-solid fa-plus"></i> Thêm sự kiện mới
