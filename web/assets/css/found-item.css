@@ -1,0 +1,65 @@
+/* Giao diện cho các màn hình quản lý đồ để quên: danh sách, tiếp nhận và chi tiết. */
+.found-item-page { min-height: 100vh; margin: -28px; background: #f6f8fa; color: #223149; }
+.found-item-hero, .found-item-editor-hero { padding: 34px 0; border-bottom: 1px solid #f0dfd1; background: #fff9f4; }
+.found-item-hero-inner, .found-item-filter-form, .found-item-form-actions, .found-item-detail-card header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.found-item-hero h1, .found-item-editor-hero h1 { margin: 12px 0 6px; font-size: 2rem; }
+.found-item-hero p, .found-item-editor-hero p { margin: 0; color: #68758a; }
+.found-item-eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 7px 12px; border-radius: 999px; background: #fff0e4; color: #e96910; font-size: .78rem; font-weight: 700; }
+.found-item-stat { min-width: 115px; padding: 16px; border: 1px solid #ffd2af; border-radius: 12px; background: #fff; text-align: center; }
+.found-item-stat strong { display: block; color: #e96910; font-size: 1.8rem; }
+.found-item-stat span { color: #68758a; font-size: .8rem; }
+.found-item-content, .found-item-editor-container { width: min(1050px, calc(100% - 48px)); margin: 0 auto; }
+.found-item-content, .found-item-editor-body { padding-top: 30px; padding-bottom: 50px; }
+.found-item-filter-card, .found-item-table-card, .found-item-form-card, .found-item-detail-card { border: 1px solid #dce4ec; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(36, 50, 74, .05); }
+.found-item-filter-card { padding: 20px; }
+.found-item-filter-form { align-items: end; }
+.found-item-filter-form label { display: grid; flex: 1; gap: 7px; color: #506077; font-size: .85rem; font-weight: 700; }
+.found-item-filter-form input, .found-item-filter-form select, .found-item-form-field input, .found-item-form-field textarea { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #ccd5df; border-radius: 9px; color: #25344c; font: inherit; }
+.found-item-button, .found-item-link, .found-item-page-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 0 15px; border: 1px solid; border-radius: 9px; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.found-item-button-primary { border-color: #f47920; background: #f47920; color: #fff; }
+.found-item-button-secondary { border-color: #d6dee7; background: #f5f7f9; color: #607086; }
+.found-item-table-card { margin-top: 20px; overflow: hidden; }
+.found-item-table-wrap { overflow-x: auto; }
+.found-item-table { width: 100%; border-collapse: collapse; }
+.found-item-table th, .found-item-table td { padding: 14px 16px; border-bottom: 1px solid #edf1f4; text-align: left; vertical-align: middle; }
+.found-item-table th { background: #f8fafc; color: #728096; font-size: .75rem; text-transform: uppercase; }
+.found-item-description { display: block; max-width: 330px; margin-top: 4px; color: #68758a; font-size: .82rem; }
+.found-item-status { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.found-item-status-available { background: #eaf8f1; color: #237a53; }
+.found-item-status-claim_pending { background: #fff5d9; color: #a46b00; }
+.found-item-status-returned { background: #edf1f5; color: #58677c; }
+.found-item-link { min-height: 32px; padding: 0 10px; border-color: #ffd0ae; background: #fff4eb; color: #e66a11; font-size: .78rem; }
+.found-item-empty { padding: 42px !important; color: #77859a; text-align: center !important; }
+.found-item-alert { margin-bottom: 18px; padding: 13px 16px; border-left: 4px solid #2e9b68; border-radius: 9px; background: #eaf8f1; color: #237a53; }
+.found-item-alert i { margin-right: 7px; }
+.found-item-pagination { display: flex; justify-content: center; gap: 7px; margin-top: 22px; }
+.found-item-page-link { width: 38px; min-height: 38px; padding: 0; border-color: #d7dfe7; background: #fff; color: #647287; }
+.found-item-page-link.is-current { border-color: #f47920; background: #f47920; color: #fff; }
+.found-item-back-link { display: inline-flex; gap: 8px; margin-bottom: 20px; color: #68758a; font-weight: 700; text-decoration: none; }
+.found-item-form-card { padding: 26px; }
+.found-item-form-field { margin-bottom: 22px; }
+.found-item-form-field label { display: block; margin-bottom: 8px; color: #45536a; font-weight: 700; }
+.found-item-form-field label span { color: #d74740; }
+.found-item-form-field textarea { min-height: 130px; resize: vertical; }
+.found-item-form-field.has-error input, .found-item-form-field.has-error textarea { border-color: #d74740; }
+.found-item-field-error { margin: 7px 0 0; color: #d74740; font-size: .84rem; }
+.found-item-field-help { margin: 7px 0 0; color: #7a8799; font-size: .8rem; }
+.found-item-optional { color: #8995a7; font-weight: 500; }
+.found-item-form-actions { justify-content: flex-end; padding-top: 20px; border-top: 1px solid #edf1f4; }
+.found-item-detail-card { overflow: hidden; }
+.found-item-detail-card header { padding: 24px; background: #fff5ed; }
+.found-item-detail-card header p { margin: 0 0 5px; color: #7a8799; font-size: .85rem; }
+.found-item-detail-card header h1 { margin: 0; font-size: 1.4rem; }
+.found-item-detail-icon { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 10px; background: #f47920; color: #fff; }
+.found-item-detail-card dl { margin: 0; padding: 8px 24px; }
+.found-item-detail-card dl div { display: grid; grid-template-columns: 190px 1fr; gap: 18px; padding: 15px 0; border-bottom: 1px solid #edf1f4; }
+.found-item-detail-card dt { color: #718096; font-weight: 700; }
+.found-item-detail-card dd { margin: 0; overflow-wrap: anywhere; }
+.found-item-image { display: block; width: min(100%, 360px); max-height: 280px; border: 1px solid #dce4ec; border-radius: 10px; object-fit: contain; }
+.found-item-alert { margin: 16px 0; padding: 12px 16px; border: 1px solid; border-radius: 8px; }
+.found-item-alert.success { border-color: #86efac; color: #166534; }
+.found-item-alert.error { border-color: #fca5a5; color: #b91c1c; }
+.found-item-claim-review { border-top: 1px solid #e2e8f0; margin-top: 20px; padding-top: 20px; }
+.found-item-claim-review h2 { font-size: 1.1rem; margin-bottom: 12px; }
+.found-item-review-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+@media (max-width: 760px) { .found-item-page { margin: -16px; } .found-item-hero-inner, .found-item-filter-form, .found-item-form-actions, .found-item-detail-card header { align-items: stretch; flex-direction: column; } .found-item-content, .found-item-editor-container { width: min(100% - 24px, 1050px); } .found-item-stat { display: none; } .found-item-filter-form label { width: 100%; } .found-item-detail-card dl div { grid-template-columns: 1fr; gap: 5px; } }
