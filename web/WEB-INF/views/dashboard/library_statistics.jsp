@@ -22,7 +22,7 @@
     int reserved = statusCount != null && statusCount.containsKey("RESERVED") ? statusCount.get("RESERVED") : 0;
 
     int good = conditionCount != null && conditionCount.containsKey("GOOD") ? conditionCount.get("GOOD") : 0;
-    int damaged = conditionCount != null && conditionCount.containsKey("DAMAGED") ? conditionCount.get("DAMAGED") : 0;
+    int damaged = conditionCount != null ? (conditionCount.getOrDefault("DAMAGED", 0) + conditionCount.getOrDefault("WORN", 0)) : 0;
     int lost = conditionCount != null && conditionCount.containsKey("LOST") ? conditionCount.get("LOST") : 0;
 %>
 

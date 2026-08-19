@@ -43,6 +43,7 @@ public class DashboardServlet extends HttpServlet {
                 
                 request.setAttribute("totalBooks", dashboardDao.getTotalBooks());
                 request.setAttribute("totalCopies", dashboardDao.getTotalCopies());
+                request.setAttribute("statusCount", dashboardDao.getCopiesCountByStatus());
                 request.setAttribute("conditionCount", dashboardDao.getCopiesCountByCondition());
                 request.setAttribute("topBooks", dashboardDao.getTopBorrowedBooks(5));
                 request.setAttribute("topOverdue", dashboardDao.getTopOverdueUsers(5));
