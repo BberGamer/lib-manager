@@ -163,6 +163,25 @@ public class BorrowService {
         return borrowId > 0 && userId > 0 && borrowRecordDao.cancelPickupRequest(borrowId, userId);
     }
 
+    /**
+     * Ghi nhận độc giả làm mất một bản đang mượn và loại bản đó khỏi tồn kho.
+     *
+     * @param borrowRecordId mã lượt mượn
+     * @param userId mã độc giả sở hữu lượt mượn
+     * @param operator tài khoản thực hiện thao tác
+     * @return {@code true} khi giao dịch báo mất hoàn tất
+     * @throws Exception khi không thể cập nhật dữ liệu
+     */
+    public boolean reportLostBorrow(int borrowRecordId, int userId, String operator)
+            throws Exception {
+        if (borrowRecordId <= 0 || userId <= 0 || operator == null
+                || operator.trim().isEmpty()) {
+            return false;
+        }
+        return borrowRecordDao.reportLostForUser(
+                borrowRecordId, userId, operator.trim());
+    }
+
     /** Xác nhận giao sách cho yêu cầu còn hạn nhận. */
     public boolean confirmPickup(int borrowId, String operator) throws Exception {
         borrowRecordDao.expirePendingRequests();

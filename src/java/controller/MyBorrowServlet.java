@@ -1,5 +1,5 @@
 /*
- * Controller HTTP hiển thị và xử lý gia hạn tại trang mượn sách cá nhân của độc giả.
+ * Controller HTTP hiển thị và xử lý thao tác tại trang mượn sách cá nhân của độc giả.
  */
 package controller;
 
@@ -18,10 +18,11 @@ import service.BorrowService;
 import service.BorrowService.BorrowPageData;
 
 /**
- * Điều phối GET `/borrow/my` và POST `/borrow/my/renew` cho người dùng vai trò READER.
+ * Điều phối trang mượn cá nhân, gồm gia hạn, hủy giữ và báo mất sách của Reader.
  */
 @WebServlet(name = "MyBorrowServlet", urlPatterns = {
-    "/borrow/my", "/borrow/my/renew", "/borrow/create", "/borrow/cancel"
+    "/borrow/my", "/borrow/my/renew", "/borrow/my/report-lost",
+    "/borrow/create", "/borrow/cancel"
 })
 public class MyBorrowServlet extends HttpServlet {
 
@@ -105,6 +106,13 @@ public class MyBorrowServlet extends HttpServlet {
                 success = borrowService.cancelBorrowRequest(parsePositiveId(request, "borrowId"), reader.getId());
                 successMessage = "Đã hủy yêu cầu mượn sách và giải phóng bản sao.";
                 errorMessage = "Không thể hủy yêu cầu. Chỉ yêu cầu đang chờ nhận mới được hủy.";
+            } else if (path.endsWith("/report-lost")) {
+                success = borrowService.reportLostBorrow(
+                        parsePositiveId(request, "borrowRecordId"),
+                        reader.getId(), reader.getUsername());
+                successMessage = "Đã ghi nhận báo mất sách và cập nhật tồn kho thư viện.";
+                errorMessage = "Không thể báo mất. Lượt mượn không thuộc tài khoản của bạn "
+                        + "hoặc không còn ở trạng thái đang mượn.";
             } else {
                 BorrowRenewalResult renewalResult = borrowService.renewBorrow(
                         parsePositiveId(request, "borrowRecordId"), reader.getId());
@@ -119,8 +127,10 @@ public class MyBorrowServlet extends HttpServlet {
         } catch (NumberFormatException exception) {
             session.setAttribute("borrowErrorMessage", "Mã lượt mượn không hợp lệ.");
         } catch (Exception exception) {
-            LOGGER.log(Level.SEVERE, "Không thể gia hạn sách cho userId=" + reader.getId(), exception);
-            session.setAttribute("borrowErrorMessage", "Không thể gia hạn sách lúc này.");
+            LOGGER.log(Level.SEVERE,
+                    "Không thể xử lý thao tác mượn sách cho userId=" + reader.getId(), exception);
+            session.setAttribute("borrowErrorMessage",
+                    "Không thể xử lý thao tác mượn sách lúc này.");
         }
         response.sendRedirect(request.getContextPath() + "/borrow/my");
     }

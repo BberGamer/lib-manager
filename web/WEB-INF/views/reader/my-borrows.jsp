@@ -2,7 +2,8 @@
     Trang theo dõi sách đang mượn và lịch sử mượn của độc giả.
     Controller render: MyBorrowServlet (GET /borrow/my).
     Mong đợi request attributes: borrowPage, maximumActiveBorrows, maximumRenewals,
-    activePage; session attribute: loggedUser và thông báo flash tùy chọn.
+    activePage; session attribute: loggedUser và thông báo flash tùy chọn. Trang gửi
+    thao tác báo mất tới POST /borrow/my/report-lost.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -12,6 +13,8 @@
 <c:set var="pageStylesheet" value="/assets/css/my-borrows.css" scope="request" />
 <c:url var="renewUrl" value="/borrow/my/renew" />
 <c:url var="cancelUrl" value="/borrow/cancel" />
+<c:url var="reportLostUrl" value="/borrow/my/report-lost" />
+<c:url var="myBorrowScriptUrl" value="/assets/js/my-borrows.js" />
 
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
@@ -155,6 +158,16 @@
                                         </c:otherwise>
                                     </c:choose>
                                     <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
+                                        <div class="borrow-lost-action">
+                                            <button type="button" class="borrow-lost-button"
+                                                    data-open-lost-dialog
+                                                    data-borrow-record-id="${record.id}">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Báo mất sách
+                                            </button>
+                                        </div>
+                                    </c:if>
+                                    <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
                                         <div class="borrow-review-action">
                                             <c:choose>
                                                 <c:when test="${reviewedBorrowIds.contains(record.id)}">
@@ -217,10 +230,11 @@
                                     <c:out value="${record.returnDate}" default="—" />
                                 </td>
                                 <td data-label="Trạng thái">
-                                    <span class="borrow-status returned">
+                                    <span class="borrow-status ${record.status eq 'LOST' ? 'lost' : 'returned'}">
                                         <c:choose>
                                             <c:when test="${record.status eq 'RETURNED'}">Đã trả</c:when>
                                             <c:when test="${record.status eq 'EXPIRED'}">Hết hạn nhận</c:when>
+                                            <c:when test="${record.status eq 'LOST'}">Đã báo mất</c:when>
                                             <c:otherwise>Đã hủy</c:otherwise>
                                         </c:choose>
                                     </span>
@@ -264,5 +278,36 @@
         </section>
     </div>
 </main>
+
+<dialog class="borrow-lost-dialog" data-lost-dialog aria-labelledby="borrow-lost-dialog-title">
+    <section class="borrow-lost-dialog-content">
+        <button type="button" class="borrow-lost-dialog-close" data-close-lost-dialog
+                aria-label="Đóng cửa sổ xác nhận">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="borrow-lost-dialog-icon" aria-hidden="true">
+            <i class="fa-solid fa-book-skull"></i>
+        </div>
+        <h2 id="borrow-lost-dialog-title">Xác nhận báo mất sách</h2>
+        <p>
+            Bạn đang báo mất cuốn <strong data-lost-book-title></strong>.
+            Bản sao này sẽ bị loại khỏi tồn kho và thao tác không thể hoàn tác trên trang cá nhân.
+        </p>
+        <form action="${reportLostUrl}" method="post">
+            <input type="hidden" name="borrowRecordId" data-lost-borrow-id>
+            <div class="borrow-lost-dialog-actions">
+                <button type="button" class="borrow-lost-dialog-cancel" data-close-lost-dialog>
+                    Quay lại
+                </button>
+                <button type="submit" class="borrow-lost-dialog-confirm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Xác nhận báo mất
+                </button>
+            </div>
+        </form>
+    </section>
+</dialog>
+
+<script src="${myBorrowScriptUrl}" defer></script>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
