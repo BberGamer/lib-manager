@@ -32,6 +32,7 @@
 .borrow-status-borrowed { background: #ebf5fb; color: #2672a3; }
 .borrow-status-returned { background: #e8f8f5; color: #277c55; }
 .borrow-status-overdue { background: #fde8e7; color: #c44236; }
+.borrow-status-lost { background: #ffe8ed; color: #a1263d; }
 .borrow-status-expired, .borrow-status-cancelled { background: #f2f4f4; color: #68747a; }
 .borrow-table-actions-heading, .borrow-table-actions { text-align: right; }
 .borrow-action-group { display: flex; justify-content: flex-end; gap: 8px; }

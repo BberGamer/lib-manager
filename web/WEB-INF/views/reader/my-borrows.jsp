@@ -292,6 +292,7 @@
         <p>
             Bạn đang báo mất cuốn <strong data-lost-book-title></strong>.
             Bản sao này sẽ bị loại khỏi tồn kho và thao tác không thể hoàn tác trên trang cá nhân.
+            Hệ thống đồng thời tạo một vé phạt chưa thanh toán bằng 100% giá cuốn sách.
         </p>
         <form action="${reportLostUrl}" method="post">
             <input type="hidden" name="borrowRecordId" data-lost-borrow-id>

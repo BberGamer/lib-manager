@@ -196,25 +196,9 @@
                                                     </div>
                                                 </c:when>
                                                 <c:when test="${reservation.status eq 'READY_FOR_PICKUP'}">
-                                                    <div class="reservation-action-group">
-                                                        <form action="${reservationUpdateUrl}" method="post">
-                                                            <input type="hidden" name="id" value="${reservation.id}">
-                                                            <input type="hidden" name="action" value="complete">
-                                                            <button type="submit" class="btn btn-sm btn-success">
-                                                                <i class="fa-solid fa-check-double"></i>
-                                                                Đã lấy sách
-                                                            </button>
-                                                        </form>
-                                                        <form action="${reservationUpdateUrl}" method="post">
-                                                            <input type="hidden" name="id" value="${reservation.id}">
-                                                            <input type="hidden" name="action" value="cancel">
-                                                            <button type="submit"
-                                                                    class="btn btn-sm reservation-cancel-button">
-                                                                <i class="fa-solid fa-ban"></i>
-                                                                Hủy
-                                                            </button>
-                                                        </form>
-                                                    </div>
+                                                    <span class="reservation-muted">
+                                                        Chờ giao sách tại trang Mượn trả
+                                                    </span>
                                                 </c:when>
                                                 <c:otherwise>
                                                     <span class="reservation-muted">Hoàn tất</span>

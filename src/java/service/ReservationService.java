@@ -45,18 +45,24 @@ public class ReservationService {
         LocalDate today = businessToday();
         LocalDate maximumDate = today.plusYears(MAXIMUM_ADVANCE_YEARS);
         List<LocalDate> availabilityDates
-                = reservationDao.findProjectedAvailabilityDates(bookId);
+                = reservationDao.findProjectedAvailabilityDates(
+                        bookId, BorrowService.LOAN_PERIOD_DAYS);
         if (availabilityDates.isEmpty()) {
             throw new ReservationValidationException(
                     "Chưa có bản sách khả dụng hoặc lịch trả hợp lệ để nhận đặt trước.");
         }
-        LocalDate requestedDate = today;
         PickupEstimate estimate = calculatePickupEstimate(
-                bookId, requestedDate, availabilityDates);
+                bookId, today, availabilityDates);
+        LocalDate earliestAvailableDate = estimate.getEarliestAvailableDate();
+        if (earliestAvailableDate.isAfter(maximumDate)) {
+            throw new ReservationValidationException(
+                    "Ngày sớm nhất dự kiến có sách nằm ngoài giới hạn đặt trước 1 năm.");
+        }
+        LocalDate requestedDate = earliestAvailableDate;
         int waitingCount = reservationDao.countActiveByBook(bookId);
-        return new CreationInfo(book, waitingCount, waitingCount + 1, today, maximumDate,
-                requestedDate, estimate.getEarliestAvailableDate(),
-                estimate.getExpectedPickupDate());
+        return new CreationInfo(book, waitingCount, waitingCount + 1,
+                earliestAvailableDate, maximumDate, requestedDate,
+                earliestAvailableDate, requestedDate);
     }
 
     /**
@@ -75,12 +81,17 @@ public class ReservationService {
         requireReservableBook(userId, bookId);
         validateRequestedDate(requestedPickupDate);
         List<LocalDate> availabilityDates
-                = reservationDao.findProjectedAvailabilityDates(bookId);
+                = reservationDao.findProjectedAvailabilityDates(
+                        bookId, BorrowService.LOAN_PERIOD_DAYS);
         if (availabilityDates.isEmpty()) {
             throw new ReservationValidationException(
                     "Chưa có bản sách khả dụng hoặc lịch trả phù hợp để dự kiến ngày nhận.");
         }
-        return calculatePickupEstimate(bookId, requestedPickupDate, availabilityDates);
+        PickupEstimate estimate = calculatePickupEstimate(
+                bookId, requestedPickupDate, availabilityDates);
+        validateRequestedDateAgainstAvailability(
+                requestedPickupDate, estimate.getEarliestAvailableDate());
+        return estimate;
     }
 
     /**
@@ -99,13 +110,16 @@ public class ReservationService {
         requireReservableBook(userId, bookId);
         validateRequestedDate(requestedPickupDate);
         List<LocalDate> availabilityDates
-                = reservationDao.findProjectedAvailabilityDates(bookId);
+                = reservationDao.findProjectedAvailabilityDates(
+                        bookId, BorrowService.LOAN_PERIOD_DAYS);
         if (availabilityDates.isEmpty()) {
             throw new ReservationValidationException(
                     "Chưa có bản sách khả dụng hoặc lịch trả phù hợp; hiện chưa thể đặt trước.");
         }
         PickupEstimate estimate = calculatePickupEstimate(
                 bookId, requestedPickupDate, availabilityDates);
+        validateRequestedDateAgainstAvailability(
+                requestedPickupDate, estimate.getEarliestAvailableDate());
         LocalDate expectedPickupDate = estimate.getExpectedPickupDate();
         if (!reservationDao.createWaiting(
                 userId, bookId, requestedPickupDate, expectedPickupDate)) {
@@ -137,6 +151,41 @@ public class ReservationService {
      */
     public boolean cancelReservation(int reservationId, int userId) throws Exception {
         return reservationId > 0 && reservationDao.cancelOwned(reservationId, userId);
+    }
+
+    /**
+     * Hủy yêu cầu đang hoạt động theo thao tác của Admin hoặc Librarian.
+     *
+     * @param reservationId mã yêu cầu cần hủy
+     * @return {@code true} khi reservation và lượt chờ nhận liên quan đã được hủy
+     * @throws Exception khi không thể cập nhật dữ liệu
+     */
+    public boolean cancelReservationByStaff(int reservationId) throws Exception {
+        return reservationId > 0 && reservationDao.cancelByStaff(reservationId);
+    }
+
+    /**
+     * Chuyển reservation sang sẵn sàng nhận, tạo lượt chờ nhận và gửi thông báo.
+     * Việc xác nhận độc giả đã nhận sách vẫn thuộc luồng mượn trả.
+     *
+     * @param reservationId mã yêu cầu đang chờ
+     * @param operator tài khoản nhân viên thực hiện
+     * @param sendEmail có gửi email ngoài thông báo trong hệ thống hay không
+     * @return {@code true} khi đã giữ được bản sao cho reservation
+     * @throws Exception khi không thể cập nhật dữ liệu
+     */
+    public boolean markReservationReady(int reservationId, String operator, boolean sendEmail)
+            throws Exception {
+        if (reservationId <= 0) {
+            return false;
+        }
+        ReservationRecord record = reservationDao.manuallyReadyReservation(
+                reservationId, operator);
+        if (record == null) {
+            return false;
+        }
+        notifyReservationReady(record, sendEmail);
+        return true;
     }
 
     /**
@@ -255,6 +304,22 @@ public class ReservationService {
         if (requestedPickupDate.isAfter(today.plusYears(MAXIMUM_ADVANCE_YEARS))) {
             throw new ReservationValidationException(
                     "Ngày nhận sách phải nằm trong vòng 1 năm kể từ hôm nay.");
+        }
+    }
+
+    /**
+     * Bảo đảm ngày độc giả muốn nhận không sớm hơn slot đầu tiên còn lại của hàng chờ.
+     *
+     * @param requestedPickupDate ngày độc giả chọn
+     * @param earliestAvailableDate ngày sớm nhất hệ thống dự kiến có sách
+     * @throws ReservationValidationException khi ngày chọn sớm hơn ngày có sách
+     */
+    private void validateRequestedDateAgainstAvailability(LocalDate requestedPickupDate,
+            LocalDate earliestAvailableDate) throws ReservationValidationException {
+        if (requestedPickupDate.isBefore(earliestAvailableDate)) {
+            throw new ReservationValidationException(
+                    "Ngày muốn nhận sách không được trước ngày dự kiến có sách: "
+                            + earliestAvailableDate + ".");
         }
     }
 

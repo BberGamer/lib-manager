@@ -8,6 +8,8 @@ import dao.BookDAO;
 import dao.BookDAOImpl;
 import dao.BookReviewDAO;
 import dao.FineDAO;
+import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import java.util.Locale;
 import java.util.Set;
 import model.BorrowRecord;
 import model.BorrowRenewalResult;
+import model.Fine;
+import utils.AuditLogger;
 
 /**
  * Cung cấp dữ liệu trang mượn cá nhân và thực hiện gia hạn qua {@link BorrowRecordDAO}.
@@ -28,6 +32,7 @@ public class BorrowService {
     public static final int UPCOMING_DUE_DAYS = 7;
     public static final int PICKUP_HOLD_HOURS = 24;
     public static final int LOAN_PERIOD_DAYS = 7;
+    private static final String LOST_FINE_REASON = "Bồi thường 100% giá sách do độc giả báo mất.";
     /** Các tình trạng vật lý được chấp nhận khi nhận lại bản sao. */
     private static final Set<String> BOOK_CONDITIONS = Set.of("GOOD", "WORN", "DAMAGED", "LOST");
 
@@ -164,7 +169,8 @@ public class BorrowService {
     }
 
     /**
-     * Ghi nhận độc giả làm mất một bản đang mượn và loại bản đó khỏi tồn kho.
+     * Ghi nhận độc giả làm mất một bản đang mượn, loại bản đó khỏi tồn kho và tạo vé phạt
+     * bằng 100% giá sách trong cùng giao dịch.
      *
      * @param borrowRecordId mã lượt mượn
      * @param userId mã độc giả sở hữu lượt mượn
@@ -178,8 +184,37 @@ public class BorrowService {
                 || operator.trim().isEmpty()) {
             return false;
         }
-        return borrowRecordDao.reportLostForUser(
-                borrowRecordId, userId, operator.trim());
+        String normalizedOperator = operator.trim();
+        BigDecimal fineAmount;
+        try (Connection connection = borrowRecordDao.openTransactionConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                BorrowRecordDAO.LostReportDetails details = borrowRecordDao.reportLostForUser(
+                        connection, borrowRecordId, userId, normalizedOperator);
+                if (details == null || details.getBookPrice() == null
+                        || details.getBookPrice() < 0) {
+                    connection.rollback();
+                    return false;
+                }
+                fineAmount = BigDecimal.valueOf(details.getBookPrice());
+                Fine fine = new Fine(details.getBorrowRecordId(), details.getUserId(),
+                        fineAmount, 0, LOST_FINE_REASON, "UNPAID");
+                fine.setBookCondition("LOST");
+                if (!fineDao.createFine(connection, fine)) {
+                    connection.rollback();
+                    return false;
+                }
+                connection.commit();
+            } catch (Exception exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+        AuditLogger.logLostFine(normalizedOperator, userId, borrowRecordId,
+                fineAmount.toPlainString());
+        return true;
     }
 
     /** Xác nhận giao sách cho yêu cầu còn hạn nhận. */

@@ -110,7 +110,7 @@ public class MyBorrowServlet extends HttpServlet {
                 success = borrowService.reportLostBorrow(
                         parsePositiveId(request, "borrowRecordId"),
                         reader.getId(), reader.getUsername());
-                successMessage = "Đã ghi nhận báo mất sách và cập nhật tồn kho thư viện.";
+                successMessage = "Đã ghi nhận báo mất, cập nhật tồn kho và tạo vé phạt bằng 100% giá sách.";
                 errorMessage = "Không thể báo mất. Lượt mượn không thuộc tài khoản của bạn "
                         + "hoặc không còn ở trạng thái đang mượn.";
             } else {

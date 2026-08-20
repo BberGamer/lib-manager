@@ -30,7 +30,7 @@
                 </div>
                 <div>
                     <dt>Số bản sao khả dụng</dt>
-                    <dd>0</dd>
+                    <dd><c:out value="${reservationInfo.book.available}"/></dd>
                 </div>
                 <div>
                     <dt>Số người đang chờ</dt>
@@ -51,7 +51,7 @@
                        value="${reservationInfo.requestedPickupDate}"
                        data-pickup-date required>
                 <small>
-                    Chọn ngày nhận mong muốn trong vòng 1 năm kể từ hôm nay.
+                    Chọn từ ngày dự kiến có sách đến tối đa 1 năm kể từ hôm nay.
                 </small>
                 <div class="reservation-estimate" aria-live="polite">
                     <div class="reservation-estimate-row">

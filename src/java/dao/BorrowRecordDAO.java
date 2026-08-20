@@ -379,20 +379,33 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Ghi nhận một bản sao bị mất theo yêu cầu của chính độc giả đang mượn.
-     * Lượt mượn, bản sao và đầu sách được khóa rồi cập nhật trong cùng giao dịch;
-     * không bản ghi nào bị xóa khỏi cơ sở dữ liệu.
+     * Mở kết nối để service điều phối giao dịch báo mất qua nhiều DAO.
      *
+     * @return kết nối JDBC đang mở
+     * @throws SQLException khi không thể kết nối cơ sở dữ liệu
+     * @throws ClassNotFoundException khi thiếu JDBC driver
+     */
+    public Connection openTransactionConnection() throws SQLException, ClassNotFoundException {
+        return DBContext.getInstance().getConnection();
+    }
+
+    /**
+     * Ghi nhận một bản sao bị mất theo yêu cầu của chính độc giả đang mượn.
+     * Lượt mượn, bản sao và đầu sách được khóa rồi cập nhật nhưng phương thức không tự
+     * commit hoặc rollback để service có thể tạo vé phạt trong cùng giao dịch.
+     *
+     * @param connection kết nối đang tham gia giao dịch nghiệp vụ
      * @param borrowRecordId mã lượt mượn cần báo mất
      * @param userId mã độc giả sở hữu lượt mượn
      * @param operator tài khoản ghi nhận thay đổi bản sao
-     * @return {@code true} khi trạng thái mất và tồn kho được cập nhật đúng một lần
-     * @throws Exception khi giao dịch cập nhật thất bại
+     * @return dữ liệu để tạo vé phạt, hoặc {@code null} khi lượt mượn không hợp lệ
+     * @throws SQLException khi không thể cập nhật dữ liệu
      */
-    public boolean reportLostForUser(int borrowRecordId, int userId, String operator)
-            throws Exception {
-        String selectSql = "SELECT br.book_id,br.copy_id FROM borrow_records br "
+    public LostReportDetails reportLostForUser(Connection connection, int borrowRecordId,
+            int userId, String operator) throws SQLException {
+        String selectSql = "SELECT br.book_id,br.copy_id,b.price FROM borrow_records br "
                 + "INNER JOIN book_copies bc ON bc.id=br.copy_id "
+                + "INNER JOIN books b ON b.id=br.book_id AND b.is_deleted=0 "
                 + "WHERE br.id=? AND br.user_id=? AND br.status IN ('BORROWED','OVERDUE') "
                 + "AND br.return_date IS NULL AND bc.is_deleted=0 "
                 + "AND bc.book_condition<>'LOST' FOR UPDATE";
@@ -405,55 +418,81 @@ public class BorrowRecordDAO {
         String bookSql = "UPDATE books SET quantity=GREATEST(0,quantity-1),updated_by=?,"
                 + "updated_at=NOW() WHERE id=? AND is_deleted=0";
 
-        try (Connection connection = DBContext.getInstance().getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                int bookId;
-                int copyId;
-                try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
-                    statement.setInt(1, borrowRecordId);
-                    statement.setInt(2, userId);
-                    try (ResultSet result = statement.executeQuery()) {
-                        if (!result.next()) {
-                            connection.rollback();
-                            return false;
-                        }
-                        bookId = result.getInt("book_id");
-                        copyId = result.getInt("copy_id");
-                    }
+        int bookId;
+        int copyId;
+        Integer bookPrice;
+        try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
+            statement.setInt(1, borrowRecordId);
+            statement.setInt(2, userId);
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    return null;
                 }
-                try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
-                    statement.setInt(1, borrowRecordId);
-                    statement.setInt(2, userId);
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(copySql)) {
-                    statement.setString(1, operator);
-                    statement.setInt(2, copyId);
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(bookSql)) {
-                    statement.setString(1, operator);
-                    statement.setInt(2, bookId);
-                    if (statement.executeUpdate() != 1) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
-                connection.commit();
-                return true;
-            } catch (Exception exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
+                bookId = result.getInt("book_id");
+                copyId = result.getInt("copy_id");
+                int storedPrice = result.getInt("price");
+                bookPrice = result.wasNull() ? null : storedPrice;
             }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
+            statement.setInt(1, borrowRecordId);
+            statement.setInt(2, userId);
+            if (statement.executeUpdate() != 1) {
+                return null;
+            }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(copySql)) {
+            statement.setString(1, operator);
+            statement.setInt(2, copyId);
+            if (statement.executeUpdate() != 1) {
+                return null;
+            }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(bookSql)) {
+            statement.setString(1, operator);
+            statement.setInt(2, bookId);
+            if (statement.executeUpdate() != 1) {
+                return null;
+            }
+        }
+        return new LostReportDetails(borrowRecordId, userId, bookPrice);
+    }
+
+    /**
+     * Dữ liệu bất biến của lượt báo mất dùng để service tạo vé phạt đúng người và đúng giá sách.
+     */
+    public static final class LostReportDetails {
+
+        private final int borrowRecordId;
+        private final int userId;
+        private final Integer bookPrice;
+
+        /**
+         * Khởi tạo dữ liệu của lượt báo mất đã được khóa và cập nhật.
+         *
+         * @param borrowRecordId mã lượt mượn
+         * @param userId mã độc giả
+         * @param bookPrice giá sách lưu tại thời điểm báo mất
+         */
+        public LostReportDetails(int borrowRecordId, int userId, Integer bookPrice) {
+            this.borrowRecordId = borrowRecordId;
+            this.userId = userId;
+            this.bookPrice = bookPrice;
+        }
+
+        /** @return mã lượt mượn dùng để liên kết vé phạt */
+        public int getBorrowRecordId() {
+            return borrowRecordId;
+        }
+
+        /** @return mã độc giả chịu khoản phạt */
+        public int getUserId() {
+            return userId;
+        }
+
+        /** @return giá sách dùng làm 100% số tiền phạt, có thể chưa được khai báo */
+        public Integer getBookPrice() {
+            return bookPrice;
         }
     }
 

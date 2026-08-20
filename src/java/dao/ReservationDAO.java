@@ -172,48 +172,15 @@ public class ReservationDAO {
         return 0;
     }
 
-    public boolean updateStatus(int id, String status) throws Exception {
-        String selectSql = "SELECT user_id,book_id FROM book_reservations WHERE id=? FOR UPDATE";
-        String reservationSql = "UPDATE book_reservations SET status=?,updated_at=NOW() WHERE id=?";
-        String borrowSql = "UPDATE borrow_records SET status='CANCELLED',updated_at=NOW() "
-                + "WHERE user_id=? AND book_id=? AND status='PENDING_PICKUP'";
-        try (Connection connection = DBContext.getInstance().getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                int userId;
-                int bookId;
-                try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
-                    statement.setInt(1, id);
-                    try (ResultSet result = statement.executeQuery()) {
-                        if (!result.next()) {
-                            connection.rollback();
-                            return false;
-                        }
-                        userId = result.getInt("user_id");
-                        bookId = result.getInt("book_id");
-                    }
-                }
-                try (PreparedStatement statement = connection.prepareStatement(reservationSql)) {
-                    statement.setString(1, status);
-                    statement.setInt(2, id);
-                    statement.executeUpdate();
-                }
-                if (!"READY_FOR_PICKUP".equals(status)) {
-                    try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
-                        statement.setInt(1, userId);
-                        statement.setInt(2, bookId);
-                        statement.executeUpdate();
-                    }
-                }
-                connection.commit();
-                return true;
-            } catch (Exception exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
-        }
+    /**
+     * Hủy reservation đang hoạt động theo thao tác của nhân viên.
+     *
+     * @param reservationId mã reservation cần hủy
+     * @return {@code true} khi reservation và lượt chờ nhận liên quan đã được hủy
+     * @throws Exception khi giao dịch cập nhật thất bại
+     */
+    public boolean cancelByStaff(int reservationId) throws Exception {
+        return cancelActiveReservation(reservationId, null);
     }
 
     public ReservationRecord findById(int id) throws Exception {
@@ -304,13 +271,16 @@ public class ReservationDAO {
 
     /**
      * Lấy ngày khả dụng của từng bản sách để dựng lịch slot. Bản đang rảnh tạo slot
-     * hôm nay; bản đang mượn đúng hạn tạo slot tại hạn trả của chính bản đó.
+     * hôm nay; bản đang mượn đúng hạn tạo slot tại hạn trả; bản chờ nhận tạo slot
+     * sau một kỳ mượn tính từ ngày tạo yêu cầu nhận sách.
      *
      * @param bookId mã đầu sách
+     * @param loanPeriodDays số ngày của một kỳ mượn dùng cho bản đang chờ nhận
      * @return danh sách ngày khả dụng; một ngày lặp lại khi có nhiều bản cùng slot
      * @throws Exception khi không thể đọc dữ liệu bản sao và lượt mượn
      */
-    public List<LocalDate> findProjectedAvailabilityDates(int bookId) throws Exception {
+    public List<LocalDate> findProjectedAvailabilityDates(int bookId, int loanPeriodDays)
+            throws Exception {
         String sql = "SELECT slots.available_date FROM ("
                 + "SELECT CURDATE() AS available_date,bc.id AS sort_id FROM book_copies bc "
                 + "WHERE bc.book_id=? AND bc.is_deleted=0 "
@@ -318,13 +288,19 @@ public class ReservationDAO {
                 + ACTIVE_BORROW_CONFLICT_SQL + ") UNION ALL "
                 + "SELECT br.due_date AS available_date,br.id AS sort_id "
                 + "FROM borrow_records br WHERE br.book_id=? AND br.status='BORROWED' "
-                + "AND br.return_date IS NULL AND br.due_date>=CURDATE()"
+                + "AND br.return_date IS NULL AND br.due_date>=CURDATE() UNION ALL "
+                + "SELECT DATE_ADD(DATE(pending_br.request_date),INTERVAL ? DAY) AS available_date,"
+                + "pending_br.copy_id AS sort_id FROM borrow_records pending_br "
+                + "WHERE pending_br.book_id=? AND pending_br.status='PENDING_PICKUP' "
+                + "AND pending_br.pickup_deadline>=NOW()"
                 + ") slots ORDER BY slots.available_date,slots.sort_id";
         List<LocalDate> dates = new ArrayList<>();
         try (Connection connection = DBContext.getInstance().getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, bookId);
             statement.setInt(2, bookId);
+            statement.setInt(3, loanPeriodDays);
+            statement.setInt(4, bookId);
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
                     dates.add(result.getDate("available_date").toLocalDate());
@@ -447,8 +423,9 @@ public class ReservationDAO {
         String available = "SELECT bc.id FROM book_copies bc WHERE bc.book_id=? AND bc.is_deleted=0 "
                 + "AND bc.book_condition IN ('GOOD','WORN') AND NOT EXISTS ("
                 + ACTIVE_BORROW_CONFLICT_SQL + ") LIMIT 1 FOR UPDATE";
-        String projectedReturn = "SELECT id FROM borrow_records WHERE book_id=? "
-                + "AND status='BORROWED' AND return_date IS NULL AND due_date>=CURDATE() "
+        String projectedAvailability = "SELECT id FROM borrow_records WHERE book_id=? AND "
+                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
+                + "(status='BORROWED' AND return_date IS NULL AND due_date>=CURDATE())) "
                 + "LIMIT 1 FOR UPDATE";
         String duplicate = "SELECT id FROM book_reservations WHERE user_id=? AND book_id=? "
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
@@ -478,7 +455,8 @@ public class ReservationDAO {
                     }
                 }
                 if (!hasProjectedAvailability) {
-                    try (PreparedStatement statement = connection.prepareStatement(projectedReturn)) {
+                    try (PreparedStatement statement
+                            = connection.prepareStatement(projectedAvailability)) {
                         statement.setInt(1, bookId);
                         try (ResultSet result = statement.executeQuery()) {
                             hasProjectedAvailability = result.next();
@@ -520,10 +498,29 @@ public class ReservationDAO {
     }
 
     /**
-     * Hủy reservation active thuộc user.
+     * Hủy reservation đang hoạt động thuộc đúng độc giả.
+     *
+     * @param reservationId mã reservation cần hủy
+     * @param userId mã độc giả sở hữu reservation
+     * @return {@code true} khi reservation và lượt chờ nhận liên quan đã được hủy
+     * @throws Exception khi giao dịch cập nhật thất bại
      */
     public boolean cancelOwned(int reservationId, int userId) throws Exception {
-        String selectSql = "SELECT book_id FROM book_reservations WHERE id=? AND user_id=? "
+        return cancelActiveReservation(reservationId, userId);
+    }
+
+    /**
+     * Dùng chung giao dịch hủy reservation và lượt chờ nhận đã được tạo từ reservation đó.
+     *
+     * @param reservationId mã reservation cần hủy
+     * @param ownerUserId mã chủ sở hữu cần kiểm tra, hoặc {@code null} với thao tác nhân viên
+     * @return {@code true} khi dữ liệu đang hoạt động được hủy
+     * @throws Exception khi giao dịch cập nhật thất bại
+     */
+    private boolean cancelActiveReservation(int reservationId, Integer ownerUserId)
+            throws Exception {
+        String selectSql = "SELECT user_id,book_id FROM book_reservations WHERE id=? "
+                + (ownerUserId == null ? "" : "AND user_id=? ")
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') FOR UPDATE";
         String reservationSql = "UPDATE book_reservations SET status='CANCELLED',updated_at=NOW() WHERE id=?";
         String borrowSql = "UPDATE borrow_records SET status='CANCELLED',updated_at=NOW() "
@@ -531,15 +528,19 @@ public class ReservationDAO {
         try (Connection connection = DBContext.getInstance().getConnection()) {
             connection.setAutoCommit(false);
             try {
+                int userId;
                 int bookId;
                 try (PreparedStatement statement = connection.prepareStatement(selectSql)) {
                     statement.setInt(1, reservationId);
-                    statement.setInt(2, userId);
+                    if (ownerUserId != null) {
+                        statement.setInt(2, ownerUserId);
+                    }
                     try (ResultSet result = statement.executeQuery()) {
                         if (!result.next()) {
                             connection.rollback();
                             return false;
                         }
+                        userId = result.getInt("user_id");
                         bookId = result.getInt("book_id");
                     }
                 }

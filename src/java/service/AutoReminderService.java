@@ -82,7 +82,8 @@ public class AutoReminderService {
         try {
             System.out.println("[AutoReminderService] Bắt đầu chạy Batch Job bởi: " + triggeredBy + " (Gửi Email: " + sendEmail + ")");
 
-            // 1. Đồng bộ hóa tiền phạt quá hạn cho toàn hệ thống
+            // 1. Đồng bộ trạng thái quá hạn trước khi xét slot đặt trước và gửi thông báo.
+            borrowRecordDAO.markOverdueBorrows();
             fineService.synchronizeAllOverdueFines();
 
             // 2. Xử lý các yêu cầu giữ sách (Pickup Request) đã hết hạn 24h

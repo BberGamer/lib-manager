@@ -93,33 +93,25 @@ public class ReservationManagementServlet extends HttpServlet {
                 int id = Integer.parseInt(request.getParameter("id"));
                 String action = request.getParameter("action");
                 if ("ready".equals(action)) {
-                    ReservationRecord tempRes = reservationDAO.findById(id);
-                    if (tempRes != null && new dao.FineDAO().searchByUser(tempRes.getUserId(), "UNPAID", null).size() > 0) {
-                        session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng: Độc giả này hiện đang có khoản phạt chưa thanh toán!");
-                    } else if (tempRes != null && new dao.BorrowRecordDAO().countActiveByUserId(tempRes.getUserId()) >= 3) {
-                        session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng: Độc giả này đã đạt giới hạn tối đa 3 lượt mượn hoạt động!");
+                    boolean success = reservationService.markReservationReady(
+                            id, loggedUser.getUsername(), true);
+                    if (success) {
+                        session.setAttribute("successMsg",
+                                "Sách đã về và được chuyển sang danh sách chờ giao sách.");
                     } else {
-                        ReservationRecord record = reservationDAO.manuallyReadyReservation(id, loggedUser.getUsername());
-                        if (record != null) {
-                            reservationService.notifyReservationReady(record, true);
-                            session.setAttribute("successMsg", "Đã cập nhật trạng thái thành công và gửi thông báo cho độc giả!");
-                        } else {
-                            session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng. Không có bản sao nào khả dụng hoặc yêu cầu không ở trạng thái Chờ mượn!");
-                        }
+                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về. "
+                                + "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.");
+                    }
+                } else if ("cancel".equals(action)) {
+                    boolean success = reservationService.cancelReservationByStaff(id);
+                    if (success) {
+                        session.setAttribute("successMsg", "Đã hủy yêu cầu đặt trước thành công.");
+                    } else {
+                        session.setAttribute("errorMsg",
+                                "Không thể hủy yêu cầu không còn hoạt động.");
                     }
                 } else {
-                    String status = "WAITING";
-                    if ("cancel".equals(action)) {
-                        status = "CANCELLED";
-                    } else if ("complete".equals(action)) {
-                        status = "COMPLETED";
-                    }
-                    boolean success = reservationDAO.updateStatus(id, status);
-                    if (success) {
-                        session.setAttribute("successMsg", "Đã cập nhật trạng thái đặt chỗ thành công!");
-                    } else {
-                        session.setAttribute("errorMsg", "Cập nhật trạng thái đặt chỗ thất bại!");
-                    }
+                    session.setAttribute("errorMsg", "Thao tác đặt trước không hợp lệ.");
                 }
             }
         } catch (Exception e) {

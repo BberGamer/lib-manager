@@ -28,7 +28,7 @@ public class Book {
     private Integer price;
     private int     quantity;       // tổng số bản
     private int     available;      // số bản còn cho mượn
-    private boolean reservable;     // có ít nhất một bản đang mượn đúng hạn để dự kiến ngày trả
+    private boolean reservable;     // có bản chờ nhận hoặc đang mượn đúng hạn để dự kiến slot
     private String  description;
     private String  coverImage;
     private String  subject;        // môn học liên quan
@@ -73,9 +73,9 @@ public class Book {
     public int getAvailable()               { return available; }
     public void setAvailable(int v)         { this.available = v; }
 
-    /** @return {@code true} khi đầu sách có lịch trả đúng hạn để nhận đặt trước */
+    /** @return {@code true} khi đầu sách có bản chờ nhận hoặc lịch trả đúng hạn */
     public boolean isReservable()           { return reservable; }
-    /** @param reservable khả năng nhận yêu cầu đặt trước theo lịch trả hiện tại */
+    /** @param reservable khả năng nhận yêu cầu đặt trước theo các slot dự kiến */
     public void setReservable(boolean reservable) { this.reservable = reservable; }
 
     public String getDescription()          { return description; }

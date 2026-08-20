@@ -46,6 +46,7 @@ async function refreshExpectedPickupDate() {
         }
         earliestDate.dateTime = payload.earliestAvailableDate;
         earliestDate.textContent = formatReservationDate(payload.earliestAvailableDate);
+        pickupInput.min = payload.earliestAvailableDate;
         expectedDate.dateTime = payload.expectedPickupDate;
         expectedDate.textContent = formatReservationDate(payload.expectedPickupDate);
         message.textContent = pickupInput.value === payload.expectedPickupDate
