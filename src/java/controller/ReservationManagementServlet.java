@@ -101,12 +101,7 @@ public class ReservationManagementServlet extends HttpServlet {
                     } else {
                         ReservationRecord record = reservationDAO.manuallyReadyReservation(id, loggedUser.getUsername());
                         if (record != null) {
-                            String notifTitle = "Sách đặt trước đã sẵn sàng – FPT Library";
-                            String notifMessage = "Xin chào " + record.getUser().getFullName() + ",\n\n"
-                                    + "Cuốn sách '" + record.getBook().getTitle() + "' bạn đặt trước hiện đã sẵn sàng để mượn.\n"
-                                    + "Vui lòng đến thư viện để nhận sách trong vòng 24 giờ kể từ thời điểm này.";
-                            new service.NotificationService().createAndSendNotification(
-                                    record.getUserId(), notifTitle, notifMessage, "RESERVATION", record.getId(), "reservation", record.getUser().getEmail());
+                            reservationService.notifyReservationReady(record, true);
                             session.setAttribute("successMsg", "Đã cập nhật trạng thái thành công và gửi thông báo cho độc giả!");
                         } else {
                             session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng. Không có bản sao nào khả dụng hoặc yêu cầu không ở trạng thái Chờ mượn!");

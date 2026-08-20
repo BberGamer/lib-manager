@@ -101,6 +101,8 @@
                             <th>Độc giả</th>
                             <th>Thông tin sách</th>
                             <th>Ngày yêu cầu</th>
+                            <th>Ngày muốn nhận</th>
+                            <th>Ngày dự kiến</th>
                             <th>Ngày hết hạn</th>
                             <th>Trạng thái</th>
                             <th class="reservation-actions-heading">Thao tác</th>
@@ -110,7 +112,7 @@
                         <c:choose>
                             <c:when test="${empty reservationList}">
                                 <tr>
-                                    <td class="reservation-empty-state" colspan="7">
+                                    <td class="reservation-empty-state" colspan="9">
                                         <i class="fa-solid fa-hourglass-empty"></i>
                                         <span>Không tìm thấy yêu cầu đặt trước nào.</span>
                                     </td>
@@ -138,6 +140,14 @@
                                         <td>
                                             <c:out value="${empty reservation.reserveDate
                                                 ? '-' : reservation.reserveDate}" />
+                                        </td>
+                                        <td>
+                                            <c:out value="${empty reservation.requestedPickupDate
+                                                ? '-' : reservation.requestedPickupDate}" />
+                                        </td>
+                                        <td>
+                                            <c:out value="${empty reservation.expectedPickupDate
+                                                ? '-' : reservation.expectedPickupDate}" />
                                         </td>
                                         <td>
                                             <c:out value="${empty reservation.expiryDate

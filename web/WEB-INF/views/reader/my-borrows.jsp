@@ -135,6 +135,13 @@
                                                 <button type="submit" class="renew-button">Hủy yêu cầu</button>
                                             </form>
                                         </c:when>
+                                        <c:when test="${record.status eq 'BORROWED'
+                                                and borrowPage.renewalBlockedBorrowIds.contains(record.id)}">
+                                            <span class="renew-unavailable">Không thể gia hạn</span>
+                                            <small class="renew-reservation-note">
+                                                Đầu sách đã có người đặt trước.
+                                            </small>
+                                        </c:when>
                                         <c:when test="${record.status eq 'BORROWED' and record.renewalCount lt maximumRenewals}">
                                             <form action="${renewUrl}" method="post" class="renew-form">
                                                 <input type="hidden" name="borrowRecordId" value="${record.id}">
@@ -148,15 +155,17 @@
                                         </c:otherwise>
                                     </c:choose>
                                     <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
-                                        <div style="margin-top: 8px;">
+                                        <div class="borrow-review-action">
                                             <c:choose>
                                                 <c:when test="${reviewedBorrowIds.contains(record.id)}">
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    <a class="borrow-review-link is-reviewed"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}">
+                                                        <i class="fa-solid fa-star"></i> Đã đánh giá
                                                     </a>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="color: var(--primary); font-size: 0.82rem; text-decoration: underline; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                    <a class="borrow-review-link is-pending"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}">
                                                         <i class="fa-solid fa-pen-to-square"></i> Viết đánh giá
                                                     </a>
                                                 </c:otherwise>
@@ -221,19 +230,21 @@
                                         <c:when test="${record.status eq 'RETURNED'}">
                                             <c:choose>
                                                 <c:when test="${reviewedBorrowIds.contains(record.id)}">
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
-                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    <a class="borrow-review-link is-reviewed"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}">
+                                                        <i class="fa-solid fa-star"></i> Đã đánh giá
                                                     </a>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="display: inline-block; padding: 4px 10px; font-size: 0.82rem; text-decoration: none; border-radius: 4px; background: linear-gradient(135deg, #f5a623, #f18d00); color: white; text-align: center; font-weight: 500;">
+                                                    <a class="borrow-review-link is-history-pending"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}">
                                                         Viết đánh giá
                                                     </a>
                                                 </c:otherwise>
                                             </c:choose>
                                         </c:when>
                                         <c:otherwise>
-                                            <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                                            <span class="borrow-review-empty">—</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>

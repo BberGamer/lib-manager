@@ -6,6 +6,7 @@ import model.BorrowRecord;
 import model.BookCopy;
 import model.User;
 import service.BorrowService;
+import service.ReservationService;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -22,6 +23,7 @@ public class BorrowManagementServlet extends HttpServlet {
     private final BorrowRecordDAO borrowRecordDAO = new BorrowRecordDAO();
     private final BookCopyDAO bookCopyDAO = new BookCopyDAO();
     private final BorrowService borrowService = new BorrowService();
+    private final ReservationService reservationService = new ReservationService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -179,7 +181,8 @@ public class BorrowManagementServlet extends HttpServlet {
             return;
         }
 
-        boolean success = borrowRecordDAO.confirmLoan(id, targetCopy.getId(), operator);
+        boolean success = borrowRecordDAO.confirmLoan(
+                id, targetCopy.getId(), operator, BorrowService.LOAN_PERIOD_DAYS);
         if (success) {
             session.setAttribute("successMsg", "Đã xác nhận cho mượn sách thành công!");
         } else {
@@ -203,13 +206,9 @@ public class BorrowManagementServlet extends HttpServlet {
             session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
             
             if (result.activatedReservationId != -1) {
-                String notifTitle = "Sách đặt trước đã sẵn sàng – FPT Library";
-                String notifMessage = "Xin chào " + result.userFullName + ",\n\n"
-                        + "Cuốn sách '" + result.bookTitle + "' bạn đặt trước hiện đã sẵn sàng để mượn.\n"
-                        + "Vui lòng đến thư viện để nhận sách trong vòng 24 giờ kể từ thời điểm này.";
-                new service.NotificationService().createAndSendNotification(
-                        result.activatedUserId, notifTitle, notifMessage, "RESERVATION", 
-                        result.activatedReservationId, "reservation", result.userEmail);
+                reservationService.notifyReservationReady(
+                        result.activatedReservationId, result.activatedUserId,
+                        result.userFullName, result.userEmail, result.bookTitle, true);
             }
         } else {
             session.setAttribute("errorMsg", "Xác nhận trả sách thất bại!");

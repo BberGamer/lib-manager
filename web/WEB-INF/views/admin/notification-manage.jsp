@@ -376,6 +376,11 @@
                                                         <i class="fa-solid fa-coins"></i> Phí phạt
                                                     </span>
                                                 </c:when>
+                                                <c:when test="${n.type eq 'RESERVATION'}">
+                                                    <span class="notif-badge notif-badge-system">
+                                                        <i class="fa-solid fa-bookmark"></i> Đặt trước
+                                                    </span>
+                                                </c:when>
                                                 <c:otherwise>
                                                     <span class="notif-badge notif-badge-system">
                                                         <c:out value="${n.type}" />

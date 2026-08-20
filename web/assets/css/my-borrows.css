@@ -51,6 +51,14 @@
 .renew-button:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .renew-button i { margin-right: 5px; }
 .renew-unavailable { color: #9aa2af; font-size: .75rem; white-space: nowrap; }
+.borrow-table td .renew-reservation-note { color: #b45309; max-width: 170px; }
+.borrow-review-action { margin-top: 8px; }
+.borrow-review-link { align-items: center; display: inline-flex; gap: 4px; font-size: .82rem; }
+.borrow-review-link.is-reviewed { color: var(--text-muted); text-decoration: none; }
+.borrow-review-link.is-reviewed i { color: #f5a623; }
+.borrow-review-link.is-pending { color: var(--primary); font-weight: 600; text-decoration: underline; }
+.borrow-review-link.is-history-pending { background: linear-gradient(135deg, #f5a623, #f18d00); border-radius: 4px; color: #fff; font-weight: 500; padding: 4px 10px; text-decoration: none; }
+.borrow-review-empty { color: var(--text-muted); font-size: .85rem; }
 .borrow-empty { text-align: center; padding: 34px !important; color: #8a94a4 !important; }
 .borrow-empty i, .borrow-empty span { display: block; }
 .borrow-empty i { font-size: 1.5rem; margin-bottom: 8px; }

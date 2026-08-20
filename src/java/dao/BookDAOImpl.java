@@ -17,11 +17,17 @@ public class BookDAOImpl implements BookDAO {
             + "AND ((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
             + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
 
+    /** Cho biết còn ít nhất một lượt mượn đúng hạn làm căn cứ nhận đặt trước. */
+    private static final String RESERVABLE_SQL = "EXISTS (SELECT 1 FROM borrow_records future_br "
+            + "WHERE future_br.book_id = b.id AND future_br.status = 'BORROWED' "
+            + "AND future_br.return_date IS NULL AND future_br.due_date >= CURDATE())";
+
     @Override
     public Book findById(int id) throws Exception {
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
                 + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
-                + " AS available, b.description, b.cover_image, b.subject, b.is_deleted "
+                + " AS available, " + RESERVABLE_SQL
+                + " AS reservable, b.description, b.cover_image, b.subject, b.is_deleted "
                 + "FROM books b WHERE b.id = ? AND b.is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -40,7 +46,8 @@ public class BookDAOImpl implements BookDAO {
         List<Book> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, ")
-          .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, b.description, b.cover_image, b.subject ")
+          .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, ")
+          .append(RESERVABLE_SQL).append(" AS reservable, b.description, b.cover_image, b.subject ")
           .append("FROM books b ")
           .append("LEFT JOIN book_authors ba ON b.id = ba.book_id ")
           .append("LEFT JOIN authors a ON ba.author_id = a.id AND a.is_deleted = 0 ")
@@ -359,7 +366,8 @@ public class BookDAOImpl implements BookDAO {
         // Truy vấn danh sách sách được mượn nhiều nhất dựa trên bảng borrow_records
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
                    + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
-                   + " AS available, b.description, b.cover_image, b.subject, "
+                   + " AS available, " + RESERVABLE_SQL
+                   + " AS reservable, b.description, b.cover_image, b.subject, "
                    + "COUNT(br.id) AS borrow_count "
                    + "FROM books b "
                    + "LEFT JOIN borrow_records br ON b.id = br.book_id "
@@ -385,7 +393,8 @@ public class BookDAOImpl implements BookDAO {
     public List<Book> getLatestBooks(int days, int limit) throws Exception {
         List<Book> list = new ArrayList<>();
         String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, "
-                   + AVAILABLE_COPY_COUNT_SQL + " AS available, b.description, b.cover_image, b.subject "
+                   + AVAILABLE_COPY_COUNT_SQL + " AS available, " + RESERVABLE_SQL
+                   + " AS reservable, b.description, b.cover_image, b.subject "
                    + "FROM books b "
                    + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
                    + "WHERE b.is_deleted = 0 AND b.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) "
@@ -422,6 +431,7 @@ public class BookDAOImpl implements BookDAO {
         if (rs.wasNull()) b.setPrice(null);
         b.setQuantity(rs.getInt("quantity"));
         b.setAvailable(rs.getInt("available"));
+        b.setReservable(rs.getBoolean("reservable"));
         b.setDescription(rs.getString("description"));
         b.setCoverImage(rs.getString("cover_image"));
         b.setSubject(rs.getString("subject"));

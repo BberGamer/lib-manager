@@ -6,6 +6,8 @@ package service;
 import dao.BorrowRecordDAO;
 import dao.BookDAO;
 import dao.BookDAOImpl;
+import dao.BookReviewDAO;
+import dao.FineDAO;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import model.BorrowRecord;
+import model.BorrowRenewalResult;
 
 /**
  * Cung cấp dữ liệu trang mượn cá nhân và thực hiện gia hạn qua {@link BorrowRecordDAO}.
@@ -24,11 +27,14 @@ public class BorrowService {
     public static final int RENEWAL_EXTENSION_DAYS = 7;
     public static final int UPCOMING_DUE_DAYS = 7;
     public static final int PICKUP_HOLD_HOURS = 24;
+    public static final int LOAN_PERIOD_DAYS = 7;
     /** Các tình trạng vật lý được chấp nhận khi nhận lại bản sao. */
     private static final Set<String> BOOK_CONDITIONS = Set.of("GOOD", "WORN", "DAMAGED", "LOST");
 
     private final BorrowRecordDAO borrowRecordDao;
     private final BookDAO bookDao;
+    private final BookReviewDAO bookReviewDao = new BookReviewDAO();
+    private final FineDAO fineDao = new FineDAO();
 
     /**
      * Khởi tạo service với DAO mặc định của ứng dụng.
@@ -64,6 +70,8 @@ public class BorrowService {
         borrowRecordDao.markOverdueBorrows();
         List<BorrowRecord> activeRecords = new ArrayList<>();
         List<BorrowRecord> historyRecords = new ArrayList<>();
+        Set<Integer> renewalBlockedBorrowIds
+                = borrowRecordDao.findRenewalBlockedBorrowIds(userId);
         int upcomingDueCount = 0;
         LocalDate today = LocalDate.now();
 
@@ -77,27 +85,65 @@ public class BorrowService {
                 historyRecords.add(record);
             }
         }
-        return new BorrowPageData(activeRecords, historyRecords, upcomingDueCount);
+        return new BorrowPageData(activeRecords, historyRecords, upcomingDueCount,
+                renewalBlockedBorrowIds);
     }
 
     /**
-     * Gia hạn lượt mượn của chính độc giả, không cho phép gia hạn quá hạn hoặc vượt giới hạn.
+     * Gia hạn lượt mượn của chính độc giả, đồng thời từ chối khi đầu sách đã có người đặt trước.
      *
      * @param borrowRecordId mã lượt mượn dương
      * @param userId mã độc giả đang đăng nhập
-     * @return {@code true} nếu gia hạn thành công
+     * @return kết quả cho biết thành công hoặc nguyên nhân không thể gia hạn
      * @throws Exception khi tầng lưu trữ không thể cập nhật dữ liệu
      */
-    public boolean renewBorrow(int borrowRecordId, int userId) throws Exception {
+    public BorrowRenewalResult renewBorrow(int borrowRecordId, int userId) throws Exception {
         if (borrowRecordId <= 0 || userId <= 0) {
-            return false;
+            return BorrowRenewalResult.NOT_ELIGIBLE;
         }
-        return borrowRecordDao.renewForUser(
-                borrowRecordId, userId, MAXIMUM_RENEWALS, RENEWAL_EXTENSION_DAYS);
+        if (borrowRecordDao.isRenewalBlockedByReservation(borrowRecordId, userId)) {
+            return BorrowRenewalResult.BLOCKED_BY_RESERVATION;
+        }
+        if (borrowRecordDao.renewForUser(
+                borrowRecordId, userId, MAXIMUM_RENEWALS, RENEWAL_EXTENSION_DAYS)) {
+            return BorrowRenewalResult.SUCCESS;
+        }
+        return borrowRecordDao.isRenewalBlockedByReservation(borrowRecordId, userId)
+                ? BorrowRenewalResult.BLOCKED_BY_RESERVATION
+                : BorrowRenewalResult.NOT_ELIGIBLE;
     }
 
+    /**
+     * Đếm số lượt mượn còn hoạt động của độc giả.
+     *
+     * @param userId mã độc giả
+     * @return số lượt chờ nhận, đang mượn hoặc quá hạn
+     * @throws Exception khi không thể truy vấn dữ liệu
+     */
     public int getActiveBorrowCount(int userId) throws Exception {
         return borrowRecordDao.countActiveByUserId(userId);
+    }
+
+    /**
+     * Kiểm tra độc giả còn khoản phạt chưa thanh toán trước khi tạo yêu cầu mượn.
+     *
+     * @param userId mã độc giả
+     * @return {@code true} khi còn ít nhất một khoản phạt chưa thanh toán
+     * @throws Exception khi không thể truy vấn dữ liệu phạt
+     */
+    public boolean hasUnpaidFines(int userId) throws Exception {
+        return !fineDao.searchByUser(userId, "UNPAID", null).isEmpty();
+    }
+
+    /**
+     * Lấy các lượt mượn đã được độc giả đánh giá để trang cá nhân hiển thị đúng thao tác.
+     *
+     * @param userId mã độc giả
+     * @return tập mã lượt mượn đã có đánh giá
+     * @throws Exception khi không thể truy vấn dữ liệu đánh giá
+     */
+    public Set<Integer> getReviewedBorrowIds(int userId) throws Exception {
+        return bookReviewDao.getReviewedBorrowIds(userId);
     }
 
     /** Tạo yêu cầu giữ sách nếu sách tồn tại và còn bản sao khả dụng. */
@@ -120,7 +166,8 @@ public class BorrowService {
     /** Xác nhận giao sách cho yêu cầu còn hạn nhận. */
     public boolean confirmPickup(int borrowId, String operator) throws Exception {
         borrowRecordDao.expirePendingRequests();
-        return borrowId > 0 && borrowRecordDao.confirmPickup(borrowId, operator);
+        return borrowId > 0
+                && borrowRecordDao.confirmPickup(borrowId, operator, LOAN_PERIOD_DAYS);
     }
 
     /**
@@ -185,6 +232,7 @@ public class BorrowService {
         private final List<BorrowRecord> activeRecords;
         private final List<BorrowRecord> historyRecords;
         private final int upcomingDueCount;
+        private final Set<Integer> renewalBlockedBorrowIds;
 
         /**
          * Tạo dữ liệu trang từ các nhóm lượt mượn đã phân loại.
@@ -192,12 +240,15 @@ public class BorrowService {
          * @param activeRecords các lượt đang mượn hoặc quá hạn
          * @param historyRecords các lượt đã kết thúc
          * @param upcomingDueCount số lượt sắp đến hạn
+         * @param renewalBlockedBorrowIds các lượt không được gia hạn vì đã có đặt trước
          */
         public BorrowPageData(List<BorrowRecord> activeRecords,
-                List<BorrowRecord> historyRecords, int upcomingDueCount) {
+                List<BorrowRecord> historyRecords, int upcomingDueCount,
+                Set<Integer> renewalBlockedBorrowIds) {
             this.activeRecords = activeRecords;
             this.historyRecords = historyRecords;
             this.upcomingDueCount = upcomingDueCount;
+            this.renewalBlockedBorrowIds = renewalBlockedBorrowIds;
         }
 
         /** @return các lượt mượn đang hoạt động */
@@ -213,6 +264,11 @@ public class BorrowService {
         /** @return số lượt sẽ đến hạn trong bảy ngày */
         public int getUpcomingDueCount() {
             return upcomingDueCount;
+        }
+
+        /** @return mã các lượt bị chặn gia hạn do đầu sách đã có đặt trước */
+        public Set<Integer> getRenewalBlockedBorrowIds() {
+            return renewalBlockedBorrowIds;
         }
     }
 }
