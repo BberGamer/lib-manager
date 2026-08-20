@@ -34,6 +34,35 @@ public class BookCopyDAO {
         return null;
     }
 
+    /**
+     * Tìm kiếm một bản sao sách chưa bị xóa dựa trên mã vạch (barcode).
+     *
+     * @param barcode mã vạch bản sao cần tìm
+     * @return đối tượng BookCopy tương ứng hoặc null nếu không tồn tại
+     * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
+     */
+    public BookCopy findByBarcode(String barcode) throws Exception {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            return null;
+        }
+        String sql = "SELECT bc.id, bc.book_id, bc.barcode, bc.book_condition, bc.note, bc.area, bc.shelf, bc.slot, "
+                     + "b.title, b.isbn, b.category, b.publisher, b.publish_year, b.price, b.quantity, b.available, "
+                     + ACTIVE_BORROW_COUNT_SQL + " AS borrowed_or_reserved "
+                     + "FROM book_copies bc "
+                     + "INNER JOIN books b ON bc.book_id = b.id "
+                     + "WHERE bc.barcode = ? AND bc.is_deleted = 0";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, barcode.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public List<BookCopy> searchCopies(int bookId, String keyword, String area, int pageNum, int pageSize) throws Exception {
         List<BookCopy> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();

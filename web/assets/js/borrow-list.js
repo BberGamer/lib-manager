@@ -63,6 +63,9 @@
      */
     function closeModal(modal) {
         modal.hidden = true;
+        if (modal.getAttribute('data-borrow-modal') === 'loan') {
+            stopScanning();
+        }
     }
 
     /**
@@ -93,7 +96,10 @@
         setModalField(modal, 'loan', 'requestId', `#${trigger.dataset.recordId}`);
         setModalField(modal, 'loan', 'bookTitle', trigger.dataset.bookTitle);
         setModalField(modal, 'loan', 'readerName', trigger.dataset.readerName);
-        setModalField(modal, 'loan', 'barcode', trigger.dataset.barcode);
+        
+        const barcodeVal = trigger.dataset.barcode;
+        setModalField(modal, 'loan', 'barcode', barcodeVal === '-' ? '' : barcodeVal);
+        
         setModalField(modal, 'loan', 'requestDate', formatDateTime(trigger.dataset.requestDate));
         setModalField(modal, 'loan', 'pickupDeadline', formatDateTime(trigger.dataset.pickupDeadline));
         openModal(modal);
@@ -131,6 +137,61 @@
         openModal(modal);
     }
 
+    let html5Qrcode = null;
+
+    /**
+     * Khởi động camera quét mã QR/Barcode.
+     *
+     * @returns {void}
+     */
+    function startScanning() {
+        const qrContainer = document.getElementById('qr-reader-container');
+        if (!qrContainer) return;
+        qrContainer.style.display = 'block';
+
+        if (html5Qrcode) {
+            stopScanning();
+        }
+
+        html5Qrcode = new Html5Qrcode("qr-reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        html5Qrcode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+                const input = document.getElementById('loan-barcode-input');
+                if (input) {
+                    input.value = decodedText;
+                }
+                stopScanning();
+            },
+            () => {}
+        ).catch((err) => {
+            console.error("Lỗi khởi tạo camera:", err);
+            alert("Không thể khởi động camera. Vui lòng cấp quyền truy cập camera cho trang web!");
+            qrContainer.style.display = 'none';
+        });
+    }
+
+    /**
+     * Tắt camera và giải phóng tài nguyên quét mã.
+     *
+     * @returns {void}
+     */
+    function stopScanning() {
+        if (html5Qrcode) {
+            html5Qrcode.stop().then(() => {
+                const qrContainer = document.getElementById('qr-reader-container');
+                if (qrContainer) qrContainer.style.display = 'none';
+                html5Qrcode = null;
+            }).catch((err) => {
+                console.error("Lỗi tắt camera:", err);
+                html5Qrcode = null;
+            });
+        }
+    }
+
     /**
      * Điều phối thao tác mở, đóng modal từ các nút và lớp nền trên trang.
      *
@@ -142,6 +203,9 @@
         const returnTrigger = event.target.closest('[data-open-return-modal]');
         const fineTrigger = event.target.closest('[data-open-fine-modal]');
         const closeTrigger = event.target.closest('[data-close-borrow-modal]');
+        
+        const startScanBtn = event.target.closest('#start-scan-btn');
+        const stopScanBtn = event.target.closest('#stop-scan-btn');
 
         if (loanTrigger) {
             prepareLoanModal(loanTrigger, document.querySelector('[data-borrow-modal="loan"]'));
@@ -151,6 +215,10 @@
             prepareFineModal(fineTrigger, document.querySelector('[data-borrow-modal="fine"]'));
         } else if (closeTrigger) {
             closeModal(closeTrigger.closest('[data-borrow-modal]'));
+        } else if (startScanBtn) {
+            startScanning();
+        } else if (stopScanBtn) {
+            stopScanning();
         } else if (event.target.matches('[data-borrow-modal]')) {
             closeModal(event.target);
         }

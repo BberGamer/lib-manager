@@ -120,14 +120,21 @@ public class BorrowManagementServlet extends HttpServlet {
         }
     }
 
-    /** Xác nhận độc giả đã nhận bản sao được giữ, mọi thời hạn do service quyết định. */
     private void confirmPickup(HttpServletRequest request, HttpServletResponse response,
             String operator, String prefix) throws Exception {
         int borrowId = Integer.parseInt(request.getParameter("id"));
-        boolean success = borrowService.confirmPickup(borrowId, operator);
+        String barcode = request.getParameter("barcode");
+        
+        if (barcode == null || barcode.trim().isEmpty()) {
+            request.getSession().setAttribute("errorMsg", "Vui lòng quét hoặc nhập mã vạch bản sao sách!");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
+            return;
+        }
+        
+        boolean success = borrowService.confirmPickup(borrowId, barcode.trim(), operator);
         request.getSession().setAttribute(success ? "successMsg" : "errorMsg",
                 success ? "Đã xác nhận giao sách thành công."
-                        : "Không thể xác nhận giao sách. Yêu cầu có thể đã hết hạn hoặc không hợp lệ.");
+                        : "Không thể xác nhận giao sách. Mã vạch bản sao có thể không hợp lệ, không đúng đầu sách hoặc đã có người mượn/giữ.");
         response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
     }
 

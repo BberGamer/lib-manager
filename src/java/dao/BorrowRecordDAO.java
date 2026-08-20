@@ -372,7 +372,7 @@ public class BorrowRecordDAO {
                 }
             }
         }
-        return confirmPickup(id, operator);
+        return confirmPickup(id, copyId, operator);
     }
 
     /**
@@ -572,20 +572,17 @@ public class BorrowRecordDAO {
      * @throws Exception khi thao tác dữ liệu thất bại
      */
     public boolean createPickupRequest(int userId, int bookId, int holdHours) throws Exception {
+        String lockBookSql = "SELECT id FROM books WHERE id=? AND is_deleted=0 FOR UPDATE";
         String duplicateSql = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? AND "
                 + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
                 + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL)) FOR UPDATE";
-        String copySql = "SELECT bc.id FROM book_copies bc WHERE bc.book_id = ? "
-                + "AND bc.is_deleted = 0 AND bc.book_condition IN ('GOOD', 'WORN') "
-                + "AND NOT EXISTS (SELECT 1 FROM borrow_records br WHERE br.copy_id = bc.id "
-                + "AND ((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
-                + "OR (br.status IN ('BORROWED', 'OVERDUE') "
-                + "AND br.borrow_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY) "
-                + "AND (br.return_date IS NULL OR br.return_date >= CURDATE())))) "
-                + "ORDER BY bc.id LIMIT 1 FOR UPDATE";
+        String countCopiesSql = "SELECT COUNT(*) FROM book_copies WHERE book_id=? AND is_deleted=0 AND book_condition IN ('GOOD', 'WORN')";
+        String countBorrowsSql = "SELECT COUNT(*) FROM borrow_records WHERE book_id=? AND "
+                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
+                + "(status IN ('BORROWED', 'OVERDUE') AND return_date IS NULL))";
         String insertSql = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, "
                 + "pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
-                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
+                + "VALUES (?, ?, NULL, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
                 + "'PENDING_PICKUP', NOW(), NOW())";
         String queueSql = "SELECT id,user_id,status FROM book_reservations WHERE book_id=? "
                 + "AND status IN ('WAITING','READY_FOR_PICKUP') ORDER BY CASE "
@@ -593,6 +590,17 @@ public class BorrowRecordDAO {
         try (Connection connection = DBContext.getInstance().getConnection()) {
             connection.setAutoCommit(false);
             try {
+                // 1. Khóa đầu sách để tránh tranh chấp ghi đồng thời (race condition)
+                try (PreparedStatement statement = connection.prepareStatement(lockBookSql)) {
+                    statement.setInt(1, bookId);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (!resultSet.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                // 2. Kiểm tra yêu cầu mượn trùng lặp
                 try (PreparedStatement statement = connection.prepareStatement(duplicateSql)) {
                     statement.setInt(1, userId);
                     statement.setInt(2, bookId);
@@ -603,6 +611,7 @@ public class BorrowRecordDAO {
                         }
                     }
                 }
+                // 3. Kiểm tra hàng chờ đặt trước (reservation queue)
                 try (PreparedStatement statement = connection.prepareStatement(queueSql)) {
                     statement.setInt(1, bookId);
                     try (ResultSet resultSet = statement.executeQuery()) {
@@ -615,22 +624,34 @@ public class BorrowRecordDAO {
                         }
                     }
                 }
-                int copyId;
-                try (PreparedStatement statement = connection.prepareStatement(copySql)) {
+                // 4. Tính toán số bản sao khả dụng thực tế
+                int totalCopies = 0;
+                try (PreparedStatement statement = connection.prepareStatement(countCopiesSql)) {
                     statement.setInt(1, bookId);
                     try (ResultSet resultSet = statement.executeQuery()) {
-                        if (!resultSet.next()) {
-                            connection.rollback();
-                            return false;
+                        if (resultSet.next()) {
+                            totalCopies = resultSet.getInt(1);
                         }
-                        copyId = resultSet.getInt(1);
                     }
                 }
+                int activeBorrows = 0;
+                try (PreparedStatement statement = connection.prepareStatement(countBorrowsSql)) {
+                    statement.setInt(1, bookId);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            activeBorrows = resultSet.getInt(1);
+                        }
+                    }
+                }
+                if (totalCopies - activeBorrows <= 0) {
+                    connection.rollback();
+                    return false;
+                }
+                // 5. Thêm bản ghi yêu cầu mượn (chưa đính kèm copy_id)
                 try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
                     statement.setInt(1, userId);
                     statement.setInt(2, bookId);
-                    statement.setInt(3, copyId);
-                    statement.setInt(4, holdHours);
+                    statement.setInt(3, holdHours);
                     statement.executeUpdate();
                 }
                 connection.commit();
@@ -658,19 +679,18 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Xác nhận giao sách đang được giữ và bắt đầu thời hạn mượn 14 ngày.
+     * Xác nhận giao sách đang được giữ, gán bản sao cụ thể và bắt đầu thời hạn mượn 14 ngày.
      *
-     * @param borrowId mã yêu cầu
+     * @param borrowId mã yêu cầu mượn trả
+     * @param copyId mã bản sao sách thực tế được giao
      * @param operator tài khoản thủ thư thao tác
      * @return {@code true} nếu xác nhận thành công
      * @throws Exception khi thao tác dữ liệu thất bại
      */
-    public boolean confirmPickup(int borrowId, String operator) throws Exception {
-        String selectSql = "SELECT br.copy_id, br.user_id, br.book_id FROM borrow_records br "
-                + "INNER JOIN book_copies bc ON bc.id=br.copy_id "
-                + "WHERE br.id=? AND br.status='PENDING_PICKUP' AND br.pickup_deadline>=NOW() "
-                + "AND bc.is_deleted=0 AND bc.book_condition IN ('GOOD','WORN') FOR UPDATE";
-        String borrowSql = "UPDATE borrow_records SET status='BORROWED', pickup_date=NOW(), "
+    public boolean confirmPickup(int borrowId, int copyId, String operator) throws Exception {
+        String selectSql = "SELECT br.user_id, br.book_id FROM borrow_records br "
+                + "WHERE br.id=? AND br.status='PENDING_PICKUP' AND br.pickup_deadline>=NOW() FOR UPDATE";
+        String borrowSql = "UPDATE borrow_records SET copy_id=?, status='BORROWED', pickup_date=NOW(), "
                 + "borrow_date=CURDATE(), due_date=DATE_ADD(CURDATE(), INTERVAL 14 DAY), updated_at=NOW() WHERE id=?";
         String completeReservationSql = "UPDATE book_reservations SET status='COMPLETED', "
                 + "updated_at=NOW() WHERE user_id=? AND book_id=? AND status='READY_FOR_PICKUP'";
@@ -691,7 +711,8 @@ public class BorrowRecordDAO {
                     }
                 }
                 try (PreparedStatement statement = connection.prepareStatement(borrowSql)) {
-                    statement.setInt(1, borrowId);
+                    statement.setInt(1, copyId);
+                    statement.setInt(2, borrowId);
                     statement.executeUpdate();
                 }
                 try (PreparedStatement statement = connection.prepareStatement(completeReservationSql)) {

@@ -9,12 +9,13 @@ import java.util.List;
 
 public class BookDAOImpl implements BookDAO {
 
-    /** Truy vấn con tính số bản tốt và không bị một lượt mượn hiện hành chiếm giữ. */
-    private static final String AVAILABLE_COPY_COUNT_SQL = "(SELECT COUNT(*) FROM book_copies bc "
+    /** Truy vấn con tính số bản sao khả dụng: tổng số bản sao hiện có (tốt/hỏng nhẹ) trừ đi số phiếu mượn/chờ nhận đang hoạt động. */
+    private static final String AVAILABLE_COPY_COUNT_SQL = "((SELECT COUNT(*) FROM book_copies bc "
             + "WHERE bc.book_id = b.id AND bc.is_deleted = 0 "
-            + "AND bc.book_condition IN ('GOOD', 'WORN') "
-            + "AND NOT EXISTS (SELECT 1 FROM borrow_records br WHERE br.copy_id = bc.id "
-            + "AND ((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
+            + "AND bc.book_condition IN ('GOOD', 'WORN')) - "
+            + "(SELECT COUNT(*) FROM borrow_records br "
+            + "WHERE br.book_id = b.id AND "
+            + "((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
             + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
 
     @Override
