@@ -152,7 +152,7 @@
                             <label for="authorSelect" class="form-label">Tác giả <span class="required">*</span></label>
                             <input type="text" id="authorSearch" placeholder="🔍 Nhập để tìm kiếm tác giả nhanh..." class="form-control" style="margin-bottom: 8px; font-size: 13.5px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
                             <select id="authorSelect" name="authorIds" class="form-select" multiple
-                                    size="5" style="min-height:120px;">
+                                    data-author-multi-select size="5" style="min-height:120px;">
                                 <% if (authorsList != null) {
                                     for (Author a : authorsList) {
                                         boolean selected = selectedAuthorIds != null && selectedAuthorIds.contains(a.getId());
@@ -160,7 +160,10 @@
                                     <option value="<%= a.getId() %>" <%= selected ? "selected" : "" %>><%= a.getName() %></option>
                                 <% }} %>
                             </select>
-                            <span class="form-hint">Giữ Ctrl để chọn nhiều tác giả</span>
+                            <span class="form-hint">Nhấp vào từng tác giả để chọn hoặc bỏ chọn nhiều tác giả.</span>
+                            <label for="selectedAuthorsText" class="form-label">Đã chọn</label>
+                            <input id="selectedAuthorsText" type="text" class="form-control"
+                                   data-selected-authors-display readonly placeholder="Chưa chọn tác giả">
                         </div>
 
                         <!-- Publisher -->
@@ -274,6 +277,7 @@
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
 
+<script src="<%= ctx %>/assets/js/book-author-multi-select.js" defer></script>
 <script>
 // ---- Title live character counter & validation ----
 (function() {
