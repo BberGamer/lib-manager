@@ -131,14 +131,14 @@
                         <% } %>
                     </div>
                     <div class="book-detail-status">
-                        <span class="badge <%= book.getAvailable() > 0 ? "badge-success" : (book.getQuantity() > 0 ? "badge-warning" : "badge-danger") %>"
+                        <span class="badge <%= book.getAvailable() > 0 ? "badge-success" : (book.isReservable() ? "badge-warning" : "badge-danger") %>"
                               style="font-size:0.85rem; padding:6px 16px;">
-                            <i class="fa-solid <%= book.getAvailable() > 0 ? "fa-circle-check" : "fa-circle-xmark" %>"></i>
+                            <i class="fa-solid <%= book.getAvailable() > 0 ? "fa-circle-check" : (book.isReservable() ? "fa-clock" : "fa-circle-xmark") %>"></i>
                             <%= book.getAvailabilityLabel() %>
                         </span>
                     </div>
 
-                    <!-- User: mượn trực tiếp khi còn bản sao, đặt trước khi đã hết bản sao -->
+                    <!-- Reader có thể mượn ngay khi còn bản và đặt trước khi có slot dự kiến. -->
                     <% if (loggedUser != null && !loggedUser.isAdminOrLibrarian()) { %>
                         <div class="book-detail-actions book-detail-reader-actions">
                             <% if (book.getAvailable() > 0) { %>
@@ -148,10 +148,16 @@
                                         <i class="fa-solid fa-book-open"></i> Mượn sách
                                     </button>
                                 </form>
-                            <% } else { %>
+                            <% } %>
+                            <% if (book.getAvailable() > 0 || book.isReservable()) { %>
                                 <a href="<%= ctx %>/reservation/create?bookId=<%= book.getId() %>" class="btn book-detail-reader-button">
                                     <i class="fa-solid fa-bookmark"></i> Đặt trước sách này
                                 </a>
+                            <% } else { %>
+                                <button type="button" class="btn book-detail-reader-button" disabled
+                                        title="Không còn lượt mượn đúng hạn để dự kiến ngày trả">
+                                    <i class="fa-solid fa-ban"></i> Chưa thể đặt trước
+                                </button>
                             <% } %>
                         </div>
                     <% } %>

@@ -80,6 +80,8 @@
                                                 Hết hạn nhận</option>
                                             <option value="CANCELLED" ${selectedStatus eq 'CANCELLED' ? 'selected' : ''
                                                 }>Đã hủy</option>
+                                            <option value="LOST" ${selectedStatus eq 'LOST' ? 'selected' : ''}>
+                                                Đã báo mất</option>
                                         </select>
                                     </label>
                                     <button type="submit" class="btn btn-primary borrow-filter-button">
@@ -186,6 +188,9 @@
                                                                         <c:when
                                                                             test="${borrowRecord.status eq 'CANCELLED'}">
                                                                             Đã hủy</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'LOST'}">
+                                                                            Đã báo mất</c:when>
                                                                         <c:otherwise>
                                                                             <c:out value="${borrowRecord.status}" />
                                                                         </c:otherwise>

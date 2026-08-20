@@ -377,6 +377,13 @@ public class BookCopyDAO {
         return 0;
     }
 
+    /**
+     * Kiểm tra bản sao có bị một lượt mượn hoặc giữ sách đang hoạt động chiếm dụng hay không.
+     *
+     * @param copyId mã bản sao cần kiểm tra
+     * @return {@code true} nếu bản sao đang bị chiếm dụng
+     * @throws Exception khi truy vấn dữ liệu thất bại
+     */
     public boolean isCopyBorrowedOrReserved(int copyId) throws Exception {
         String sql = "SELECT COUNT(*) FROM borrow_records br WHERE br.copy_id=? AND "
                 + "((br.status='PENDING_PICKUP' AND br.pickup_deadline>=NOW()) OR "

@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ReservationRecord {
@@ -7,10 +8,13 @@ public class ReservationRecord {
     private int bookId;
     private int userId;
     private LocalDateTime reserveDate;
+    private LocalDate requestedPickupDate;
+    private LocalDate expectedPickupDate;
     private LocalDateTime expiryDate;
     private String status; // WAITING, READY_FOR_PICKUP, COMPLETED, CANCELLED, EXPIRED
     private int queuePosition;
     private LocalDateTime notifiedAt;
+    private LocalDateTime delayNotifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -61,6 +65,26 @@ public class ReservationRecord {
         this.reserveDate = reserveDate;
     }
 
+    /** @return ngày độc giả mong muốn đến nhận sách */
+    public LocalDate getRequestedPickupDate() {
+        return requestedPickupDate;
+    }
+
+    /** @param requestedPickupDate ngày nhận do độc giả lựa chọn */
+    public void setRequestedPickupDate(LocalDate requestedPickupDate) {
+        this.requestedPickupDate = requestedPickupDate;
+    }
+
+    /** @return ngày hệ thống dự kiến có slot sách cho yêu cầu */
+    public LocalDate getExpectedPickupDate() {
+        return expectedPickupDate;
+    }
+
+    /** @param expectedPickupDate ngày dự kiến được phân bổ từ lịch trả sách */
+    public void setExpectedPickupDate(LocalDate expectedPickupDate) {
+        this.expectedPickupDate = expectedPickupDate;
+    }
+
     public LocalDateTime getExpiryDate() {
         return expiryDate;
     }
@@ -88,6 +112,16 @@ public class ReservationRecord {
 
     public void setNotifiedAt(LocalDateTime notifiedAt) {
         this.notifiedAt = notifiedAt;
+    }
+
+    /** @return thời điểm đã thông báo lịch nhận bị trễ, hoặc {@code null} nếu chưa báo */
+    public LocalDateTime getDelayNotifiedAt() {
+        return delayNotifiedAt;
+    }
+
+    /** @param delayNotifiedAt thời điểm hệ thống ghi nhận đã báo trễ */
+    public void setDelayNotifiedAt(LocalDateTime delayNotifiedAt) {
+        this.delayNotifiedAt = delayNotifiedAt;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -130,6 +164,8 @@ public class ReservationRecord {
                 ", bookId=" + bookId +
                 ", status='" + status + '\'' +
                 ", reserveDate=" + reserveDate +
+                ", requestedPickupDate=" + requestedPickupDate +
+                ", expectedPickupDate=" + expectedPickupDate +
                 ", expiryDate=" + expiryDate +
                 ", notifiedAt=" + notifiedAt +
                 ", createdAt=" + createdAt +

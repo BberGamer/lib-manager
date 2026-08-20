@@ -17,7 +17,7 @@ public class BorrowRecord {
     private LocalDate dueDate;
     private LocalDate returnDate;
     private int renewalCount;
-    private String status; // PENDING_PICKUP, BORROWED, RETURNED, EXPIRED, CANCELLED, OVERDUE
+    private String status; // PENDING_PICKUP, BORROWED, RETURNED, EXPIRED, CANCELLED, OVERDUE, LOST
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

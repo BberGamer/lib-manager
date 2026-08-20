@@ -46,14 +46,40 @@
 .borrow-status.pending { color: #a76000; background: #fff3d8; }
 .borrow-status.overdue { color: #df304f; background: #ffebee; }
 .borrow-status.returned { color: #267a4b; background: #e8f7ee; }
+.borrow-status.lost { color: #a1263d; background: #ffe8ed; }
 .renew-form { margin: 0; }
 .renew-button { background: linear-gradient(180deg, #ff8a1d, #eb6200); color: #fff; border: 0; border-radius: 6px; padding: 7px 14px; font-family: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(235,98,0,.22); white-space: nowrap; }
 .renew-button:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .renew-button i { margin-right: 5px; }
 .renew-unavailable { color: #9aa2af; font-size: .75rem; white-space: nowrap; }
+.borrow-table td .renew-reservation-note { color: #b45309; max-width: 170px; }
+.borrow-lost-action { margin-top: 8px; }
+.borrow-lost-button { background: #fff; border: 1px solid #ef4864; border-radius: 6px; color: #c92d48; cursor: pointer; font-family: inherit; font-size: .78rem; font-weight: 600; line-height: 1.2; padding: 7px 12px; white-space: nowrap; }
+.borrow-lost-button:hover { background: #fff0f3; }
+.borrow-lost-button i { margin-right: 5px; }
+.borrow-review-action { margin-top: 8px; }
+.borrow-review-link { align-items: center; display: inline-flex; gap: 4px; font-size: .82rem; }
+.borrow-review-link.is-reviewed { color: var(--text-muted); text-decoration: none; }
+.borrow-review-link.is-reviewed i { color: #f5a623; }
+.borrow-review-link.is-pending { color: var(--primary); font-weight: 600; text-decoration: underline; }
+.borrow-review-link.is-history-pending { background: linear-gradient(135deg, #f5a623, #f18d00); border-radius: 4px; color: #fff; font-weight: 500; padding: 4px 10px; text-decoration: none; }
+.borrow-review-empty { color: var(--text-muted); font-size: .85rem; }
 .borrow-empty { text-align: center; padding: 34px !important; color: #8a94a4 !important; }
 .borrow-empty i, .borrow-empty span { display: block; }
 .borrow-empty i { font-size: 1.5rem; margin-bottom: 8px; }
+.borrow-lost-dialog { border: 0; border-radius: 16px; box-shadow: 0 24px 70px rgba(15, 23, 42, .28); color: #17213a; max-width: 480px; padding: 0; width: calc(100% - 32px); }
+.borrow-lost-dialog::backdrop { background: rgba(15, 23, 42, .58); }
+.borrow-lost-dialog-content { padding: 28px; position: relative; text-align: center; }
+.borrow-lost-dialog-close { background: transparent; border: 0; color: #7a8496; cursor: pointer; font-size: 1.15rem; padding: 6px; position: absolute; right: 14px; top: 12px; }
+.borrow-lost-dialog-icon { align-items: center; background: #fff0f3; border-radius: 50%; color: #d52f4d; display: inline-flex; font-size: 1.65rem; height: 58px; justify-content: center; width: 58px; }
+.borrow-lost-dialog h2 { font-size: 1.25rem; margin: 16px 0 10px; }
+.borrow-lost-dialog p { color: #657087; line-height: 1.65; margin: 0; }
+.borrow-lost-dialog p strong { color: #17213a; }
+.borrow-lost-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.borrow-lost-dialog-actions button { border-radius: 7px; cursor: pointer; font-family: inherit; font-size: .85rem; font-weight: 600; line-height: 1.2; padding: 10px 15px; }
+.borrow-lost-dialog-cancel { background: #f3f5f8; border: 1px solid #dfe4eb; color: #4e5a70; }
+.borrow-lost-dialog-confirm { background: #d92f4d; border: 1px solid #d92f4d; color: #fff; }
+.borrow-lost-dialog-confirm:hover { background: #bd233e; }
 @media (max-width: 760px) {
     .borrow-hero-inner { align-items: flex-start; flex-direction: column; padding-top: 28px; padding-bottom: 28px; }
     .borrow-hero-counts { width: 100%; }
@@ -65,4 +91,6 @@
     .borrow-table td::before { content: attr(data-label); position: absolute; left: 0; top: 7px; width: 38%; font-weight: 700; color: #151d38; }
     .borrow-empty { padding-left: 0 !important; }
     .borrow-empty::before { display: none; }
+    .borrow-lost-dialog-actions { flex-direction: column-reverse; }
+    .borrow-lost-dialog-actions button { width: 100%; }
 }

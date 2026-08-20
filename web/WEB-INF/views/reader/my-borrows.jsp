@@ -2,7 +2,8 @@
     Trang theo dõi sách đang mượn và lịch sử mượn của độc giả.
     Controller render: MyBorrowServlet (GET /borrow/my).
     Mong đợi request attributes: borrowPage, maximumActiveBorrows, maximumRenewals,
-    activePage; session attribute: loggedUser và thông báo flash tùy chọn.
+    activePage; session attribute: loggedUser và thông báo flash tùy chọn. Trang gửi
+    thao tác báo mất tới POST /borrow/my/report-lost.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -12,6 +13,8 @@
 <c:set var="pageStylesheet" value="/assets/css/my-borrows.css" scope="request" />
 <c:url var="renewUrl" value="/borrow/my/renew" />
 <c:url var="cancelUrl" value="/borrow/cancel" />
+<c:url var="reportLostUrl" value="/borrow/my/report-lost" />
+<c:url var="myBorrowScriptUrl" value="/assets/js/my-borrows.js" />
 
 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
 
@@ -135,6 +138,13 @@
                                                 <button type="submit" class="renew-button">Hủy yêu cầu</button>
                                             </form>
                                         </c:when>
+                                        <c:when test="${record.status eq 'BORROWED'
+                                                and borrowPage.renewalBlockedBorrowIds.contains(record.id)}">
+                                            <span class="renew-unavailable">Không thể gia hạn</span>
+                                            <small class="renew-reservation-note">
+                                                Đầu sách đã có người đặt trước.
+                                            </small>
+                                        </c:when>
                                         <c:when test="${record.status eq 'BORROWED' and record.renewalCount lt maximumRenewals}">
                                             <form action="${renewUrl}" method="post" class="renew-form">
                                                 <input type="hidden" name="borrowRecordId" value="${record.id}">
@@ -148,15 +158,27 @@
                                         </c:otherwise>
                                     </c:choose>
                                     <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
-                                        <div style="margin-top: 8px;">
+                                        <div class="borrow-lost-action">
+                                            <button type="button" class="borrow-lost-button"
+                                                    data-open-lost-dialog
+                                                    data-borrow-record-id="${record.id}">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Báo mất sách
+                                            </button>
+                                        </div>
+                                    </c:if>
+                                    <c:if test="${record.status eq 'BORROWED' or record.status eq 'OVERDUE'}">
+                                        <div class="borrow-review-action">
                                             <c:choose>
                                                 <c:when test="${reviewedBorrowIds.contains(record.id)}">
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    <a class="borrow-review-link is-reviewed"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}">
+                                                        <i class="fa-solid fa-star"></i> Đã đánh giá
                                                     </a>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="color: var(--primary); font-size: 0.82rem; text-decoration: underline; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                    <a class="borrow-review-link is-pending"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}">
                                                         <i class="fa-solid fa-pen-to-square"></i> Viết đánh giá
                                                     </a>
                                                 </c:otherwise>
@@ -208,10 +230,11 @@
                                     <c:out value="${record.returnDate}" default="—" />
                                 </td>
                                 <td data-label="Trạng thái">
-                                    <span class="borrow-status returned">
+                                    <span class="borrow-status ${record.status eq 'LOST' ? 'lost' : 'returned'}">
                                         <c:choose>
                                             <c:when test="${record.status eq 'RETURNED'}">Đã trả</c:when>
                                             <c:when test="${record.status eq 'EXPIRED'}">Hết hạn nhận</c:when>
+                                            <c:when test="${record.status eq 'LOST'}">Đã báo mất</c:when>
                                             <c:otherwise>Đã hủy</c:otherwise>
                                         </c:choose>
                                     </span>
@@ -221,19 +244,21 @@
                                         <c:when test="${record.status eq 'RETURNED'}">
                                             <c:choose>
                                                 <c:when test="${reviewedBorrowIds.contains(record.id)}">
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
-                                                        <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đã đánh giá
+                                                    <a class="borrow-review-link is-reviewed"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}">
+                                                        <i class="fa-solid fa-star"></i> Đã đánh giá
                                                     </a>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <a href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}" style="display: inline-block; padding: 4px 10px; font-size: 0.82rem; text-decoration: none; border-radius: 4px; background: linear-gradient(135deg, #f5a623, #f18d00); color: white; text-align: center; font-weight: 500;">
+                                                    <a class="borrow-review-link is-history-pending"
+                                                       href="${pageContext.request.contextPath}/book/detail?id=${record.bookId}&borrowId=${record.id}">
                                                         Viết đánh giá
                                                     </a>
                                                 </c:otherwise>
                                             </c:choose>
                                         </c:when>
                                         <c:otherwise>
-                                            <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                                            <span class="borrow-review-empty">—</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -253,5 +278,37 @@
         </section>
     </div>
 </main>
+
+<dialog class="borrow-lost-dialog" data-lost-dialog aria-labelledby="borrow-lost-dialog-title">
+    <section class="borrow-lost-dialog-content">
+        <button type="button" class="borrow-lost-dialog-close" data-close-lost-dialog
+                aria-label="Đóng cửa sổ xác nhận">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="borrow-lost-dialog-icon" aria-hidden="true">
+            <i class="fa-solid fa-book-skull"></i>
+        </div>
+        <h2 id="borrow-lost-dialog-title">Xác nhận báo mất sách</h2>
+        <p>
+            Bạn đang báo mất cuốn <strong data-lost-book-title></strong>.
+            Bản sao này sẽ bị loại khỏi tồn kho và thao tác không thể hoàn tác trên trang cá nhân.
+            Hệ thống đồng thời tạo một vé phạt chưa thanh toán bằng 100% giá cuốn sách.
+        </p>
+        <form action="${reportLostUrl}" method="post">
+            <input type="hidden" name="borrowRecordId" data-lost-borrow-id>
+            <div class="borrow-lost-dialog-actions">
+                <button type="button" class="borrow-lost-dialog-cancel" data-close-lost-dialog>
+                    Quay lại
+                </button>
+                <button type="submit" class="borrow-lost-dialog-confirm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Xác nhận báo mất
+                </button>
+            </div>
+        </form>
+    </section>
+</dialog>
+
+<script src="${myBorrowScriptUrl}" defer></script>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

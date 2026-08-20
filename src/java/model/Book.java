@@ -13,8 +13,8 @@ import java.sql.Timestamp;
  *
  * Trạng thái sách:
  *   - available > 0  → "Còn sách"
- *   - available == 0 AND quantity > 0 → "Đặt trước"
- *   - quantity == 0  → "Hết sách"
+ *   - available == 0 AND reservable → "Đặt trước"
+ *   - available == 0 AND NOT reservable → "Chưa thể đặt trước" hoặc "Hết sách"
  */
 public class Book {
 
@@ -28,6 +28,7 @@ public class Book {
     private Integer price;
     private int     quantity;       // tổng số bản
     private int     available;      // số bản còn cho mượn
+    private boolean reservable;     // có bản chờ nhận hoặc đang mượn đúng hạn để dự kiến slot
     private String  description;
     private String  coverImage;
     private String  subject;        // môn học liên quan
@@ -72,6 +73,11 @@ public class Book {
     public int getAvailable()               { return available; }
     public void setAvailable(int v)         { this.available = v; }
 
+    /** @return {@code true} khi đầu sách có bản chờ nhận hoặc lịch trả đúng hạn */
+    public boolean isReservable()           { return reservable; }
+    /** @param reservable khả năng nhận yêu cầu đặt trước theo các slot dự kiến */
+    public void setReservable(boolean reservable) { this.reservable = reservable; }
+
     public String getDescription()          { return description; }
     public void setDescription(String v)    { this.description = v; }
 
@@ -105,11 +111,12 @@ public class Book {
 
     /**
      * Trả về nhãn khả dụng được tổng hợp từ số bản có thể cho mượn.
-     * @return "Còn sách" | "Đặt trước" | "Hết sách"
+     * @return nhãn còn sách, đặt trước, chưa thể đặt trước hoặc hết sách
      */
     public String getAvailabilityLabel() {
         if (available > 0)                   return "Còn sách";
-        if (quantity > 0 && available == 0)  return "Đặt trước";
+        if (reservable)                      return "Đặt trước";
+        if (quantity > 0)                    return "Chưa thể đặt trước";
         return "Hết sách";
     }
 
@@ -120,7 +127,7 @@ public class Book {
      */
     public String getAvailabilityClass() {
         if (available > 0)                   return "status-available";
-        if (quantity > 0 && available == 0)  return "status-reserve";
+        if (reservable)                      return "status-reserve";
         return "status-unavailable";
     }
 

@@ -1,3 +1,6 @@
+/*
+ * DAO truy vấn đầu sách và tổng hợp số lượng khả dụng cho các luồng mượn, đặt trước.
+ */
 package dao;
 
 import model.Book;
@@ -7,10 +10,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Triển khai lưu trữ đầu sách, gồm tìm kiếm và tính khả năng mượn/đặt trước từ dữ liệu bản sao.
+ */
 public class BookDAOImpl implements BookDAO {
 
-    /** Truy vấn con tính số bản sao khả dụng: tổng số bản sao hiện có (tốt/hỏng nhẹ) trừ đi số phiếu mượn/chờ nhận đang hoạt động. */
-    private static final String AVAILABLE_COPY_COUNT_SQL = "((SELECT COUNT(*) FROM book_copies bc "
+    /** Truy vấn con tính slot logic còn lại, kể cả phiếu chờ nhận chưa được gán bản sao. */
+    private static final String LOGICALLY_AVAILABLE_COPY_COUNT_SQL
+            = "((SELECT COUNT(*) FROM book_copies bc "
             + "WHERE bc.book_id = b.id AND bc.is_deleted = 0 "
             + "AND bc.book_condition IN ('GOOD', 'WORN')) - "
             + "(SELECT COUNT(*) FROM borrow_records br "
@@ -18,11 +25,31 @@ public class BookDAOImpl implements BookDAO {
             + "((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
             + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
 
+    /** Truy vấn con đếm các yêu cầu đang chờ nhưng chưa được gán bản sao. */
+    private static final String WAITING_RESERVATION_COUNT_SQL
+            = "(SELECT COUNT(*) FROM book_reservations waiting_reservation "
+            + "WHERE waiting_reservation.book_id = b.id "
+            + "AND waiting_reservation.status = 'WAITING')";
+
+    /** Số bản có thể mượn ngay sau khi dành sách cho hàng đặt trước hiện tại. */
+    private static final String AVAILABLE_COPY_COUNT_SQL = "GREATEST(0, "
+            + LOGICALLY_AVAILABLE_COPY_COUNT_SQL + " - "
+            + WAITING_RESERVATION_COUNT_SQL + ")";
+
+    /** Cho biết còn slot đúng hạn hoặc bản rảnh đã được phân bổ cho hàng chờ để đặt lượt kế tiếp. */
+    private static final String RESERVABLE_SQL = "(EXISTS (SELECT 1 FROM borrow_records future_br "
+            + "WHERE future_br.book_id = b.id AND ((future_br.status = 'PENDING_PICKUP' "
+            + "AND future_br.pickup_deadline >= NOW()) OR (future_br.status = 'BORROWED' "
+            + "AND future_br.return_date IS NULL AND future_br.due_date >= CURDATE()))) OR ("
+            + LOGICALLY_AVAILABLE_COPY_COUNT_SQL + " > 0 AND "
+            + WAITING_RESERVATION_COUNT_SQL + " > 0))";
+
     @Override
     public Book findById(int id) throws Exception {
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
                 + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
-                + " AS available, b.description, b.cover_image, b.subject, b.is_deleted "
+                + " AS available, " + RESERVABLE_SQL
+                + " AS reservable, b.description, b.cover_image, b.subject, b.is_deleted "
                 + "FROM books b WHERE b.id = ? AND b.is_deleted = 0";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -41,7 +68,8 @@ public class BookDAOImpl implements BookDAO {
         List<Book> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, ")
-          .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, b.description, b.cover_image, b.subject ")
+          .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, ")
+          .append(RESERVABLE_SQL).append(" AS reservable, b.description, b.cover_image, b.subject ")
           .append("FROM books b ")
           .append("LEFT JOIN book_authors ba ON b.id = ba.book_id ")
           .append("LEFT JOIN authors a ON ba.author_id = a.id AND a.is_deleted = 0 ")
@@ -360,7 +388,8 @@ public class BookDAOImpl implements BookDAO {
         // Truy vấn danh sách sách được mượn nhiều nhất dựa trên bảng borrow_records
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
                    + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
-                   + " AS available, b.description, b.cover_image, b.subject, "
+                   + " AS available, " + RESERVABLE_SQL
+                   + " AS reservable, b.description, b.cover_image, b.subject, "
                    + "COUNT(br.id) AS borrow_count "
                    + "FROM books b "
                    + "LEFT JOIN borrow_records br ON b.id = br.book_id "
@@ -386,7 +415,8 @@ public class BookDAOImpl implements BookDAO {
     public List<Book> getLatestBooks(int days, int limit) throws Exception {
         List<Book> list = new ArrayList<>();
         String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, "
-                   + AVAILABLE_COPY_COUNT_SQL + " AS available, b.description, b.cover_image, b.subject "
+                   + AVAILABLE_COPY_COUNT_SQL + " AS available, " + RESERVABLE_SQL
+                   + " AS reservable, b.description, b.cover_image, b.subject "
                    + "FROM books b "
                    + "LEFT JOIN categories c ON b.category_id = c.id AND c.is_deleted = 0 "
                    + "WHERE b.is_deleted = 0 AND b.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) "
@@ -423,6 +453,7 @@ public class BookDAOImpl implements BookDAO {
         if (rs.wasNull()) b.setPrice(null);
         b.setQuantity(rs.getInt("quantity"));
         b.setAvailable(rs.getInt("available"));
+        b.setReservable(rs.getBoolean("reservable"));
         b.setDescription(rs.getString("description"));
         b.setCoverImage(rs.getString("cover_image"));
         b.setSubject(rs.getString("subject"));

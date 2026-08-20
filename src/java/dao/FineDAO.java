@@ -1,3 +1,6 @@
+/*
+ * DAO lưu trữ khoản phạt, gồm khoản phạt quá hạn và khoản phạt do tình trạng sách.
+ */
 package dao;
 
 import model.Fine;
@@ -13,6 +16,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cung cấp truy vấn và thao tác ghi cho khoản phạt, đồng thời hỗ trợ tham gia giao dịch
+ * nghiệp vụ do service sở hữu.
+ */
 public class FineDAO {
 
     private static final String FINE_DETAIL_SELECT =
@@ -161,21 +168,42 @@ public class FineDAO {
         return 0;
     }
 
+    /**
+     * Tạo khoản phạt tình trạng sách bằng kết nối riêng của DAO.
+     *
+     * @param fine khoản phạt đã được service kiểm tra
+     * @return {@code true} nếu khoản phạt được tạo và chưa tồn tại khoản phạt tình trạng sách
+     * @throws Exception khi không thể ghi dữ liệu
+     */
     public boolean createFine(Fine fine) throws Exception {
-        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, book_condition, fine_type, reason, "
-                + "status, created_at, updated_at) "
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            return createFine(connection, fine);
+        }
+    }
+
+    /**
+     * Tạo khoản phạt tình trạng sách trong giao dịch do service sở hữu.
+     * Phương thức không commit hoặc rollback kết nối được truyền vào.
+     *
+     * @param connection kết nối đang tham gia giao dịch nghiệp vụ
+     * @param fine khoản phạt đã được service kiểm tra
+     * @return {@code true} nếu khoản phạt được tạo và chưa tồn tại khoản phạt tình trạng sách
+     * @throws SQLException khi không thể ghi dữ liệu
+     */
+    public boolean createFine(Connection connection, Fine fine) throws SQLException {
+        String sql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, "
+                + "book_condition, fine_type, reason, status, created_at, updated_at) "
                 + "SELECT ?, ?, ?, 0, ?, 'BOOK_CONDITION', ?, 'UNPAID', NOW(), NOW() "
                 + "WHERE NOT EXISTS (SELECT 1 FROM fines WHERE borrow_record_id = ? "
                 + "AND fine_type = 'BOOK_CONDITION')";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, fine.getBorrowRecordId());
-            ps.setInt(2, fine.getUserId());
-            ps.setBigDecimal(3, fine.getAmount());
-            ps.setString(4, fine.getBookCondition());
-            ps.setString(5, fine.getReason());
-            ps.setInt(6, fine.getBorrowRecordId());
-            return ps.executeUpdate() > 0;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, fine.getBorrowRecordId());
+            statement.setInt(2, fine.getUserId());
+            statement.setBigDecimal(3, fine.getAmount());
+            statement.setString(4, fine.getBookCondition());
+            statement.setString(5, fine.getReason());
+            statement.setInt(6, fine.getBorrowRecordId());
+            return statement.executeUpdate() > 0;
         }
     }
 

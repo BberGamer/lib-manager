@@ -96,10 +96,10 @@
         setModalField(modal, 'loan', 'requestId', `#${trigger.dataset.recordId}`);
         setModalField(modal, 'loan', 'bookTitle', trigger.dataset.bookTitle);
         setModalField(modal, 'loan', 'readerName', trigger.dataset.readerName);
-        
+
         const barcodeVal = trigger.dataset.barcode;
         setModalField(modal, 'loan', 'barcode', barcodeVal === '-' ? '' : barcodeVal);
-        
+
         setModalField(modal, 'loan', 'requestDate', formatDateTime(trigger.dataset.requestDate));
         setModalField(modal, 'loan', 'pickupDeadline', formatDateTime(trigger.dataset.pickupDeadline));
         openModal(modal);
@@ -203,7 +203,7 @@
         const returnTrigger = event.target.closest('[data-open-return-modal]');
         const fineTrigger = event.target.closest('[data-open-fine-modal]');
         const closeTrigger = event.target.closest('[data-close-borrow-modal]');
-        
+
         const startScanBtn = event.target.closest('#start-scan-btn');
         const stopScanBtn = event.target.closest('#stop-scan-btn');
 
