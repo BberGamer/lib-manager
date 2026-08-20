@@ -388,7 +388,7 @@ public class ReservationDAO {
     }
 
     /**
-     * Lấy các yêu cầu đã đến ngày dự kiến để thử gán bản sao đang có sẵn.
+     * Lấy các yêu cầu đã đến ngày dự kiến để thử tạo slot chờ nhận khi còn sách.
      *
      * @return danh sách mã yêu cầu theo ngày dự kiến và thứ tự tạo
      * @throws Exception khi không thể đọc hàng chờ
@@ -565,11 +565,11 @@ public class ReservationDAO {
     }
 
     /**
-     * Giữ một bản sao cho reservation WAITING cũ nhất trong thời lượng chỉ định.
+     * Giữ một slot chờ nhận cho reservation WAITING cũ nhất trong thời lượng chỉ định.
      *
      * @param bookId mã đầu sách
-     * @param readyHours số giờ giữ bản sao
-     * @return {@code true} khi reservation được gán bản sao thành công
+     * @param readyHours số giờ giữ slot chờ nhận
+     * @return {@code true} khi reservation được tạo lượt chờ nhận thành công
      * @throws Exception khi thao tác dữ liệu thất bại
      */
     public boolean activateNext(int bookId, int readyHours) throws Exception {
@@ -595,7 +595,7 @@ public class ReservationDAO {
      *
      * @param reservationId mã reservation đang chờ
      * @param operator tài khoản thực hiện
-     * @return reservation đã được gán bản sao, hoặc {@code null} nếu không còn hợp lệ
+     * @return reservation đã chuyển sang chờ nhận, hoặc {@code null} nếu không còn hợp lệ
      * @throws Exception khi thao tác dữ liệu thất bại
      */
     public ReservationRecord manuallyReadyReservation(int reservationId, String operator) throws Exception {
@@ -603,12 +603,12 @@ public class ReservationDAO {
     }
 
     /**
-     * Khóa reservation và một bản sao có thể mượn, sau đó tạo lượt chờ nhận trong cùng transaction.
+     * Khóa reservation và một slot có thể mượn, sau đó tạo lượt chờ nhận chưa gán bản sao.
      *
      * @param reservationId mã reservation đang chờ
      * @param operator tài khoản thực hiện
-     * @param readyHours số giờ giữ bản sao
-     * @return reservation đã được gán bản sao, hoặc {@code null} nếu không còn hợp lệ
+     * @param readyHours số giờ giữ slot chờ nhận
+     * @return reservation đã chuyển sang chờ nhận, hoặc {@code null} nếu không còn hợp lệ
      * @throws Exception khi thao tác dữ liệu thất bại
      */
     private ReservationRecord manuallyReadyReservation(int reservationId, String operator,
@@ -622,15 +622,22 @@ public class ReservationDAO {
                 + "WHERE br.user_id=r.user_id AND ((br.status='PENDING_PICKUP' "
                 + "AND br.pickup_deadline>=NOW()) OR (br.status IN ('BORROWED','OVERDUE') "
                 + "AND br.return_date IS NULL)))<3 FOR UPDATE";
-        String copySql = "SELECT bc.id FROM book_copies bc WHERE bc.book_id = ? AND bc.is_deleted = 0 "
+        String availableSlotSql = "SELECT bc.id FROM book_copies bc WHERE bc.book_id = ? AND bc.is_deleted = 0 "
                 + "AND bc.book_condition IN ('GOOD', 'WORN') AND NOT EXISTS ("
-                + ACTIVE_BORROW_CONFLICT_SQL + ") ORDER BY bc.id LIMIT 1 FOR UPDATE";
+                + ACTIVE_BORROW_CONFLICT_SQL + ") AND (SELECT COUNT(*) FROM borrow_records active_borrow "
+                + "WHERE active_borrow.book_id=bc.book_id AND ((active_borrow.status='PENDING_PICKUP' "
+                + "AND active_borrow.pickup_deadline>=NOW()) OR "
+                + "(active_borrow.status IN ('BORROWED','OVERDUE') "
+                + "AND active_borrow.return_date IS NULL))) < (SELECT COUNT(*) FROM book_copies eligible_copy "
+                + "WHERE eligible_copy.book_id=bc.book_id AND eligible_copy.is_deleted=0 "
+                + "AND eligible_copy.book_condition IN ('GOOD','WORN')) "
+                + "ORDER BY bc.id LIMIT 1 FOR UPDATE";
         String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), "
                 + "expiry_date = DATE_ADD(NOW(), INTERVAL ? HOUR), updated_at = NOW() WHERE id = ?";
         String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, "
                 + "request_date, pickup_deadline, borrow_date, due_date, renewal_count, "
                 + "status, created_at, updated_at) "
-                + "VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
+                + "VALUES (?, ?, NULL, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
                 + "'PENDING_PICKUP', NOW(), NOW())";
 
         try (Connection conn = DBContext.getInstance().getConnection()) {
@@ -662,18 +669,17 @@ public class ReservationDAO {
                     return null;
                 }
 
-                // Check for available copy
-                int copyId = -1;
-                try (PreparedStatement ps = conn.prepareStatement(copySql)) {
+                boolean hasAvailableSlot = false;
+                try (PreparedStatement ps = conn.prepareStatement(availableSlotSql)) {
                     ps.setInt(1, bookId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
-                            copyId = rs.getInt(1);
+                            hasAvailableSlot = true;
                         }
                     }
                 }
 
-                if (copyId == -1) {
+                if (!hasAvailableSlot) {
                     conn.rollback();
                     return null;
                 }
@@ -689,8 +695,7 @@ public class ReservationDAO {
                 try (PreparedStatement ps = conn.prepareStatement(insertBorrow)) {
                     ps.setInt(1, userId);
                     ps.setInt(2, bookId);
-                    ps.setInt(3, copyId);
-                    ps.setInt(4, readyHours);
+                    ps.setInt(3, readyHours);
                     ps.executeUpdate();
                 }
 

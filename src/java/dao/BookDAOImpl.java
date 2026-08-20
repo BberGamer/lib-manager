@@ -1,3 +1,6 @@
+/*
+ * DAO truy vấn đầu sách và tổng hợp số lượng khả dụng cho các luồng mượn, đặt trước.
+ */
 package dao;
 
 import model.Book;
@@ -7,15 +10,19 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Triển khai lưu trữ đầu sách, gồm tìm kiếm và tính khả năng mượn/đặt trước từ dữ liệu bản sao.
+ */
 public class BookDAOImpl implements BookDAO {
 
-    /** Truy vấn con tính số bản vật lý tốt và chưa bị một lượt mượn hiện hành chiếm giữ. */
-    private static final String PHYSICALLY_AVAILABLE_COPY_COUNT_SQL
-            = "(SELECT COUNT(*) FROM book_copies bc "
+    /** Truy vấn con tính slot logic còn lại, kể cả phiếu chờ nhận chưa được gán bản sao. */
+    private static final String LOGICALLY_AVAILABLE_COPY_COUNT_SQL
+            = "((SELECT COUNT(*) FROM book_copies bc "
             + "WHERE bc.book_id = b.id AND bc.is_deleted = 0 "
-            + "AND bc.book_condition IN ('GOOD', 'WORN') "
-            + "AND NOT EXISTS (SELECT 1 FROM borrow_records br WHERE br.copy_id = bc.id "
-            + "AND ((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
+            + "AND bc.book_condition IN ('GOOD', 'WORN')) - "
+            + "(SELECT COUNT(*) FROM borrow_records br "
+            + "WHERE br.book_id = b.id AND "
+            + "((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
             + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
 
     /** Truy vấn con đếm các yêu cầu đang chờ nhưng chưa được gán bản sao. */
@@ -26,7 +33,7 @@ public class BookDAOImpl implements BookDAO {
 
     /** Số bản có thể mượn ngay sau khi dành sách cho hàng đặt trước hiện tại. */
     private static final String AVAILABLE_COPY_COUNT_SQL = "GREATEST(0, "
-            + PHYSICALLY_AVAILABLE_COPY_COUNT_SQL + " - "
+            + LOGICALLY_AVAILABLE_COPY_COUNT_SQL + " - "
             + WAITING_RESERVATION_COUNT_SQL + ")";
 
     /** Cho biết còn slot đúng hạn hoặc bản rảnh đã được phân bổ cho hàng chờ để đặt lượt kế tiếp. */
@@ -34,7 +41,7 @@ public class BookDAOImpl implements BookDAO {
             + "WHERE future_br.book_id = b.id AND ((future_br.status = 'PENDING_PICKUP' "
             + "AND future_br.pickup_deadline >= NOW()) OR (future_br.status = 'BORROWED' "
             + "AND future_br.return_date IS NULL AND future_br.due_date >= CURDATE()))) OR ("
-            + PHYSICALLY_AVAILABLE_COPY_COUNT_SQL + " > 0 AND "
+            + LOGICALLY_AVAILABLE_COPY_COUNT_SQL + " > 0 AND "
             + WAITING_RESERVATION_COUNT_SQL + " > 0))";
 
     @Override

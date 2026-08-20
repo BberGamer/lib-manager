@@ -192,7 +192,7 @@ public class ReservationService {
      * Kích hoạt người chờ đã đến lịch khi một bản sách vừa được hoàn trả.
      *
      * @param bookId mã đầu sách vừa có bản trả
-     * @return {@code true} khi đã giữ bản sao cho một yêu cầu
+     * @return {@code true} khi đã tạo slot chờ nhận cho một yêu cầu
      * @throws Exception khi không thể cập nhật dữ liệu
      */
     public boolean activateNextReservation(int bookId) throws Exception {
@@ -200,7 +200,7 @@ public class ReservationService {
     }
 
     /**
-     * Thử giữ các bản đang rảnh cho mọi yêu cầu đã đến ngày dự kiến và gửi thông báo nhận sách.
+     * Thử tạo slot chờ nhận cho mọi yêu cầu đã đến ngày dự kiến và gửi thông báo nhận sách.
      *
      * @param sendEmail có gửi thêm email ngoài thông báo trong hệ thống hay không
      * @return số yêu cầu được chuyển sang sẵn sàng nhận

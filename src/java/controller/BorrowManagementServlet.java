@@ -1,9 +1,7 @@
 package controller;
 
 import dao.BorrowRecordDAO;
-import dao.BookCopyDAO;
 import model.BorrowRecord;
-import model.BookCopy;
 import model.User;
 import service.BorrowService;
 import service.ReservationService;
@@ -13,6 +11,8 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @WebServlet(name = "BorrowManagementServlet", urlPatterns = {
     "/admin/borrow/list", "/admin/borrow/confirm-pickup", "/admin/borrow/confirm-return",
@@ -20,8 +20,8 @@ import java.util.List;
 })
 public class BorrowManagementServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(BorrowManagementServlet.class.getName());
     private final BorrowRecordDAO borrowRecordDAO = new BorrowRecordDAO();
-    private final BookCopyDAO bookCopyDAO = new BookCopyDAO();
     private final BorrowService borrowService = new BorrowService();
     private final ReservationService reservationService = new ReservationService();
 
@@ -81,9 +81,9 @@ public class BorrowManagementServlet extends HttpServlet {
             request.setAttribute("pageTitle", "Quản lý mượn trả – FPT Library");
             User loggedUser = (User) request.getSession(false).getAttribute("loggedUser");
             request.setAttribute("borrowActionPrefix", loggedUser.isAdmin() ? "/admin" : "/librarian");
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Lỗi tải danh sách mượn sách: " + e.getMessage());
+        } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Không thể tải danh sách mượn sách", exception);
+            request.setAttribute("error", "Không thể tải danh sách mượn sách lúc này.");
         }
 
         request.getRequestDispatcher("/WEB-INF/views/admin/borrow-list.jsp").forward(request, response);
@@ -115,79 +115,28 @@ public class BorrowManagementServlet extends HttpServlet {
             } else {
                 response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.setAttribute("errorMsg", "Đã xảy ra lỗi: " + e.getMessage());
+        } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Không thể xử lý thao tác mượn trả", exception);
+            session.setAttribute("errorMsg", "Không thể xử lý thao tác mượn trả lúc này.");
             response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
         }
     }
 
-    /** Xác nhận độc giả đã nhận bản sao được giữ, mọi thời hạn do service quyết định. */
     private void confirmPickup(HttpServletRequest request, HttpServletResponse response,
             String operator, String prefix) throws Exception {
         int borrowId = Integer.parseInt(request.getParameter("id"));
-        boolean success = borrowService.confirmPickup(borrowId, operator);
-        request.getSession().setAttribute(success ? "successMsg" : "errorMsg",
-                success ? "Đã xác nhận giao sách thành công."
-                        : "Không thể xác nhận giao sách. Yêu cầu có thể đã hết hạn hoặc không hợp lệ.");
-        response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
-    }
-
-    private void confirmLoan(HttpServletRequest request, HttpServletResponse response, String operator, String prefix) throws Exception {
-        int id = Integer.parseInt(request.getParameter("id"));
         String barcode = request.getParameter("barcode");
-        HttpSession session = request.getSession();
 
         if (barcode == null || barcode.trim().isEmpty()) {
-            session.setAttribute("errorMsg", "Vui lòng nhập hoặc quét mã vạch của bản sao sách!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
+            request.getSession().setAttribute("errorMsg", "Vui lòng quét hoặc nhập mã vạch bản sao sách!");
+            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
             return;
         }
 
-        BorrowRecord record = borrowRecordDAO.findById(id);
-        if (record == null) {
-            session.setAttribute("errorMsg", "Không tìm thấy yêu cầu mượn sách này!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
-            return;
-        }
-
-        List<BookCopy> copies = bookCopyDAO.searchCopies(record.getBookId(), barcode.trim(), null, 1, 10);
-        BookCopy targetCopy = null;
-        for (BookCopy c : copies) {
-            if (barcode.trim().equalsIgnoreCase(c.getBarcode())) {
-                targetCopy = c;
-                break;
-            }
-        }
-
-        if (targetCopy == null) {
-            session.setAttribute("errorMsg", "Không tìm thấy bản sao sách có mã vạch '" + barcode + "' của đầu sách này!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
-            return;
-        }
-
-        boolean isBorrowedOrReserved = false;
-        try {
-            isBorrowedOrReserved = bookCopyDAO.isCopyBorrowedOrReserved(targetCopy.getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        boolean hasBorrowableCondition = "GOOD".equals(targetCopy.getBookCondition())
-                || "WORN".equals(targetCopy.getBookCondition());
-        if (!hasBorrowableCondition || isBorrowedOrReserved) {
-            session.setAttribute("errorMsg", "Bản sao sách này hiện không khả dụng cho mượn (đang mượn/giữ hoặc tình trạng không tốt)!");
-            response.sendRedirect(request.getContextPath() + prefix + "/borrow/list?status=PENDING_PICKUP");
-            return;
-        }
-
-        boolean success = borrowRecordDAO.confirmLoan(
-                id, targetCopy.getId(), operator, BorrowService.LOAN_PERIOD_DAYS);
-        if (success) {
-            session.setAttribute("successMsg", "Đã xác nhận cho mượn sách thành công!");
-        } else {
-            session.setAttribute("errorMsg", "Xác nhận cho mượn thất bại!");
-        }
+        boolean success = borrowService.confirmPickup(borrowId, barcode.trim(), operator);
+        request.getSession().setAttribute(success ? "successMsg" : "errorMsg",
+                success ? "Đã xác nhận giao sách thành công."
+                        : "Không thể xác nhận giao sách. Mã vạch bản sao có thể không hợp lệ, không đúng đầu sách hoặc đã có người mượn/giữ.");
         response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
     }
 
