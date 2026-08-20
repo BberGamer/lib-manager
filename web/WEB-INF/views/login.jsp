@@ -37,7 +37,7 @@
                                         class="login-form">
                                         <%-- Ô nhập tên đăng nhập (dùng HTML5 required để ngăn gửi form trống) --%>
                                         <div class="form-group">
-                                            <label for="username">Tên đăng nhập</label>
+                                            <label for="username">Tên đăng nhập hoặc Email </label>
                                             <input type="text" id="username" name="username" required
                                                 placeholder="Nhập tên đăng nhập" class="form-control">
                                         </div>
