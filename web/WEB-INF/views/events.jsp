@@ -41,7 +41,7 @@
                         <i class="fa-solid fa-calendar-days"></i> Sự kiện
                     </div>
                     <h1 class="books-page-title">Quản lý Sự kiện</h1>
-                    <p class="books-page-subtitle">Xem, tìm kiếm và quản lý các sự kiện, hội thảo tại Thư viện FPT</p>
+                    <p class="books-page-subtitle">Xem, tìm kiếm và quản lý các sự kiện, trưng bày sách tại Thư viện FPT</p>
                 </div>
                 <div class="books-page-stats">
                     <div class="bps-item">
@@ -527,13 +527,7 @@
                             <input type="datetime-local" id="addEndTime" name="endTime" class="form-control">
                         </div>
                     </div>
-                    <div class="event-form-group">
-                        <label for="addStatus">Trạng thái sự kiện</label>
-                        <select id="addStatus" name="status" class="form-select">
-                            <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-                            <option value="CANCELLED">Hủy (CANCELLED)</option>
-                        </select>
-                    </div>
+                    <input type="hidden" name="status" value="ACTIVE">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline" data-action="close-modal">Hủy</button>
