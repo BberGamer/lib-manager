@@ -78,3 +78,56 @@
     .borrow-modal-actions { flex-direction: column-reverse; }
     .borrow-modal-actions .btn { width: 100%; }
 }
+
+/* Định dạng cho Trình Quét mã QR/Barcode bằng Camera */
+.barcode-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.barcode-input-wrapper input {
+    padding-right: 42px !important;
+}
+.scan-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.scan-btn:hover {
+    color: #4f46e5;
+    transform: scale(1.15);
+}
+#qr-reader-container {
+    margin-top: 15px;
+    border: 1px dashed var(--primary);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 10px;
+    background: #f8fafc;
+    text-align: center;
+}
+#qr-reader {
+    width: 100%;
+    border: none !important;
+}
+#qr-reader video {
+    border-radius: 6px;
+    width: 100% !important;
+}
+#qr-reader__dashboard {
+    padding: 10px 0 !important;
+}
+#qr-reader__status_span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+

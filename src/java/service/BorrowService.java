@@ -117,10 +117,42 @@ public class BorrowService {
         return borrowId > 0 && userId > 0 && borrowRecordDao.cancelPickupRequest(borrowId, userId);
     }
 
-    /** Xác nhận giao sách cho yêu cầu còn hạn nhận. */
-    public boolean confirmPickup(int borrowId, String operator) throws Exception {
+    /**
+     * Xác nhận giao sách cho yêu cầu còn hạn nhận và gán bản sao sách dựa trên mã vạch.
+     *
+     * @param borrowId mã lượt mượn
+     * @param barcode mã vạch bản sao được giao
+     * @param operator tài khoản thủ thư thực hiện
+     * @return {@code true} nếu xác nhận thành công
+     * @throws Exception khi xảy ra lỗi dữ liệu
+     */
+    public boolean confirmPickup(int borrowId, String barcode, String operator) throws Exception {
         borrowRecordDao.expirePendingRequests();
-        return borrowId > 0 && borrowRecordDao.confirmPickup(borrowId, operator);
+        if (borrowId <= 0 || barcode == null || barcode.trim().isEmpty()) {
+            return false;
+        }
+        
+        dao.BookCopyDAO bookCopyDao = new dao.BookCopyDAO();
+        model.BookCopy copy = bookCopyDao.findByBarcode(barcode.trim());
+        if (copy == null) {
+            return false;
+        }
+        
+        model.BorrowRecord record = borrowRecordDao.findById(borrowId);
+        if (record == null || record.getBookId() != copy.getBookId()) {
+            return false;
+        }
+        
+        if (bookCopyDao.isCopyBorrowedOrReserved(copy.getId())) {
+            return false;
+        }
+        
+        String condition = copy.getBookCondition();
+        if (!"GOOD".equalsIgnoreCase(condition) && !"WORN".equalsIgnoreCase(condition)) {
+            return false;
+        }
+        
+        return borrowRecordDao.confirmPickup(borrowId, copy.getId(), operator);
     }
 
     /**
