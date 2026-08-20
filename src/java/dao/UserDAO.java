@@ -25,9 +25,10 @@ public class UserDAO {
 
     // Lấy thông tin người dùng theo Tên đăng nhập (username)
     public User getUserByUsername(String username) throws Exception {
-        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE username = ?";
+        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE username = ? OR email = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, username); // thêm nếu (OR = ? ...)
+            ps.setString(1, username);
+            ps.setString(2, username); // thêm nếu (OR = ? ...)
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
