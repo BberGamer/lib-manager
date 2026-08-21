@@ -308,6 +308,9 @@ public class BookDetailServlet extends HttpServlet {
                 if (!authorIds.isEmpty()) {
                     dao.setBookAuthors(newId, authorIds);
                 }
+                // Ghi audit log tạo sách mới
+                String actor = loggedUser != null ? loggedUser.getUsername() : "admin";
+                utils.AuditLogger.logBookCreate(actor, newId, book.getTitle() != null ? book.getTitle() : "");
                 response.sendRedirect(redirectBase + "/book/detail?id=" + newId + "&success=created");
             } else {
                 setSidebarAttributes(request);
@@ -442,6 +445,10 @@ public class BookDetailServlet extends HttpServlet {
                 return;
             }
 
+            // Lấy tên sách trước khi xóa để ghi audit log
+            Book bookToDelete = dao.findById(id);
+            String bookTitle = bookToDelete != null && bookToDelete.getTitle() != null ? bookToDelete.getTitle() : "Không xác định";
+
             // Xóa liên kết tác giả trước
             dao.setBookAuthors(id, new ArrayList<>());
 
@@ -449,6 +456,7 @@ public class BookDetailServlet extends HttpServlet {
             boolean deleted = dao.deleteBook(id, operator);
 
             if (deleted) {
+                utils.AuditLogger.logBookDelete(operator, id, bookTitle);
                 response.sendRedirect(redirectBase + "/books?success=deleted");
             } else {
                 response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&error=delete_failed");

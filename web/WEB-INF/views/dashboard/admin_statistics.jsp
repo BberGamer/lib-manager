@@ -188,23 +188,83 @@
                                     } else if ("DELETE_USER".equals(act)) {
                                         label = "Xóa tài khoản";
                                         color = "#64748b";
+                                    } else if ("CREATE_USER".equals(act)) {
+                                        label = "Tạo tài khoản mới";
+                                        color = "#10b981";
+                                    } else if ("UPDATE_USER".equals(act)) {
+                                        label = "Cập nhật tài khoản";
+                                        color = "#6366f1";
                                     } else if ("WAIVE_FINE".equals(act)) {
                                         label = "Miễn giảm phạt";
                                         color = "#0284c7";
+                                    } else if ("FINE_PAID_CASH".equals(act)) {
+                                        label = "Thu tiền phạt (tiền mặt)";
+                                        color = "#059669";
+                                    } else if ("FINE_PAID_ONLINE".equals(act)) {
+                                        label = "Thanh toán phạt (VNPay)";
+                                        color = "#0891b2";
                                     } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
-                                        label = "Vượt hạn mức";
+                                        label = "Vượt hạn mức mượn";
                                         color = "#f59e0b";
                                     } else if ("APPLY_DAMAGE_FINE".equals(act)) {
-                                        label = "Phạt hỏng sách";
+                                        label = "Phạt hư hỏng sách";
                                         color = "#ea580c";
                                     } else if ("APPLY_LOST_FINE".equals(act)) {
                                         label = "Phạt mất sách";
                                         color = "#991b1b";
+                                    } else if ("BORROW_CONFIRM_PICKUP".equals(act)) {
+                                        label = "Giao sách cho độc giả";
+                                        color = "#16a34a";
+                                    } else if ("BORROW_CONFIRM_RETURN".equals(act)) {
+                                        label = "Nhận trả sách";
+                                        color = "#65a30d";
                                     } else if ("CONFIRM_RESERVATION".equals(act)) {
-                                        label = "Duyệt đặt trước";
+                                        label = "Xác nhận sách về (đặt trước)";
                                         color = "#a855f7";
+                                    } else if ("CANCEL_RESERVATION_BY_STAFF".equals(act)) {
+                                        label = "Hủy phiếu đặt trước";
+                                        color = "#9333ea";
+                                    } else if ("FOUND_ITEM_CREATE".equals(act)) {
+                                        label = "Tiếp nhận đồ để quên";
+                                        color = "#f97316";
+                                    } else if ("FOUND_ITEM_VERIFY_APPROVE".equals(act)) {
+                                        label = "Duyệt yêu cầu nhận đồ";
+                                        color = "#84cc16";
+                                    } else if ("FOUND_ITEM_VERIFY_REJECT".equals(act)) {
+                                        label = "Từ chối nhận đồ";
+                                        color = "#dc2626";
+                                    } else if ("FOUND_ITEM_HANDOVER_COMPLETE".equals(act)) {
+                                        label = "Bàn giao đồ hoàn tất";
+                                        color = "#15803d";
+                                    } else if ("BOOK_CREATE".equals(act)) {
+                                        label = "Thêm đầu sách mới";
+                                        color = "#2563eb";
+                                    } else if ("BOOK_DELETE".equals(act)) {
+                                        label = "Xóa đầu sách";
+                                        color = "#7c3aed";
+                                    } else if ("BOOK_BULK_IMPORT".equals(act) || "IMPORT_BOOKS".equals(act)) {
+                                        label = "Nhập sách từ file CSV";
+                                        color = "#1d4ed8";
+                                    } else if ("BOOK_EXPORT".equals(act)) {
+                                        label = "Xuất sách ra file CSV";
+                                        color = "#0284c7";
+                                    } else if ("POLICY_CREATE".equals(act)) {
+                                        label = "Tạo bản nháp điều lệ";
+                                        color = "#0e7490";
+                                    } else if ("POLICY_PUBLISH".equals(act)) {
+                                        label = "Xuất bản điều lệ";
+                                        color = "#047857";
+                                    } else if ("POLICY_ARCHIVE".equals(act)) {
+                                        label = "Lưu trữ điều lệ";
+                                        color = "#78716c";
+                                    } else if ("POLICY_DELETE".equals(act)) {
+                                        label = "Xóa bản nháp điều lệ";
+                                        color = "#b91c1c";
+                                    } else if ("POLICY_REVISE".equals(act)) {
+                                        label = "Tạo phiên bản sửa đổi";
+                                        color = "#0369a1";
                                     } else if ("AUTO_BATCH_REMINDER".equals(act)) {
-                                        label = "Quét tự động hàng loạt";
+                                        label = "Quét nhắc hạn tự động";
                                         color = "#06b6d4";
                                     } else if ("UPDATE_AUTOMATION_SETTING".equals(act)) {
                                         label = "Cập nhật cấu hình tự động";
@@ -267,23 +327,83 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if ("DELETE_USER".equals(act)) {
                     label = "Xóa tài khoản";
                     color = "#64748b";
+                } else if ("CREATE_USER".equals(act)) {
+                    label = "Tạo tài khoản mới";
+                    color = "#10b981";
+                } else if ("UPDATE_USER".equals(act)) {
+                    label = "Cập nhật tài khoản";
+                    color = "#6366f1";
                 } else if ("WAIVE_FINE".equals(act)) {
                     label = "Miễn giảm phạt";
                     color = "#0284c7";
+                } else if ("FINE_PAID_CASH".equals(act)) {
+                    label = "Thu tiền phạt (tiền mặt)";
+                    color = "#059669";
+                } else if ("FINE_PAID_ONLINE".equals(act)) {
+                    label = "Thanh toán phạt (VNPay)";
+                    color = "#0891b2";
                 } else if ("OVERRIDE_BORROW_LIMIT".equals(act)) {
-                    label = "Vượt hạn mức";
+                    label = "Vượt hạn mức mượn";
                     color = "#f59e0b";
                 } else if ("APPLY_DAMAGE_FINE".equals(act)) {
-                    label = "Phạt hỏng sách";
+                    label = "Phạt hư hỏng sách";
                     color = "#ea580c";
                 } else if ("APPLY_LOST_FINE".equals(act)) {
                     label = "Phạt mất sách";
                     color = "#991b1b";
+                } else if ("BORROW_CONFIRM_PICKUP".equals(act)) {
+                    label = "Giao sách cho độc giả";
+                    color = "#16a34a";
+                } else if ("BORROW_CONFIRM_RETURN".equals(act)) {
+                    label = "Nhận trả sách";
+                    color = "#65a30d";
                 } else if ("CONFIRM_RESERVATION".equals(act)) {
-                    label = "Duyệt đặt trước";
+                    label = "Xác nhận sách về (đặt trước)";
                     color = "#a855f7";
+                } else if ("CANCEL_RESERVATION_BY_STAFF".equals(act)) {
+                    label = "Hủy phiếu đặt trước";
+                    color = "#9333ea";
+                } else if ("FOUND_ITEM_CREATE".equals(act)) {
+                    label = "Tiếp nhận đồ để quên";
+                    color = "#f97316";
+                } else if ("FOUND_ITEM_VERIFY_APPROVE".equals(act)) {
+                    label = "Duyệt yêu cầu nhận đồ";
+                    color = "#84cc16";
+                } else if ("FOUND_ITEM_VERIFY_REJECT".equals(act)) {
+                    label = "Từ chối nhận đồ";
+                    color = "#dc2626";
+                } else if ("FOUND_ITEM_HANDOVER_COMPLETE".equals(act)) {
+                    label = "Bàn giao đồ hoàn tất";
+                    color = "#15803d";
+                } else if ("BOOK_CREATE".equals(act)) {
+                    label = "Thêm đầu sách mới";
+                    color = "#2563eb";
+                } else if ("BOOK_DELETE".equals(act)) {
+                    label = "Xóa đầu sách";
+                    color = "#7c3aed";
+                } else if ("BOOK_BULK_IMPORT".equals(act) || "IMPORT_BOOKS".equals(act)) {
+                    label = "Nhập sách từ file CSV";
+                    color = "#1d4ed8";
+                } else if ("BOOK_EXPORT".equals(act)) {
+                    label = "Xuất sách ra file CSV";
+                    color = "#0284c7";
+                } else if ("POLICY_CREATE".equals(act)) {
+                    label = "Tạo bản nháp điều lệ";
+                    color = "#0e7490";
+                } else if ("POLICY_PUBLISH".equals(act)) {
+                    label = "Xuất bản điều lệ";
+                    color = "#047857";
+                } else if ("POLICY_ARCHIVE".equals(act)) {
+                    label = "Lưu trữ điều lệ";
+                    color = "#78716c";
+                } else if ("POLICY_DELETE".equals(act)) {
+                    label = "Xóa bản nháp điều lệ";
+                    color = "#b91c1c";
+                } else if ("POLICY_REVISE".equals(act)) {
+                    label = "Tạo phiên bản sửa đổi";
+                    color = "#0369a1";
                 } else if ("AUTO_BATCH_REMINDER".equals(act)) {
-                    label = "Quét tự động hàng loạt";
+                    label = "Quét nhắc hạn tự động";
                     color = "#06b6d4";
                 } else if ("UPDATE_AUTOMATION_SETTING".equals(act)) {
                     label = "Cập nhật cấu hình tự động";

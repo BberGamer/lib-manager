@@ -88,6 +88,13 @@ public class BookImportExportServlet extends HttpServlet {
 
             bookExcelService.exportBooksToCsv(response.getOutputStream(), books);
 
+            // Ghi audit log xuất danh sách sách
+            HttpSession session = request.getSession(false);
+            User loggedUser = (session != null) ? (User) session.getAttribute("loggedUser") : null;
+            String operator = loggedUser != null ? loggedUser.getUsername() : "system";
+            utils.AuditLogger.log("BOOK_EXPORT", operator, 0,
+                    "Xuất danh sách sách ra file CSV: " + books.size() + " đầu sách | File: " + fileName);
+
         } catch (Exception e) {
             e.printStackTrace();
             request.getSession().setAttribute("dbError", "Lỗi khi xuất file danh sách sách: " + e.getMessage());
@@ -137,6 +144,7 @@ public class BookImportExportServlet extends HttpServlet {
 
             ImportResult result = bookExcelService.importBooksFromCsv(filePart.getInputStream(), loggedUser.getUsername());
             session.setAttribute("importResult", result);
+            // Lưu ý: BookExcelService đã tự ghi audit log "IMPORT_BOOKS" bên trong, không cần ghi thêm ở đây.
 
             if (result.getSuccessCount() > 0) {
                 session.setAttribute("successMsg", "Đã nhập thành công " + result.getSuccessCount() + "/" + result.getTotalRows() + " đầu sách vào hệ thống!");

@@ -150,6 +150,11 @@ public class FineManagementServlet extends HttpServlet {
                 Fine f = fineDAO.findById(id);
                 int targetUid = f != null ? f.getUserId() : 0;
                 utils.AuditLogger.logWaiveFine(operator, targetUid, id, paymentNote);
+            } else if ("PAID".equalsIgnoreCase(status)) {
+                Fine f = fineDAO.findById(id);
+                int targetUid = f != null ? f.getUserId() : 0;
+                String amount = f != null && f.getAmount() != null ? f.getAmount().toPlainString() : "0";
+                utils.AuditLogger.logFinePaidCash(operator, targetUid, id, amount);
             }
             session.setAttribute("successMsg", "Cập nhật trạng thái khoản phạt thành công!");
         } else {

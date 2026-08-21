@@ -24,6 +24,7 @@ import model.User;
 import exception.PolicyException;
 import service.PolicyService;
 import exception.PolicyValidationException;
+import utils.AuditLogger;
 import utils.RoleGuard;
 
 /** Nhận route `/admin/policies`, gọi PolicyService và forward các JSP được bảo vệ. */
@@ -213,6 +214,7 @@ public class AdminPolicyServlet extends HttpServlet {
         }
         try {
             policyService.createDraft(policy, currentActor(request));
+            AuditLogger.logPolicyCreate(currentActor(request), policy.getId(), policy.getTitle() != null ? policy.getTitle() : "");
             setFlash(request, FLASH_SUCCESS, "Đã tạo bản nháp điều lệ thành công.");
             redirectToList(request, response);
         } catch (PolicyValidationException exception) {
@@ -281,6 +283,8 @@ public class AdminPolicyServlet extends HttpServlet {
         try {
             Policy savedRevision = policyService.createRevision(
                     sourceId.get(), revision, currentActor(request));
+            AuditLogger.logPolicyRevise(currentActor(request), sourceId.get(), savedRevision.getId(),
+                    savedRevision.getTitle() != null ? savedRevision.getTitle() : "");
             setFlash(request, FLASH_SUCCESS,
                     "Đã tạo bản nháp phiên bản " + savedRevision.getVersion() + ".");
             redirectToList(request, response);
@@ -315,14 +319,25 @@ public class AdminPolicyServlet extends HttpServlet {
                 case "publish" -> {
                     policyService.publishPolicy(id.get(), currentActor(request));
                     successMessage = "Đã xuất bản điều lệ thành công.";
+                    // Lấy policy sau publish để ghi title
+                    policyService.findAdminPolicy(id.get()).ifPresent(p ->
+                        AuditLogger.logPolicyPublish(currentActor(request), p.getId(), p.getTitle() != null ? p.getTitle() : ""));
                 }
                 case "archive" -> {
+                    // Lấy title trước khi archive
+                    String archiveTitle = policyService.findAdminPolicy(id.get())
+                            .map(p -> p.getTitle() != null ? p.getTitle() : "").orElse("");
                     policyService.archivePolicy(id.get(), currentActor(request));
                     successMessage = "Đã lưu trữ điều lệ thành công.";
+                    AuditLogger.logPolicyArchive(currentActor(request), id.get(), archiveTitle);
                 }
                 default -> {
+                    // delete: lấy title trước khi xóa
+                    String deleteTitle = policyService.findAdminPolicy(id.get())
+                            .map(p -> p.getTitle() != null ? p.getTitle() : "").orElse("");
                     policyService.deleteDraft(id.get(), currentActor(request));
                     successMessage = "Đã xóa bản nháp điều lệ.";
+                    AuditLogger.logPolicyDelete(currentActor(request), id.get(), deleteTitle);
                 }
             }
             setFlash(request, FLASH_SUCCESS, successMessage);
