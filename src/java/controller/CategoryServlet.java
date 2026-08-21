@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import model.Category;
 import model.User;
 import service.CategoryService;
+import utils.AuditLogger;
 import utils.RoleGuard;
 
 /**
@@ -238,7 +239,8 @@ public class CategoryServlet extends HttpServlet {
             throws ServletException, IOException, CategoryException {
         Category category = readCategory(request, 0);
         try {
-            categoryService.createCategory(category, currentActor(request));
+            Category created = categoryService.createCategory(category, currentActor(request));
+            AuditLogger.logCategoryCreate(currentActor(request), created != null ? created.getId() : 0, category.getName());
             setFlash(request, FLASH_SUCCESS, "Đã thêm thể loại thành công.");
             redirectToList(request, response);
         } catch (CategoryValidationException exception) {
@@ -266,6 +268,7 @@ public class CategoryServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
+            AuditLogger.logCategoryUpdate(currentActor(request), id.get(), category.getName());
             setFlash(request, FLASH_SUCCESS, "Đã cập nhật thể loại thành công.");
             redirectToList(request, response);
         } catch (CategoryValidationException exception) {
@@ -286,8 +289,16 @@ public class CategoryServlet extends HttpServlet {
         if (id.isEmpty()) {
             return;
         }
+        String categoryName = categoryService.findCategory(id.get()).map(Category::getName).orElse("ID#" + id.get());
         try {
+<<<<<<< HEAD
+            boolean deleted = categoryService.deleteCategory(id.get());
+            if (deleted) {
+                AuditLogger.logCategoryDelete(currentActor(request), id.get(), categoryName);
+            }
+=======
             boolean deleted = categoryService.deleteCategory(id.get(), currentActor(request));
+>>>>>>> 9065f3e1cafc318d532d930377c873bed3229d2c
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa thể loại thành công." : "Không tìm thấy thể loại cần xóa.");
         } catch (CategoryValidationException exception) {

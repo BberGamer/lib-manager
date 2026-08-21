@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 import model.Author;
 import model.User;
 import service.AuthorService;
+import utils.AuditLogger;
 import utils.RoleGuard;
 
 /**
@@ -167,7 +168,8 @@ public class AuthorServlet extends HttpServlet {
             return;
         }
         try {
-            authorService.createAuthor(author, currentActor(request));
+            Author created = authorService.createAuthor(author, currentActor(request));
+            AuditLogger.logAuthorCreate(currentActor(request), created != null ? created.getId() : 0, author.getName());
             setFlash(request, FLASH_SUCCESS, "Đã thêm tác giả thành công.");
             redirectToList(request, response);
         } catch (AuthorValidationException exception) {
@@ -193,6 +195,7 @@ public class AuthorServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
+            AuditLogger.logAuthorUpdate(currentActor(request), id.get(), author.getName());
             setFlash(request, FLASH_SUCCESS, "Đã cập nhật tác giả thành công.");
             redirectToList(request, response);
         } catch (AuthorValidationException exception) {
@@ -207,8 +210,16 @@ public class AuthorServlet extends HttpServlet {
         if (id.isEmpty()) {
             return;
         }
+        String authorName = authorService.findAuthor(id.get()).map(Author::getName).orElse("ID#" + id.get());
         try {
+<<<<<<< HEAD
+            boolean deleted = authorService.deleteAuthor(id.get());
+            if (deleted) {
+                AuditLogger.logAuthorDelete(currentActor(request), id.get(), authorName);
+            }
+=======
             boolean deleted = authorService.deleteAuthor(id.get(), currentActor(request));
+>>>>>>> 9065f3e1cafc318d532d930377c873bed3229d2c
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa tác giả thành công." : "Không tìm thấy tác giả cần xóa.");
         } catch (AuthorValidationException exception) {

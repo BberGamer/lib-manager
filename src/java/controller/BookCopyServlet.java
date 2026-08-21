@@ -8,6 +8,7 @@ import model.BookCopy;
 import model.User;
 import model.Shelf;
 import service.ShelfService;
+import utils.AuditLogger;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -276,6 +277,7 @@ public class BookCopyServlet extends HttpServlet {
         boolean success = copyDao.addCopy(copy);
         if (success) {
             copyDao.addAuditLog(copy.getId(), "ADD", operator, null, copy.getBookCondition(), "Thêm bản sao mới");
+            AuditLogger.logBookCopyAdd(operator, bookId, copy.getBarcode(), copy.getShelf());
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=added");
         } else {
             errors.add("Thêm bản sao thất bại do lỗi hệ thống.");
@@ -380,6 +382,7 @@ public class BookCopyServlet extends HttpServlet {
         boolean success = copyDao.updateCopy(existingCopy);
         if (success) {
             copyDao.addAuditLog(id, "UPDATE", operator, oldCondition, condition, "Cập nhật bản sao");
+            AuditLogger.logBookCopyUpdate(operator, existingCopy.getBookId(), existingCopy.getBarcode(), condition);
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + existingCopy.getBookId() + "&success=updated");
         } else {
             errors.add("Cập nhật bản sao thất bại do lỗi hệ thống.");
@@ -416,6 +419,7 @@ public class BookCopyServlet extends HttpServlet {
         }
 
         int bookId = copy.getBookId();
+        String copyBarcode = copy.getBarcode();
 
         // Constraint check: Cannot delete BORROWED or RESERVED copy
         boolean isBorrowedOrReserved = false;
@@ -432,6 +436,7 @@ public class BookCopyServlet extends HttpServlet {
         boolean success = copyDao.deleteCopy(id, operator);
         if (success) {
             copyDao.addAuditLog(id, "DELETE", operator, copy.getBookCondition(), null, "Xóa bản sao");
+            AuditLogger.logBookCopyDelete(operator, bookId, copyBarcode);
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&success=deleted");
         } else {
             response.sendRedirect(redirectBase + "/book/copies?bookId=" + bookId + "&error=delete_failed");

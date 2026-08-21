@@ -13,6 +13,7 @@ package controller;
 import model.Event;
 import model.User;
 import service.EventService;
+import utils.AuditLogger;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -146,6 +147,7 @@ public class EventServlet extends HttpServlet {
                 event.setCreatedBy(loggedUser.getUsername());
 
                 eventService.createEvent(event);
+                AuditLogger.logEventCreate(loggedUser.getUsername(), event.getId(), event.getTitle());
                 session.setAttribute("successMsg", "Thêm sự kiện mới thành công!");
 
             } else if ("update".equalsIgnoreCase(action)) {
@@ -159,11 +161,18 @@ public class EventServlet extends HttpServlet {
                 event.setUpdatedBy(loggedUser.getUsername());
 
                 eventService.updateEvent(event);
+                AuditLogger.logEventUpdate(loggedUser.getUsername(), id, event.getTitle());
                 session.setAttribute("successMsg", "Cập nhật sự kiện thành công!");
 
             } else if ("delete".equalsIgnoreCase(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
+                String eventTitle = "";
+                try {
+                    Event ev = eventService.getEventById(id);
+                    if (ev != null && ev.getTitle() != null) eventTitle = ev.getTitle();
+                } catch (Exception ignored) {}
                 eventService.deleteEvent(id, loggedUser.getUsername());
+                AuditLogger.logEventDelete(loggedUser.getUsername(), id, eventTitle);
                 session.setAttribute("successMsg", "Xóa sự kiện thành công!");
 
             } else {

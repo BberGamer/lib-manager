@@ -393,6 +393,8 @@ public class BookDetailServlet extends HttpServlet {
             if (updated) {
                 // Update authors
                 dao.setBookAuthors(id, authorIds);
+                String actor = loggedUser != null ? loggedUser.getUsername() : "admin";
+                utils.AuditLogger.logBookUpdate(actor, id, book.getTitle() != null ? book.getTitle() : "");
                 response.sendRedirect(redirectBase + "/book/detail?id=" + id + "&success=updated");
             } else {
                 setSidebarAttributes(request);

@@ -97,22 +97,20 @@
                 <table class="reservation-table">
                     <thead>
                         <tr>
-                            <th>Mã</th>
+                            <th style="width: 55px;">Mã</th>
                             <th>Độc giả</th>
                             <th>Thông tin sách</th>
-                            <th>Ngày yêu cầu</th>
-                            <th>Ngày muốn nhận</th>
-                            <th>Ngày dự kiến</th>
-                            <th>Ngày hết hạn</th>
-                            <th>Trạng thái</th>
-                            <th class="reservation-actions-heading">Thao tác</th>
+                            <th>Ngày đặt / Muốn nhận</th>
+                            <th>Dự kiến / Hạn giữ</th>
+                            <th style="text-align: center;">Trạng thái</th>
+                            <th class="reservation-actions-heading" style="text-align: right;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:choose>
                             <c:when test="${empty reservationList}">
                                 <tr>
-                                    <td class="reservation-empty-state" colspan="9">
+                                    <td class="reservation-empty-state" colspan="7">
                                         <i class="fa-solid fa-hourglass-empty"></i>
                                         <span>Không tìm thấy yêu cầu đặt trước nào.</span>
                                     </td>
@@ -122,7 +120,7 @@
                                 <c:forEach var="reservation" items="${reservationList}">
                                     <tr>
                                         <td class="reservation-record-id">
-                                            <c:out value="${reservation.id}" />
+                                            #<c:out value="${reservation.id}" />
                                         </td>
                                         <td>
                                             <strong><c:out value="${reservation.user.fullName}" /></strong>
@@ -138,22 +136,36 @@
                                             <small>ISBN: <c:out value="${reservation.book.isbn}" /></small>
                                         </td>
                                         <td>
-                                            <c:out value="${empty reservation.reserveDate
-                                                ? '-' : reservation.reserveDate}" />
+                                            <span style="display: block; font-weight: 500; white-space: nowrap;">
+                                                <c:choose>
+                                                    <c:when test="${not empty reservation.reserveDate}">
+                                                        ${fn:replace(fn:substring(reservation.reserveDate, 0, 16), 'T', ' ')}
+                                                    </c:when>
+                                                    <c:otherwise>-</c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                            <c:if test="${not empty reservation.requestedPickupDate}">
+                                                <small style="color: #64748b; white-space: nowrap;">
+                                                    Nhận: <c:out value="${reservation.requestedPickupDate}" />
+                                                </small>
+                                            </c:if>
                                         </td>
                                         <td>
-                                            <c:out value="${empty reservation.requestedPickupDate
-                                                ? '-' : reservation.requestedPickupDate}" />
+                                            <span style="display: block; font-weight: 500; white-space: nowrap;">
+                                                <c:choose>
+                                                    <c:when test="${not empty reservation.expectedPickupDate}">
+                                                        Dự kiến: <c:out value="${reservation.expectedPickupDate}" />
+                                                    </c:when>
+                                                    <c:otherwise>-</c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                            <c:if test="${not empty reservation.expiryDate}">
+                                                <small style="color: #ef4444; font-weight: 500; white-space: nowrap;">
+                                                    Hạn: <c:out value="${reservation.expiryDate}" />
+                                                </small>
+                                            </c:if>
                                         </td>
-                                        <td>
-                                            <c:out value="${empty reservation.expectedPickupDate
-                                                ? '-' : reservation.expectedPickupDate}" />
-                                        </td>
-                                        <td>
-                                            <c:out value="${empty reservation.expiryDate
-                                                ? '-' : reservation.expiryDate}" />
-                                        </td>
-                                        <td>
+                                        <td style="text-align: center;">
                                             <span class="reservation-status
                                                   reservation-status-${fn:toLowerCase(reservation.status)}">
                                                 <c:choose>
@@ -176,19 +188,19 @@
                                             <c:choose>
                                                 <c:when test="${reservation.status eq 'WAITING'}">
                                                     <div class="reservation-action-group">
-                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                        <form action="${reservationUpdateUrl}" method="post" style="display: inline-block; margin: 0;">
                                                             <input type="hidden" name="id" value="${reservation.id}">
                                                             <input type="hidden" name="action" value="ready">
-                                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                            <button type="submit" class="btn btn-sm btn-primary" style="white-space: nowrap;">
                                                                 <i class="fa-solid fa-circle-check"></i>
                                                                 Sách đã về
                                                             </button>
                                                         </form>
-                                                        <form action="${reservationUpdateUrl}" method="post">
+                                                        <form action="${reservationUpdateUrl}" method="post" style="display: inline-block; margin: 0;">
                                                             <input type="hidden" name="id" value="${reservation.id}">
                                                             <input type="hidden" name="action" value="cancel">
                                                             <button type="submit"
-                                                                    class="btn btn-sm reservation-cancel-button">
+                                                                    class="btn btn-sm reservation-cancel-button" style="white-space: nowrap;">
                                                                 <i class="fa-solid fa-ban"></i>
                                                                 Hủy
                                                             </button>
@@ -196,12 +208,12 @@
                                                     </div>
                                                 </c:when>
                                                 <c:when test="${reservation.status eq 'READY_FOR_PICKUP'}">
-                                                    <span class="reservation-muted">
-                                                        Chờ giao sách tại trang Mượn trả
+                                                    <span class="reservation-muted" style="white-space: nowrap;">
+                                                        Chờ giao sách
                                                     </span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="reservation-muted">Hoàn tất</span>
+                                                    <span class="reservation-muted" style="white-space: nowrap;">Hoàn tất</span>
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
