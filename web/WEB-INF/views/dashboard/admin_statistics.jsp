@@ -239,15 +239,63 @@
                                     } else if ("BOOK_CREATE".equals(act)) {
                                         label = "Thêm đầu sách mới";
                                         color = "#2563eb";
+                                    } else if ("BOOK_UPDATE".equals(act)) {
+                                        label = "Cập nhật đầu sách";
+                                        color = "#3b82f6";
                                     } else if ("BOOK_DELETE".equals(act)) {
                                         label = "Xóa đầu sách";
                                         color = "#7c3aed";
+                                    } else if ("BOOK_COPY_ADD".equals(act)) {
+                                        label = "Thêm bản sao sách";
+                                        color = "#059669";
+                                    } else if ("BOOK_COPY_UPDATE".equals(act)) {
+                                        label = "Cập nhật bản sao sách";
+                                        color = "#10b981";
+                                    } else if ("BOOK_COPY_DELETE".equals(act)) {
+                                        label = "Xóa bản sao sách";
+                                        color = "#f43f5e";
                                     } else if ("BOOK_BULK_IMPORT".equals(act) || "IMPORT_BOOKS".equals(act)) {
                                         label = "Nhập sách từ file CSV";
                                         color = "#1d4ed8";
                                     } else if ("BOOK_EXPORT".equals(act)) {
                                         label = "Xuất sách ra file CSV";
                                         color = "#0284c7";
+                                    } else if ("SHELF_CREATE".equals(act)) {
+                                        label = "Thêm kệ sách mới";
+                                        color = "#d97706";
+                                    } else if ("SHELF_UPDATE".equals(act)) {
+                                        label = "Cập nhật kệ sách";
+                                        color = "#b45309";
+                                    } else if ("SHELF_DELETE".equals(act)) {
+                                        label = "Xóa kệ sách";
+                                        color = "#78350f";
+                                    } else if ("AUTHOR_CREATE".equals(act)) {
+                                        label = "Thêm tác giả mới";
+                                        color = "#4f46e5";
+                                    } else if ("AUTHOR_UPDATE".equals(act)) {
+                                        label = "Cập nhật tác giả";
+                                        color = "#4338ca";
+                                    } else if ("AUTHOR_DELETE".equals(act)) {
+                                        label = "Xóa tác giả";
+                                        color = "#3730a3";
+                                    } else if ("CATEGORY_CREATE".equals(act)) {
+                                        label = "Thêm danh mục mới";
+                                        color = "#0d9488";
+                                    } else if ("CATEGORY_UPDATE".equals(act)) {
+                                        label = "Cập nhật danh mục";
+                                        color = "#0f766e";
+                                    } else if ("CATEGORY_DELETE".equals(act)) {
+                                        label = "Xóa danh mục";
+                                        color = "#115e59";
+                                    } else if ("EVENT_CREATE".equals(act)) {
+                                        label = "Thêm sự kiện mới";
+                                        color = "#e11d48";
+                                    } else if ("EVENT_UPDATE".equals(act)) {
+                                        label = "Cập nhật sự kiện";
+                                        color = "#be123c";
+                                    } else if ("EVENT_DELETE".equals(act)) {
+                                        label = "Xóa sự kiện";
+                                        color = "#9f1239";
                                     } else if ("POLICY_CREATE".equals(act)) {
                                         label = "Tạo bản nháp điều lệ";
                                         color = "#0e7490";
@@ -263,6 +311,21 @@
                                     } else if ("POLICY_REVISE".equals(act)) {
                                         label = "Tạo phiên bản sửa đổi";
                                         color = "#0369a1";
+                                    } else if ("NOTIFICATION_BROADCAST".equals(act)) {
+                                        label = "Phát thông báo hệ thống";
+                                        color = "#ec4899";
+                                    } else if ("NOTIFICATION_SEND".equals(act)) {
+                                        label = "Gửi thông báo độc giả";
+                                        color = "#f43f5e";
+                                    } else if ("SEND_DUE_REMINDER".equals(act)) {
+                                        label = "Nhắc nhở sắp đến hạn";
+                                        color = "#f59e0b";
+                                    } else if ("SEND_OVERDUE_WARNING".equals(act)) {
+                                        label = "Cảnh báo sách quá hạn";
+                                        color = "#ef4444";
+                                    } else if ("SEND_FINE_REMINDER".equals(act)) {
+                                        label = "Nhắc nộp phí phạt";
+                                        color = "#b91c1c";
                                     } else if ("AUTO_BATCH_REMINDER".equals(act)) {
                                         label = "Quét nhắc hạn tự động";
                                         color = "#06b6d4";
@@ -378,15 +441,63 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if ("BOOK_CREATE".equals(act)) {
                     label = "Thêm đầu sách mới";
                     color = "#2563eb";
+                } else if ("BOOK_UPDATE".equals(act)) {
+                    label = "Cập nhật đầu sách";
+                    color = "#3b82f6";
                 } else if ("BOOK_DELETE".equals(act)) {
                     label = "Xóa đầu sách";
                     color = "#7c3aed";
+                } else if ("BOOK_COPY_ADD".equals(act)) {
+                    label = "Thêm bản sao sách";
+                    color = "#059669";
+                } else if ("BOOK_COPY_UPDATE".equals(act)) {
+                    label = "Cập nhật bản sao sách";
+                    color = "#10b981";
+                } else if ("BOOK_COPY_DELETE".equals(act)) {
+                    label = "Xóa bản sao sách";
+                    color = "#f43f5e";
                 } else if ("BOOK_BULK_IMPORT".equals(act) || "IMPORT_BOOKS".equals(act)) {
                     label = "Nhập sách từ file CSV";
                     color = "#1d4ed8";
                 } else if ("BOOK_EXPORT".equals(act)) {
                     label = "Xuất sách ra file CSV";
                     color = "#0284c7";
+                } else if ("SHELF_CREATE".equals(act)) {
+                    label = "Thêm kệ sách mới";
+                    color = "#d97706";
+                } else if ("SHELF_UPDATE".equals(act)) {
+                    label = "Cập nhật kệ sách";
+                    color = "#b45309";
+                } else if ("SHELF_DELETE".equals(act)) {
+                    label = "Xóa kệ sách";
+                    color = "#78350f";
+                } else if ("AUTHOR_CREATE".equals(act)) {
+                    label = "Thêm tác giả mới";
+                    color = "#4f46e5";
+                } else if ("AUTHOR_UPDATE".equals(act)) {
+                    label = "Cập nhật tác giả";
+                    color = "#4338ca";
+                } else if ("AUTHOR_DELETE".equals(act)) {
+                    label = "Xóa tác giả";
+                    color = "#3730a3";
+                } else if ("CATEGORY_CREATE".equals(act)) {
+                    label = "Thêm danh mục mới";
+                    color = "#0d9488";
+                } else if ("CATEGORY_UPDATE".equals(act)) {
+                    label = "Cập nhật danh mục";
+                    color = "#0f766e";
+                } else if ("CATEGORY_DELETE".equals(act)) {
+                    label = "Xóa danh mục";
+                    color = "#115e59";
+                } else if ("EVENT_CREATE".equals(act)) {
+                    label = "Thêm sự kiện mới";
+                    color = "#e11d48";
+                } else if ("EVENT_UPDATE".equals(act)) {
+                    label = "Cập nhật sự kiện";
+                    color = "#be123c";
+                } else if ("EVENT_DELETE".equals(act)) {
+                    label = "Xóa sự kiện";
+                    color = "#9f1239";
                 } else if ("POLICY_CREATE".equals(act)) {
                     label = "Tạo bản nháp điều lệ";
                     color = "#0e7490";
@@ -402,6 +513,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if ("POLICY_REVISE".equals(act)) {
                     label = "Tạo phiên bản sửa đổi";
                     color = "#0369a1";
+                } else if ("NOTIFICATION_BROADCAST".equals(act)) {
+                    label = "Phát thông báo hệ thống";
+                    color = "#ec4899";
+                } else if ("NOTIFICATION_SEND".equals(act)) {
+                    label = "Gửi thông báo độc giả";
+                    color = "#f43f5e";
+                } else if ("SEND_DUE_REMINDER".equals(act)) {
+                    label = "Nhắc nhở sắp đến hạn";
+                    color = "#f59e0b";
+                } else if ("SEND_OVERDUE_WARNING".equals(act)) {
+                    label = "Cảnh báo sách quá hạn";
+                    color = "#ef4444";
+                } else if ("SEND_FINE_REMINDER".equals(act)) {
+                    label = "Nhắc nộp phí phạt";
+                    color = "#b91c1c";
                 } else if ("AUTO_BATCH_REMINDER".equals(act)) {
                     label = "Quét nhắc hạn tự động";
                     color = "#06b6d4";

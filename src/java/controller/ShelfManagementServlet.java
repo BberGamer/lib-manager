@@ -10,6 +10,7 @@ import model.User;
 
 import service.*;
 
+import utils.AuditLogger;
 import utils.RoleGuard;
 
 import java.io.IOException;
@@ -172,7 +173,8 @@ public class ShelfManagementServlet extends HttpServlet {
             throws ServletException, IOException, ShelfException {
         Shelf s = read(q, 0);
         try {
-            service.create(s, actor(q));
+            Shelf created = service.create(s, actor(q));
+            AuditLogger.logShelfCreate(actor(q), created != null ? created.getId() : 0, s.getCode(), s.getName());
             success(q, "Thêm kệ sách thành công.");
             redirect(q, p);
         } catch (ShelfValidationException e) {
@@ -193,6 +195,7 @@ public class ShelfManagementServlet extends HttpServlet {
                 p.sendError(404);
                 return;
             }
+            AuditLogger.logShelfUpdate(actor(q), id, s.getCode(), s.getName());
             success(q, "Cập nhật kệ sách thành công.");
             redirect(q, p);
         } catch (ShelfValidationException e) {
@@ -207,8 +210,12 @@ public class ShelfManagementServlet extends HttpServlet {
             p.sendError(400, "Mã kệ không hợp lệ.");
             return;
         }
+        String shelfCode = service.find(id).map(Shelf::getCode).orElse("ID#" + id);
         try {
             boolean ok = service.delete(id, actor(q));
+            if (ok) {
+                AuditLogger.logShelfDelete(actor(q), id, shelfCode);
+            }
             q.getSession(false)
                     .setAttribute(
                             ok ? "flashSuccess" : "flashError",

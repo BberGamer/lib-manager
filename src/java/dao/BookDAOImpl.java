@@ -199,34 +199,88 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public int createBook(Book book) throws Exception {
         String sql = "INSERT INTO books (isbn, title, category, category_id, publisher, publish_year, price, quantity, available, description, cover_image, subject, is_deleted, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW(), ?, ?)";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, book.getIsbn());
-            ps.setString(2, book.getTitle());
-            ps.setString(3, book.getCategory());
-            if (book.getCategoryId() > 0) ps.setInt(4, book.getCategoryId());
-            else ps.setNull(4, Types.INTEGER);
-            ps.setString(5, book.getPublisher());
-            if (book.getPublishYear() != null) ps.setInt(6, book.getPublishYear());
-            else ps.setNull(6, Types.INTEGER);
-            if (book.getPrice() != null) ps.setInt(7, book.getPrice());
-            else ps.setNull(7, Types.INTEGER);
-            ps.setInt(8, book.getQuantity());
-            ps.setInt(9, book.getAvailable());
-            ps.setString(10, book.getDescription());
-            ps.setString(11, book.getCoverImage());
-            ps.setString(12, book.getSubject());
-            ps.setString(13, book.getCreatedBy());
-            ps.setString(14, book.getUpdatedBy());
+        try (Connection conn = DBContext.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int newId = -1;
+                try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, book.getIsbn());
+                    ps.setString(2, book.getTitle());
+                    ps.setString(3, book.getCategory());
+                    if (book.getCategoryId() > 0) ps.setInt(4, book.getCategoryId());
+                    else ps.setNull(4, Types.INTEGER);
+                    ps.setString(5, book.getPublisher());
+                    if (book.getPublishYear() != null) ps.setInt(6, book.getPublishYear());
+                    else ps.setNull(6, Types.INTEGER);
+                    if (book.getPrice() != null) ps.setInt(7, book.getPrice());
+                    else ps.setNull(7, Types.INTEGER);
+                    ps.setInt(8, book.getQuantity());
+                    ps.setInt(9, book.getAvailable());
+                    ps.setString(10, book.getDescription());
+                    ps.setString(11, book.getCoverImage());
+                    ps.setString(12, book.getSubject());
+                    ps.setString(13, book.getCreatedBy());
+                    ps.setString(14, book.getUpdatedBy());
 
-            int affected = ps.executeUpdate();
-            if (affected > 0) {
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) return rs.getInt(1);
+                    int affected = ps.executeUpdate();
+                    if (affected > 0) {
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) {
+                                newId = rs.getInt(1);
+                            }
+                        }
+                    }
                 }
+
+                // Tự động sinh bản sao vật lý (book_copies) nếu số lượng > 0
+                if (newId > 0 && book.getQuantity() > 0) {
+                    String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, note, is_deleted, created_by, updated_by, created_at, updated_at) "
+                            + "VALUES (?, ?, 'GOOD', ?, 0, ?, ?, NOW(), NOW())";
+                    String copyNote = "Khởi tạo khi tạo sách mới";
+                    String operator = book.getCreatedBy() != null ? book.getCreatedBy() : "admin";
+                    try (PreparedStatement psCopy = conn.prepareStatement(insertCopySql)) {
+                        for (int i = 1; i <= book.getQuantity(); i++) {
+                            String barcode = generateUniqueBarcode(conn, newId, i);
+                            psCopy.setInt(1, newId);
+                            psCopy.setString(2, barcode);
+                            psCopy.setString(3, copyNote);
+                            psCopy.setString(4, operator);
+                            psCopy.setString(5, operator);
+                            psCopy.addBatch();
+                        }
+                        psCopy.executeBatch();
+                    }
+                }
+
+                conn.commit();
+                return newId;
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
             }
         }
-        return -1;
+    }
+
+    private String generateUniqueBarcode(Connection conn, int bookId, int copyIndex) throws SQLException {
+        String baseBarcode = String.format("BC%04d_%02d", bookId, copyIndex);
+        String testBarcode = baseBarcode;
+        int attempt = 1;
+
+        while (true) {
+            String checkSql = "SELECT 1 FROM book_copies WHERE barcode = ? AND is_deleted = 0 LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                ps.setString(1, testBarcode);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return testBarcode;
+                    }
+                }
+            }
+            testBarcode = baseBarcode + "_" + attempt;
+            attempt++;
+        }
     }
 
     @Override

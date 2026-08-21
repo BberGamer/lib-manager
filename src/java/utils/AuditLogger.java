@@ -210,6 +210,118 @@ public class AuditLogger {
                 "Điều lệ nguồn #" + sourceId + " → Bản nháp #" + newDraftId + " | Tạo phiên bản sửa đổi: " + title);
     }
 
+    /** Admin cập nhật thông tin đầu sách */
+    public static void logBookUpdate(String performedBy, int bookId, String title) {
+        log("BOOK_UPDATE", performedBy, 0,
+                "Mã sách #" + bookId + " | Cập nhật thông tin đầu sách: " + title);
+    }
+
+    /** Thêm bản sao vật lý mới */
+    public static void logBookCopyAdd(String performedBy, int bookId, String barcode, String shelf) {
+        log("BOOK_COPY_ADD", performedBy, 0,
+                "Mã sách #" + bookId + " | Thêm bản sao: " + barcode + (shelf != null && !shelf.isEmpty() ? " (Kệ: " + shelf + ")" : ""));
+    }
+
+    /** Cập nhật bản sao vật lý */
+    public static void logBookCopyUpdate(String performedBy, int bookId, String barcode, String condition) {
+        log("BOOK_COPY_UPDATE", performedBy, 0,
+                "Mã sách #" + bookId + " | Cập nhật bản sao: " + barcode + " | Tình trạng: " + condition);
+    }
+
+    /** Xóa bản sao vật lý */
+    public static void logBookCopyDelete(String performedBy, int bookId, String barcode) {
+        log("BOOK_COPY_DELETE", performedBy, 0,
+                "Mã sách #" + bookId + " | Xóa bản sao vật lý: " + barcode);
+    }
+
+    // =========================================================================
+    // Quản lý vị trí kệ sách
+    // =========================================================================
+
+    /** Thêm kệ sách mới */
+    public static void logShelfCreate(String performedBy, int shelfId, String code, String name) {
+        log("SHELF_CREATE", performedBy, 0,
+                "Mã kệ #" + shelfId + " | Thêm kệ sách: " + code + " (" + name + ")");
+    }
+
+    /** Cập nhật kệ sách */
+    public static void logShelfUpdate(String performedBy, int shelfId, String code, String name) {
+        log("SHELF_UPDATE", performedBy, 0,
+                "Mã kệ #" + shelfId + " | Cập nhật kệ sách: " + code + " (" + name + ")");
+    }
+
+    /** Xóa kệ sách */
+    public static void logShelfDelete(String performedBy, int shelfId, String code) {
+        log("SHELF_DELETE", performedBy, 0,
+                "Mã kệ #" + shelfId + " | Xóa kệ sách: " + code);
+    }
+
+    // =========================================================================
+    // Quản lý tác giả
+    // =========================================================================
+
+    /** Thêm tác giả mới */
+    public static void logAuthorCreate(String performedBy, int authorId, String name) {
+        log("AUTHOR_CREATE", performedBy, 0,
+                "Mã tác giả #" + authorId + " | Thêm tác giả: " + name);
+    }
+
+    /** Cập nhật tác giả */
+    public static void logAuthorUpdate(String performedBy, int authorId, String name) {
+        log("AUTHOR_UPDATE", performedBy, 0,
+                "Mã tác giả #" + authorId + " | Cập nhật tác giả: " + name);
+    }
+
+    /** Xóa tác giả */
+    public static void logAuthorDelete(String performedBy, int authorId, String name) {
+        log("AUTHOR_DELETE", performedBy, 0,
+                "Mã tác giả #" + authorId + " | Xóa tác giả: " + name);
+    }
+
+    // =========================================================================
+    // Quản lý danh mục / Thể loại
+    // =========================================================================
+
+    /** Thêm thể loại mới */
+    public static void logCategoryCreate(String performedBy, int categoryId, String name) {
+        log("CATEGORY_CREATE", performedBy, 0,
+                "Mã danh mục #" + categoryId + " | Thêm danh mục: " + name);
+    }
+
+    /** Cập nhật thể loại */
+    public static void logCategoryUpdate(String performedBy, int categoryId, String name) {
+        log("CATEGORY_UPDATE", performedBy, 0,
+                "Mã danh mục #" + categoryId + " | Cập nhật danh mục: " + name);
+    }
+
+    /** Xóa thể loại */
+    public static void logCategoryDelete(String performedBy, int categoryId, String name) {
+        log("CATEGORY_DELETE", performedBy, 0,
+                "Mã danh mục #" + categoryId + " | Xóa danh mục: " + name);
+    }
+
+    // =========================================================================
+    // Quản lý sự kiện
+    // =========================================================================
+
+    /** Thêm sự kiện mới */
+    public static void logEventCreate(String performedBy, int eventId, String title) {
+        log("EVENT_CREATE", performedBy, 0,
+                "Mã sự kiện #" + eventId + " | Thêm sự kiện: " + title);
+    }
+
+    /** Cập nhật sự kiện */
+    public static void logEventUpdate(String performedBy, int eventId, String title) {
+        log("EVENT_UPDATE", performedBy, 0,
+                "Mã sự kiện #" + eventId + " | Cập nhật sự kiện: " + title);
+    }
+
+    /** Xóa sự kiện */
+    public static void logEventDelete(String performedBy, int eventId, String title) {
+        log("EVENT_DELETE", performedBy, 0,
+                "Mã sự kiện #" + eventId + " | Xóa sự kiện: " + title);
+    }
+
     // =========================================================================
     // Đồ để quên
     // =========================================================================
@@ -230,5 +342,39 @@ public class AuditLogger {
     public static void logHandoverFoundItem(String performedBy, int targetUserId, int itemId) {
         log("FOUND_ITEM_HANDOVER_COMPLETE", performedBy, targetUserId,
                 "Mã đồ LF-" + itemId + " | Đã xác nhận hoàn tất bàn giao đồ để quên cho độc giả");
+    }
+
+    // =========================================================================
+    // Quản lý thông báo & Nhắc nhở
+    // =========================================================================
+
+    /** Gửi thông báo broadcast/tới nhiều độc giả */
+    public static void logNotificationBroadcast(String performedBy, int recipientCount, String title, String type) {
+        log("NOTIFICATION_BROADCAST", performedBy, 0,
+                "Gửi thông báo [" + type + "] tới " + recipientCount + " độc giả | Tiêu đề: " + title);
+    }
+
+    /** Gửi thông báo đích danh tới 1 độc giả */
+    public static void logNotificationSend(String performedBy, int targetUserId, String title, String type) {
+        log("NOTIFICATION_SEND", performedBy, targetUserId,
+                "Gửi thông báo [" + type + "] đích danh | Tiêu đề: " + title);
+    }
+
+    /** Gửi nhắc nhở sách sắp đến hạn trả */
+    public static void logDueReminder(String performedBy, int targetUserId, int borrowId, String bookTitle) {
+        log("SEND_DUE_REMINDER", performedBy, targetUserId,
+                "Mã mượn #" + borrowId + " | Gửi nhắc nhở sách sắp đến hạn: " + bookTitle);
+    }
+
+    /** Gửi cảnh báo sách đã quá hạn */
+    public static void logOverdueWarning(String performedBy, int targetUserId, int borrowId, String bookTitle) {
+        log("SEND_OVERDUE_WARNING", performedBy, targetUserId,
+                "Mã mượn #" + borrowId + " | Gửi cảnh báo sách quá hạn: " + bookTitle);
+    }
+
+    /** Gửi nhắc nhở nợ phí phạt */
+    public static void logFineReminder(String performedBy, int targetUserId, int fineId, String amount) {
+        log("SEND_FINE_REMINDER", performedBy, targetUserId,
+                "Mã phạt #" + fineId + " | Gửi nhắc nợ phạt: " + amount + " ₫");
     }
 }

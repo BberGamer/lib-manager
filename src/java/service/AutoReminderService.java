@@ -148,7 +148,7 @@ public class AutoReminderService {
                     + result.expiredPickups + " yêu cầu hết hạn giữ, kích hoạt "
                     + result.readyReservations + " đặt trước, báo trễ "
                     + result.delayedReservations + " đặt trước";
-            AuditLogger.log("AUTO_BATCH_REMINDR", triggeredBy != null ? triggeredBy : "SYSTEM", 0, logDetail);
+            AuditLogger.log("AUTO_BATCH_REMINDER", triggeredBy != null ? triggeredBy : "SYSTEM", 0, logDetail);
 
             result.success = true;
             result.message = logDetail;
