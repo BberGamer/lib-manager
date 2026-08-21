@@ -104,8 +104,22 @@ public class ReservationManagementServlet extends HttpServlet {
                                 "Sách đã về và được chuyển sang danh sách chờ giao sách.");
                         AuditLogger.logConfirmReservation(loggedUser.getUsername(), targetUserId, id);
                     } else {
-                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về. "
-                                + "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.");
+                        String detailReason = "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.";
+                        if (res != null) {
+                            try (java.sql.Connection c = utils.DBContext.getInstance().getConnection();
+                                 java.sql.PreparedStatement ps = c.prepareStatement("SELECT 1 FROM fines WHERE user_id = ? AND status = 'UNPAID' LIMIT 1")) {
+                                ps.setInt(1, res.getUserId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    if (rs.next()) {
+                                        detailReason = "Độc giả @" + (res.getUser() != null ? res.getUser().getUsername() : res.getUserId())
+                                                + " đang có khoản phạt chưa thanh toán. Vui lòng xử lý tại menu 'Quản lý phạt' trước khi giao sách.";
+                                    } else if (!"WAITING".equalsIgnoreCase(res.getStatus())) {
+                                        detailReason = "Yêu cầu đặt trước này không ở trạng thái 'Chờ mượn' (hiện là " + res.getStatus() + ").";
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về: " + detailReason);
                     }
                 } else if ("cancel".equals(action)) {
                     // Lấy thông tin đặt trước trước khi hủy để ghi userId Reader
