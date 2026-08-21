@@ -129,11 +129,11 @@
                                 <ul class="dropdown-menu">
                                     <li><a href="${myBorrowsUrl}"
                                            class="dropdown-item ${navCurrentPage eq 'borrows' ? 'active' : ''}">
-                                            <i class="fa-solid fa-book-open"></i> Đang mượn & Lịch sử
+                                            <i class="fa-solid fa-book-open"></i> Mượn sách
                                         </a></li>
                                     <li><a href="${myReservationsUrl}"
                                            class="dropdown-item ${navCurrentPage eq 'reservations' ? 'active' : ''}">
-                                            <i class="fa-solid fa-bookmark"></i> Hàng chờ đặt trước
+                                            <i class="fa-solid fa-bookmark"></i> Đặt trước
                                         </a></li>
                                 </ul>
                             </li>
