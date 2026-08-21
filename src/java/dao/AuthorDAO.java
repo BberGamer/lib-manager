@@ -44,12 +44,30 @@ public interface AuthorDAO {
     /** @param author tác giả hợp lệ @param actor tài khoản thao tác @return tác giả đã lưu */
     Author insert(Author author, String actor) throws SQLException, ClassNotFoundException;
 
+    /**
+     * Khôi phục tác giả đã xóa mềm cùng tên và thay thế bằng dữ liệu vừa nhập.
+     * @param author dữ liệu tác giả đã được service kiểm tra
+     * @param actor tài khoản quản trị thực hiện thao tác
+     * @return tác giả đã khôi phục hoặc rỗng nếu không có bản ghi phù hợp
+     * @throws SQLException khi cập nhật hoặc đọc dữ liệu thất bại
+     * @throws ClassNotFoundException khi không tải được JDBC driver
+     */
+    Optional<Author> restoreDeleted(Author author, String actor)
+            throws SQLException, ClassNotFoundException;
+
     /** @param author tác giả hợp lệ @param actor tài khoản thao tác @return true nếu cập nhật thành công */
     boolean update(Author author, String actor) throws SQLException, ClassNotFoundException;
 
     /** @param authorId mã tác giả @return true nếu còn liên kết với sách */
     boolean hasBooks(int authorId) throws SQLException, ClassNotFoundException;
 
-    /** @param id mã tác giả @return true nếu xóa thành công */
-    boolean deleteById(int id) throws SQLException, ClassNotFoundException;
+    /**
+     * Xóa mềm tác giả đang hoạt động và lưu thông tin kiểm toán của thao tác.
+     * @param id mã tác giả
+     * @param actor tài khoản quản trị thực hiện thao tác
+     * @return true nếu xóa thành công
+     * @throws SQLException khi cập nhật dữ liệu thất bại
+     * @throws ClassNotFoundException khi không tải được JDBC driver
+     */
+    boolean deleteById(int id, String actor) throws SQLException, ClassNotFoundException;
 }

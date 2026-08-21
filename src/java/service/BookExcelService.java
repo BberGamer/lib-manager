@@ -439,26 +439,67 @@ public class BookExcelService {
         return 0;
     }
 
+    /**
+     * Tìm tác giả đang hoạt động, khôi phục tác giả xóa mềm hoặc tạo mới trong cùng transaction import.
+     *
+     * @param conn connection của transaction import hiện tại
+     * @param name tên tác giả đã được kiểm tra từ dữ liệu import
+     * @param operator tài khoản thực hiện import để ghi kiểm toán
+     * @return mã tác giả, hoặc {@code 0} khi không thể tạo bản ghi mới
+     * @throws SQLException khi truy vấn hoặc ghi dữ liệu thất bại
+     */
     private int findOrCreateAuthor(Connection conn, String name, String operator) throws SQLException {
-        String findSql = "SELECT id FROM authors WHERE LOWER(name) = LOWER(?) AND is_deleted = 0 LIMIT 1";
-        try (PreparedStatement ps = conn.prepareStatement(findSql)) {
-            ps.setString(1, name.trim());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id");
+        String normalizedName = name.trim();
+        String auditActor = operator != null ? operator : "admin";
+        int existingAuthorId = findActiveAuthorId(conn, normalizedName);
+        if (existingAuthorId > 0) {
+            return existingAuthorId;
+        }
+
+        String restoreSql = "UPDATE authors SET is_deleted = 0, updated_by = ?, updated_at = NOW() "
+                + "WHERE LOWER(name) = LOWER(?) AND is_deleted = 1 LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(restoreSql)) {
+            ps.setString(1, auditActor);
+            ps.setString(2, normalizedName);
+            if (ps.executeUpdate() == 1) {
+                int restoredAuthorId = findActiveAuthorId(conn, normalizedName);
+                if (restoredAuthorId > 0) {
+                    return restoredAuthorId;
                 }
             }
         }
 
-        String insertSql = "INSERT INTO authors (name, bio, is_deleted, created_by, updated_by, created_at, updated_at) VALUES (?, 'Tự động tạo từ Import Sách', 0, ?, ?, NOW(), NOW())";
+        String insertSql = "INSERT INTO authors (name, bio, is_deleted, created_by, updated_by, created_at, "
+                + "updated_at) VALUES (?, 'Tự động tạo từ Import Sách', 0, ?, ?, NOW(), NOW())";
         try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, name.trim());
-            ps.setString(2, operator != null ? operator : "admin");
-            ps.setString(3, operator != null ? operator : "admin");
+            ps.setString(1, normalizedName);
+            ps.setString(2, auditActor);
+            ps.setString(3, auditActor);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Tìm mã tác giả chưa xóa mềm trong cùng transaction import.
+     *
+     * @param conn connection của transaction import hiện tại
+     * @param normalizedName tên tác giả đã được loại bỏ khoảng trắng thừa
+     * @return mã tác giả hoặc {@code 0} nếu không có bản ghi đang hoạt động
+     * @throws SQLException khi truy vấn thất bại
+     */
+    private int findActiveAuthorId(Connection conn, String normalizedName) throws SQLException {
+        String findSql = "SELECT id FROM authors WHERE LOWER(name) = LOWER(?) AND is_deleted = 0 LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(findSql)) {
+            ps.setString(1, normalizedName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
                 }
             }
         }

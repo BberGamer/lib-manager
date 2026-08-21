@@ -203,7 +203,7 @@ public class AuthorServlet extends HttpServlet {
         }
     }
 
-    /** Xóa tác giả không còn liên kết sách và đặt flash message. */
+    /** Xóa mềm tác giả không còn liên kết sách và đặt flash message. */
     private void delete(HttpServletRequest request, HttpServletResponse response)
             throws IOException, AuthorException {
         Optional<Integer> id = requireId(request, response);
@@ -212,10 +212,14 @@ public class AuthorServlet extends HttpServlet {
         }
         String authorName = authorService.findAuthor(id.get()).map(Author::getName).orElse("ID#" + id.get());
         try {
+<<<<<<< HEAD
             boolean deleted = authorService.deleteAuthor(id.get());
             if (deleted) {
                 AuditLogger.logAuthorDelete(currentActor(request), id.get(), authorName);
             }
+=======
+            boolean deleted = authorService.deleteAuthor(id.get(), currentActor(request));
+>>>>>>> 9065f3e1cafc318d532d930377c873bed3229d2c
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa tác giả thành công." : "Không tìm thấy tác giả cần xóa.");
         } catch (AuthorValidationException exception) {
