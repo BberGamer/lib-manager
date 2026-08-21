@@ -119,60 +119,60 @@
                                 <i class="fa-solid fa-book"></i> Danh sách sách
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="${aboutUrl}"
-                               class="nav-link ${navCurrentPage eq 'about' ? 'active' : ''}">
-                                <i class="fa-solid fa-circle-info"></i> Giới thiệu
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="${policiesPublicUrl}"
-                               class="nav-link ${navCurrentPage eq 'policies' ? 'active' : ''}">
-                                <i class="fa-solid fa-scale-balanced"></i> Điều lệ
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="${eventsUrl}"
-                               class="nav-link ${navCurrentPage eq 'events' ? 'active' : ''}">
-                                <i class="fa-solid fa-calendar-days"></i> Sự kiện
-                            </a>
-                        </li>
 
                         <c:if test="${not empty navUser and not navUser.adminOrLibrarian}">
-                            <li class="nav-item">
-                                <a href="${myBorrowsUrl}"
-                                   class="nav-link ${navCurrentPage eq 'borrows' ? 'active' : ''}">
-                                    <i class="fa-solid fa-book-open"></i> Mượn sách
-                                </a>
-                            </li>
                             <li class="nav-item dropdown">
-                                <a href="#" class="nav-link ${navCurrentPage eq 'reservations'
-                                        or navCurrentPage eq 'fines'
-                                        or navCurrentPage eq 'found-items'
-                                        or navCurrentPage eq 'notifications' ? 'active' : ''}">
-                                    <i class="fa-solid fa-ellipsis"></i> Tiện ích
+                                <a href="#" class="nav-link ${navCurrentPage eq 'borrows' or navCurrentPage eq 'reservations' ? 'active' : ''}">
+                                    <i class="fa-solid fa-book-bookmark"></i> Tủ sách của tôi
                                     <i class="fa-solid fa-chevron-down fa-xs nav-chevron"></i>
                                 </a>
                                 <ul class="dropdown-menu">
+                                    <li><a href="${myBorrowsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'borrows' ? 'active' : ''}">
+                                            <i class="fa-solid fa-book-open"></i> Mượn sách
+                                        </a></li>
                                     <li><a href="${myReservationsUrl}"
                                            class="dropdown-item ${navCurrentPage eq 'reservations' ? 'active' : ''}">
                                             <i class="fa-solid fa-bookmark"></i> Đặt trước
                                         </a></li>
-                                    <li><a href="${myFinesUrl}"
-                                           class="dropdown-item ${navCurrentPage eq 'fines' ? 'active' : ''}">
-                                            <i class="fa-solid fa-coins"></i> Phạt
+                                </ul>
+                            </li>
+                        </c:if>
+
+                        <c:if test="${empty navUser or not navUser.adminOrLibrarian}">
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link ${navCurrentPage eq 'events'
+                                        or navCurrentPage eq 'policies'
+                                        or navCurrentPage eq 'about'
+                                        or navCurrentPage eq 'found-items'
+                                        or navCurrentPage eq 'fines' ? 'active' : ''}">
+                                    <i class="fa-solid fa-circle-info"></i> Thông tin & Tiện ích
+                                    <i class="fa-solid fa-chevron-down fa-xs nav-chevron"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="${eventsUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'events' ? 'active' : ''}">
+                                            <i class="fa-solid fa-calendar-days"></i> Sự kiện
+                                        </a></li>
+                                    <li><a href="${policiesPublicUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'policies' ? 'active' : ''}">
+                                            <i class="fa-solid fa-scale-balanced"></i> Điều lệ & Quy định
+                                        </a></li>
+                                    <li><a href="${aboutUrl}"
+                                           class="dropdown-item ${navCurrentPage eq 'about' ? 'active' : ''}">
+                                            <i class="fa-solid fa-circle-info"></i> Giới thiệu
                                         </a></li>
                                     <li><a href="${readerFoundItemsUrl}"
                                            class="dropdown-item ${navCurrentPage eq 'found-items' ? 'active' : ''}">
                                             <i class="fa-solid fa-box-open"></i> Đồ để quên
                                         </a></li>
-                                    <li><a href="${myNotificationsUrl}"
-                                           class="dropdown-item ${navCurrentPage eq 'notifications' ? 'active' : ''}">
-                                            <i class="fa-solid fa-bell"></i> Thông báo
-                                            <c:if test="${headerUnreadCount gt 0}">
-                                                (<c:out value="${headerUnreadCount}" />)
-                                            </c:if>
-                                        </a></li>
+                                    <c:if test="${not empty navUser and not navUser.adminOrLibrarian}">
+                                        <li class="dropdown-divider"></li>
+                                        <li><a href="${myFinesUrl}"
+                                               class="dropdown-item ${navCurrentPage eq 'fines' ? 'active' : ''}">
+                                                <i class="fa-solid fa-coins"></i> Khoản phạt của tôi
+                                            </a></li>
+                                    </c:if>
                                 </ul>
                             </li>
                         </c:if>
@@ -267,6 +267,13 @@
                     <div class="navbar-actions">
                         <c:choose>
                             <c:when test="${not empty navUser}">
+                                <a href="${myNotificationsUrl}" class="header-notif-btn ${navCurrentPage eq 'notifications' ? 'active' : ''}" title="Thông báo của tôi">
+                                    <i class="fa-solid fa-bell"></i>
+                                    <c:if test="${headerUnreadCount gt 0}">
+                                        <span class="header-notif-badge"><c:out value="${headerUnreadCount}" /></span>
+                                    </c:if>
+                                </a>
+
                                 <a href="${profileUrl}" class="user-info" title="Hồ sơ cá nhân">
                                     <i class="fa-solid fa-circle-user fa-xl"></i>
                                     <span class="user-info-text">
