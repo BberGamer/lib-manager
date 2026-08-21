@@ -84,10 +84,10 @@ public class AuthorService {
     }
 
     /**
-     * Chuẩn hóa, kiểm tra và tạo tác giả.
+     * Chuẩn hóa, kiểm tra và tạo hoặc khôi phục tác giả đã xóa mềm cùng tên.
      * @param author dữ liệu biểu mẫu
      * @param actor tài khoản Admin
-     * @return tác giả đã lưu
+     * @return tác giả đã lưu hoặc đã khôi phục
      * @throws AuthorValidationException khi dữ liệu không hợp lệ
      * @throws AuthorException khi lưu thất bại
      */
@@ -100,6 +100,10 @@ public class AuthorService {
                 errors.put("name", "Tên tác giả đã tồn tại.");
             }
             rejectInvalid(errors);
+            Optional<Author> restoredAuthor = authorDao.restoreDeleted(author, actor);
+            if (restoredAuthor.isPresent()) {
+                return restoredAuthor.get();
+            }
             return authorDao.insert(author, actor);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new AuthorException("Không thể tạo tác giả", exception);
@@ -130,20 +134,21 @@ public class AuthorService {
     }
 
     /**
-     * Xóa vật lý tác giả khi không còn quan hệ với sách.
+     * Xóa mềm tác giả khi không còn quan hệ với sách.
      * @param id mã tác giả
+     * @param actor tài khoản quản trị thực hiện thao tác
      * @return true nếu xóa thành công
      * @throws AuthorValidationException khi còn sách tham chiếu
      * @throws AuthorException khi kiểm tra hoặc xóa thất bại
      */
-    public boolean deleteAuthor(int id) throws AuthorValidationException, AuthorException {
+    public boolean deleteAuthor(int id, String actor) throws AuthorValidationException, AuthorException {
         try {
             Map<String, String> errors = new LinkedHashMap<>();
             if (authorDao.hasBooks(id)) {
                 errors.put("delete", "Không thể xóa tác giả vì vẫn còn sách liên kết.");
             }
             rejectInvalid(errors);
-            return authorDao.deleteById(id);
+            return authorDao.deleteById(id, actor);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new AuthorException("Không thể xóa tác giả mã " + id, exception);
         }
