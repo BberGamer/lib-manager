@@ -955,12 +955,18 @@ img { max-width: 100%; display: block; }
   margin-top: 14px;
 }
 
+.book-detail-reader-actions > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .book-detail-reader-form {
-  width: 100%;
+  display: flex;
   margin: 0;
 }
 
 .book-detail-reader-button {
+  min-height: 72px;
   width: 100%;
   padding: 12px 20px;
   border: 0;
@@ -969,9 +975,14 @@ img { max-width: 100%; display: block; }
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.25;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   transition: opacity 0.2s;
+}
+
+.book-detail-reader-form .book-detail-reader-button {
+  height: 100%;
 }
 
 .book-detail-reader-button:hover {
