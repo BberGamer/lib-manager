@@ -103,7 +103,7 @@
                                    name="studentId" class="form-control"
                                    value="<%= profile.getStudentId() != null ? profile.getStudentId() : "" %>"
                                    maxlength="20"
-                                   placeholder="Ví dụ: SS170001" />
+                                   placeholder="Ví dụ: HE170001" />
                         </div>
                         <% } %>
 
