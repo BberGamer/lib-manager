@@ -274,7 +274,7 @@ public class CategoryServlet extends HttpServlet {
     }
 
     /**
-     * Xóa vật lý thể loại không còn sách tham chiếu và chuyển thông báo qua flash session.
+     * Xóa mềm thể loại không còn sách tham chiếu và chuyển thông báo qua flash session.
      * @param request request chứa mã thể loại
      * @param response response dùng để redirect
      * @throws IOException khi redirect thất bại
@@ -287,7 +287,7 @@ public class CategoryServlet extends HttpServlet {
             return;
         }
         try {
-            boolean deleted = categoryService.deleteCategory(id.get());
+            boolean deleted = categoryService.deleteCategory(id.get(), currentActor(request));
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa thể loại thành công." : "Không tìm thấy thể loại cần xóa.");
         } catch (CategoryValidationException exception) {
