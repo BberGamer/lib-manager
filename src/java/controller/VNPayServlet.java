@@ -166,6 +166,10 @@ public class VNPayServlet extends HttpServlet {
                     boolean updated = fineService.processPaymentSuccess(
                             fineId, "ONLINE", "Thanh toán thành công qua VNPay (Mã GD: " + transactionNo + ")", "VNPay Client Return");
                     if (updated) {
+                        // Ghi audit log thanh toán phạt online thành công
+                        model.Fine paidFine = fineService.getFineById(fineId);
+                        int targetUserId = paidFine != null ? paidFine.getUserId() : 0;
+                        utils.AuditLogger.logFinePaidOnline(targetUserId, fineId, transactionNo);
                         setFlashMessage(request, "fineSuccessMessage",
                                 "Thanh toán khoản phạt #F" + fineId + " thành công qua VNPay! Mã giao dịch: " + transactionNo);
                     } else {

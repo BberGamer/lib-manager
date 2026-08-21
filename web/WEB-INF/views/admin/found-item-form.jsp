@@ -10,17 +10,29 @@
 <c:url var="foundItemListUrl" value="${rolePath}/found-items" />
 <c:url var="createFoundItemUrl" value="${rolePath}/found-items/create" />
 
-<main class="found-item-page">
-    <section class="found-item-editor-hero">
-        <div class="found-item-editor-container">
-            <a class="found-item-back-link" href="${foundItemListUrl}"><i class="fa-solid fa-arrow-left"></i>Quay lại danh sách</a>
-            <span class="found-item-eyebrow"><i class="fa-solid fa-plus"></i> Tiếp nhận</span>
-            <h1>Thêm đồ để quên</h1>
-            <p>Ghi nhận thông tin cơ bản để nhân viên thư viện có thể theo dõi và trả đồ đúng người.</p>
+<main class="page-wrapper found-item-page">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-plus"></i> Tiếp nhận
+                    </div>
+                    <h1 class="books-page-title">Thêm đồ để quên mới</h1>
+                    <p class="books-page-subtitle">
+                        Ghi nhận thông tin cơ bản để nhân viên thư viện theo dõi và hoàn trả đúng người
+                    </p>
+                </div>
+                <div>
+                    <a class="btn btn-outline btn-sm" href="${foundItemListUrl}">
+                        <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
-    <div class="found-item-editor-container found-item-editor-body">
+    <div class="container" style="padding-top: 24px; padding-bottom: 48px; max-width: 820px;">
         <section class="found-item-form-card">
             <form action="${createFoundItemUrl}" method="post" enctype="multipart/form-data" class="found-item-form">
                 <div class="found-item-form-field">
