@@ -212,14 +212,10 @@ public class AuthorServlet extends HttpServlet {
         }
         String authorName = authorService.findAuthor(id.get()).map(Author::getName).orElse("ID#" + id.get());
         try {
-<<<<<<< HEAD
-            boolean deleted = authorService.deleteAuthor(id.get());
+            boolean deleted = authorService.deleteAuthor(id.get(), currentActor(request));
             if (deleted) {
                 AuditLogger.logAuthorDelete(currentActor(request), id.get(), authorName);
             }
-=======
-            boolean deleted = authorService.deleteAuthor(id.get(), currentActor(request));
->>>>>>> 9065f3e1cafc318d532d930377c873bed3229d2c
             setFlash(request, deleted ? FLASH_SUCCESS : FLASH_ERROR,
                     deleted ? "Đã xóa tác giả thành công." : "Không tìm thấy tác giả cần xóa.");
         } catch (AuthorValidationException exception) {
