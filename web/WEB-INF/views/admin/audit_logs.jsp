@@ -55,11 +55,31 @@
                                     <c:when test="${act eq 'LOCK_ACCOUNT'}">Khóa tài khoản (LOCK_ACCOUNT)</c:when>
                                     <c:when test="${act eq 'UNLOCK_ACCOUNT'}">Mở khóa tài khoản (UNLOCK_ACCOUNT)</c:when>
                                     <c:when test="${act eq 'DELETE_USER'}">Xóa tài khoản (DELETE_USER)</c:when>
+                                    <c:when test="${act eq 'CREATE_USER'}">Tạo tài khoản mới (CREATE_USER)</c:when>
+                                    <c:when test="${act eq 'UPDATE_USER'}">Cập nhật tài khoản (UPDATE_USER)</c:when>
                                     <c:when test="${act eq 'WAIVE_FINE'}">Miễn giảm phạt (WAIVE_FINE)</c:when>
+                                    <c:when test="${act eq 'FINE_PAID_CASH'}">Thu phạt tiền mặt (FINE_PAID_CASH)</c:when>
+                                    <c:when test="${act eq 'FINE_PAID_ONLINE'}">Thanh toán phạt VNPay (FINE_PAID_ONLINE)</c:when>
                                     <c:when test="${act eq 'OVERRIDE_BORROW_LIMIT'}">Vượt hạn mức mượn (OVERRIDE)</c:when>
                                     <c:when test="${act eq 'APPLY_DAMAGE_FINE'}">Phạt hỏng sách (DAMAGE_FINE)</c:when>
                                     <c:when test="${act eq 'APPLY_LOST_FINE'}">Phạt mất sách (LOST_FINE)</c:when>
+                                    <c:when test="${act eq 'BORROW_CONFIRM_PICKUP'}">Giao sách cho độc giả (PICKUP)</c:when>
+                                    <c:when test="${act eq 'BORROW_CONFIRM_RETURN'}">Nhận trả sách (RETURN)</c:when>
                                     <c:when test="${act eq 'CONFIRM_RESERVATION'}">Xác nhận đặt trước (RESERVATION)</c:when>
+                                    <c:when test="${act eq 'CANCEL_RESERVATION_BY_STAFF'}">Hủy đặt trước (CANCEL_RES)</c:when>
+                                    <c:when test="${act eq 'FOUND_ITEM_CREATE'}">Tiếp nhận đồ để quên (FOUND_ITEM)</c:when>
+                                    <c:when test="${act eq 'FOUND_ITEM_VERIFY_APPROVE'}">Duyệt nhận lại đồ (CLAIM_APPROVE)</c:when>
+                                    <c:when test="${act eq 'FOUND_ITEM_VERIFY_REJECT'}">Từ chối nhận lại đồ (CLAIM_REJECT)</c:when>
+                                    <c:when test="${act eq 'FOUND_ITEM_HANDOVER_COMPLETE'}">Bàn giao đồ hoàn tất (HANDOVER)</c:when>
+                                    <c:when test="${act eq 'BOOK_CREATE'}">Thêm đầu sách mới (BOOK_CREATE)</c:when>
+                                    <c:when test="${act eq 'BOOK_DELETE'}">Xóa đầu sách (BOOK_DELETE)</c:when>
+                                    <c:when test="${act eq 'BOOK_BULK_IMPORT' or act eq 'IMPORT_BOOKS'}">Nhập sách từ file CSV (IMPORT)</c:when>
+                                    <c:when test="${act eq 'BOOK_EXPORT'}">Xuất sách ra CSV (EXPORT)</c:when>
+                                    <c:when test="${act eq 'POLICY_CREATE'}">Tạo nháp điều lệ (POLICY_CREATE)</c:when>
+                                    <c:when test="${act eq 'POLICY_PUBLISH'}">Xuất bản điều lệ (POLICY_PUBLISH)</c:when>
+                                    <c:when test="${act eq 'POLICY_ARCHIVE'}">Lưu trữ điều lệ (POLICY_ARCHIVE)</c:when>
+                                    <c:when test="${act eq 'POLICY_DELETE'}">Xóa nháp điều lệ (POLICY_DELETE)</c:when>
+                                    <c:when test="${act eq 'POLICY_REVISE'}">Sửa đổi điều lệ (POLICY_REVISE)</c:when>
                                     <c:when test="${act eq 'AUTO_BATCH_REMINDER'}">Quét tự động hàng loạt (BATCH_REMINDER)</c:when>
                                     <c:when test="${act eq 'UPDATE_AUTOMATION_SETTING'}">Cập nhật cấu hình tự động (SETTING)</c:when>
                                     <c:otherwise><c:out value="${act}" /></c:otherwise>
@@ -177,6 +197,106 @@
                                                 <c:when test="${log.action eq 'CONFIRM_RESERVATION'}">
                                                     <span style="background: #f3e8ff; color: #7e22ce; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                                                         <i class="fa-solid fa-bookmark"></i> Xác nhận đặt trước
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'CREATE_USER'}">
+                                                    <span style="background: #d1fae5; color: #047857; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-user-plus"></i> Tạo tài khoản
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'UPDATE_USER'}">
+                                                    <span style="background: #ede9fe; color: #6d28d9; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-user-pen"></i> Cập nhật tài khoản
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FINE_PAID_CASH'}">
+                                                    <span style="background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-money-bill-wave"></i> Thu tiền mặt
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FINE_PAID_ONLINE'}">
+                                                    <span style="background: #cffafe; color: #0e7490; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-credit-card"></i> VNPay Online
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BORROW_CONFIRM_PICKUP'}">
+                                                    <span style="background: #dcfce7; color: #15803d; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-hand-holding"></i> Giao sách
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BORROW_CONFIRM_RETURN'}">
+                                                    <span style="background: #ecfccb; color: #4d7c0f; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-rotate-left"></i> Nhận trả sách
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'CANCEL_RESERVATION_BY_STAFF'}">
+                                                    <span style="background: #f3e8ff; color: #6b21a8; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-ban"></i> Hủy đặt trước
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FOUND_ITEM_CREATE'}">
+                                                    <span style="background: #ffedd5; color: #c2410c; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-box-open"></i> Đồ để quên
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FOUND_ITEM_VERIFY_APPROVE'}">
+                                                    <span style="background: #ecfccb; color: #3f6212; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-circle-check"></i> Duyệt nhận đồ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FOUND_ITEM_VERIFY_REJECT'}">
+                                                    <span style="background: #fee2e2; color: #b91c1c; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-circle-xmark"></i> Từ chối nhận đồ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'FOUND_ITEM_HANDOVER_COMPLETE'}">
+                                                    <span style="background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-clipboard-check"></i> Bàn giao đồ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BOOK_CREATE'}">
+                                                    <span style="background: #dbeafe; color: #1d4ed8; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-book"></i> Thêm đầu sách
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BOOK_DELETE'}">
+                                                    <span style="background: #ede9fe; color: #5b21b6; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-trash-can"></i> Xóa đầu sách
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BOOK_BULK_IMPORT' or log.action eq 'IMPORT_BOOKS'}">
+                                                    <span style="background: #dbeafe; color: #1e40af; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-import"></i> Nhập sách CSV
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'BOOK_EXPORT'}">
+                                                    <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-export"></i> Xuất sách CSV
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_CREATE'}">
+                                                    <span style="background: #cffafe; color: #155e75; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-circle-plus"></i> Nháp điều lệ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_PUBLISH'}">
+                                                    <span style="background: #d1fae5; color: #065f46; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-circle-check"></i> Xuất bản điều lệ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_ARCHIVE'}">
+                                                    <span style="background: #f5f5f4; color: #44403c; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-box-archive"></i> Lưu trữ điều lệ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_DELETE'}">
+                                                    <span style="background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-circle-xmark"></i> Xóa nháp điều lệ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_REVISE'}">
+                                                    <span style="background: #e0f2fe; color: #075985; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i class="fa-solid fa-file-pen"></i> Sửa đổi điều lệ
                                                     </span>
                                                 </c:when>
                                                 <c:when test="${log.action eq 'AUTO_BATCH_REMINDER'}">
