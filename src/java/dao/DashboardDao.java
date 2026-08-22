@@ -40,12 +40,12 @@ public class DashboardDao {
         Map<String, Integer> map = new HashMap<>();
         try (Connection con = DBContext.getInstance().getConnection()) {
             // 1. AVAILABLE
-            String sqlAvailable = "SELECT COUNT(*) FROM book_copies bc WHERE bc.is_deleted = 0 "
-                    + "AND bc.book_condition IN ('GOOD', 'WORN') "
-                    + "AND NOT EXISTS (SELECT 1 FROM borrow_records br "
-                    + "WHERE br.copy_id = bc.id AND ((br.status = 'PENDING_PICKUP' "
-                    + "AND br.pickup_deadline >= NOW()) OR (br.status IN ('BORROWED', 'OVERDUE') "
-                    + "AND br.return_date IS NULL)))";
+            String sqlAvailable = "SELECT GREATEST(0, "
+                    + "(SELECT COUNT(*) FROM book_copies bc WHERE bc.is_deleted=0 "
+                    + "AND bc.book_condition IN ('GOOD','WORN')) - "
+                    + "(SELECT COUNT(*) FROM borrow_records br WHERE "
+                    + "(br.status='PENDING_PICKUP' AND br.pickup_deadline>=NOW()) OR "
+                    + "(br.status IN ('BORROWED','OVERDUE') AND br.return_date IS NULL)))";
             try (PreparedStatement ps = con.prepareStatement(sqlAvailable);
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) map.put("AVAILABLE", rs.getInt(1));

@@ -143,6 +143,7 @@ public class NotificationManagementServlet extends HttpServlet {
                     boolean sent = notificationService.createAndSendNotification(
                             loan.getUserId(), title, message, "DUE_REMINDER", loan.getId(), "borrow_record", loan.getUser().getEmail());
                     if (sent) {
+                        utils.AuditLogger.logDueReminder(loggedUser.getUsername(), loan.getUserId(), loan.getId(), loan.getBook() != null ? loan.getBook().getTitle() : "");
                         session.setAttribute("successMsg", "Đã gửi thông báo sắp đến hạn tới " + loan.getUser().getFullName() + " thành công!");
                     } else {
                         session.setAttribute("errorMsg", "Gửi thông báo thất bại!");
@@ -161,6 +162,7 @@ public class NotificationManagementServlet extends HttpServlet {
                     boolean sent = notificationService.createAndSendNotification(
                             loan.getUserId(), title, message, "OVERDUE", loan.getId(), "borrow_record", loan.getUser().getEmail());
                     if (sent) {
+                        utils.AuditLogger.logOverdueWarning(loggedUser.getUsername(), loan.getUserId(), loan.getId(), loan.getBook() != null ? loan.getBook().getTitle() : "");
                         session.setAttribute("successMsg", "Đã gửi cảnh báo quá hạn tới " + loan.getUser().getFullName() + " thành công!");
                     } else {
                         session.setAttribute("errorMsg", "Gửi thông báo thất bại!");
@@ -179,6 +181,7 @@ public class NotificationManagementServlet extends HttpServlet {
                     boolean sent = notificationService.createAndSendNotification(
                             fine.getUserId(), title, message, "FINE", fine.getId(), "fine", fine.getUser().getEmail());
                     if (sent) {
+                        utils.AuditLogger.logFineReminder(loggedUser.getUsername(), fine.getUserId(), fine.getId(), fine.getAmount() != null ? fine.getAmount().toString() : "0");
                         session.setAttribute("successMsg", "Đã gửi thông báo phạt tới " + fine.getUser().getFullName() + " thành công!");
                     } else {
                         session.setAttribute("errorMsg", "Gửi thông báo thất bại!");
@@ -222,6 +225,11 @@ public class NotificationManagementServlet extends HttpServlet {
                         boolean ok = notificationService.createAndSendNotification(
                                 u.getId(), title, message, type, null, null, emailTo);
                         if (ok) successCount++;
+                    }
+                    if (isSystemWide || recipients.size() > 1) {
+                        utils.AuditLogger.logNotificationBroadcast(loggedUser.getUsername(), successCount, title, type);
+                    } else if (recipients.size() == 1) {
+                        utils.AuditLogger.logNotificationSend(loggedUser.getUsername(), recipients.get(0).getId(), title, type);
                     }
                     session.setAttribute("successMsg", "Đã gửi thông báo thành công tới " + successCount + " người nhận!");
                 }

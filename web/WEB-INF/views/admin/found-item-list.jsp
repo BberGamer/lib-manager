@@ -10,22 +10,30 @@
 <c:url var="foundItemListUrl" value="${rolePath}/found-items" />
 <c:url var="newFoundItemUrl" value="${rolePath}/found-items/new" />
 
-<main class="found-item-page">
-    <section class="found-item-hero">
-        <div class="container found-item-hero-inner">
-            <div>
-                <span class="found-item-eyebrow"><i class="fa-solid fa-box-open"></i> Nghiệp vụ thư viện</span>
-                <h1>Quản lý đồ để quên</h1>
-                <p>Tiếp nhận và theo dõi các đồ vật được để quên tại thư viện.</p>
-            </div>
-            <div class="found-item-stat">
-                <strong><c:out value="${totalFoundItems}" /></strong>
-                <span>Đồ vật</span>
+<main class="page-wrapper found-item-page">
+    <section class="books-page-header">
+        <div class="container">
+            <div class="books-page-header-inner">
+                <div>
+                    <div class="hero-eyebrow">
+                        <i class="fa-solid fa-box-open"></i> Nghiệp vụ thư viện
+                    </div>
+                    <h1 class="books-page-title">Quản lý đồ để quên</h1>
+                    <p class="books-page-subtitle">
+                        Tiếp nhận và theo dõi các đồ vật được để quên tại thư viện
+                    </p>
+                </div>
+                <div class="books-page-stats" aria-label="Tổng số đồ vật">
+                    <div class="bps-item">
+                        <span class="bps-num"><c:out value="${totalFoundItems}" /></span>
+                        <span class="bps-lbl">Đồ vật</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="container found-item-content">
+    <div class="container" style="padding-top: 24px; padding-bottom: 48px;">
         <c:if test="${not empty flashSuccess}">
             <div class="found-item-alert found-item-alert-success">
                 <i class="fa-solid fa-circle-check"></i><c:out value="${flashSuccess}" />

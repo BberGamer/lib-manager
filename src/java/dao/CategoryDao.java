@@ -191,18 +191,21 @@ public class CategoryDao {
     }
 
     /**
-     * Xóa vật lý một thể loại đang hoạt động sau khi service đã kiểm tra quan hệ sách.
+     * Xóa mềm một thể loại đang hoạt động sau khi service đã kiểm tra quan hệ sách.
      *
      * @param id mã thể loại
+     * @param actor tài khoản quản trị thực hiện thao tác
      * @return {@code true} nếu bản ghi được xóa
      * @throws SQLException khi xóa thất bại
      * @throws ClassNotFoundException khi không tải được JDBC driver
      */
-    public boolean deleteById(int id) throws SQLException, ClassNotFoundException {
-        String sql = "DELETE FROM categories WHERE id = ? AND is_deleted = 0";
+    public boolean deleteById(int id, String actor) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE categories SET is_deleted = 1, updated_by = ?, updated_at = NOW() "
+                + "WHERE id = ? AND is_deleted = 0";
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, id);
+            statement.setString(1, actor);
+            statement.setInt(2, id);
             return statement.executeUpdate() == 1;
         }
     }

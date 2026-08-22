@@ -3,6 +3,7 @@ package controller;
 import dao.ReservationDAO;
 import model.ReservationRecord;
 import model.User;
+import utils.AuditLogger;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -93,38 +94,47 @@ public class ReservationManagementServlet extends HttpServlet {
                 int id = Integer.parseInt(request.getParameter("id"));
                 String action = request.getParameter("action");
                 if ("ready".equals(action)) {
-                    ReservationRecord tempRes = reservationDAO.findById(id);
-                    if (tempRes != null && new dao.FineDAO().searchByUser(tempRes.getUserId(), "UNPAID", null).size() > 0) {
-                        session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng: Độc giả này hiện đang có khoản phạt chưa thanh toán!");
-                    } else if (tempRes != null && new dao.BorrowRecordDAO().countActiveByUserId(tempRes.getUserId()) >= 3) {
-                        session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng: Độc giả này đã đạt giới hạn tối đa 3 lượt mượn hoạt động!");
+                    // Lấy thông tin đặt trước để ghi userId Reader
+                    ReservationRecord res = reservationDAO.findById(id);
+                    int targetUserId = res != null ? res.getUserId() : 0;
+                    boolean success = reservationService.markReservationReady(
+                            id, loggedUser.getUsername(), true);
+                    if (success) {
+                        session.setAttribute("successMsg",
+                                "Sách đã về và được chuyển sang danh sách chờ giao sách.");
+                        AuditLogger.logConfirmReservation(loggedUser.getUsername(), targetUserId, id);
                     } else {
-                        ReservationRecord record = reservationDAO.manuallyReadyReservation(id, loggedUser.getUsername());
-                        if (record != null) {
-                            String notifTitle = "Sách đặt trước đã sẵn sàng – FPT Library";
-                            String notifMessage = "Xin chào " + record.getUser().getFullName() + ",\n\n"
-                                    + "Cuốn sách '" + record.getBook().getTitle() + "' bạn đặt trước hiện đã sẵn sàng để mượn.\n"
-                                    + "Vui lòng đến thư viện để nhận sách trong vòng 24 giờ kể từ thời điểm này.";
-                            new service.NotificationService().createAndSendNotification(
-                                    record.getUserId(), notifTitle, notifMessage, "RESERVATION", record.getId(), "reservation", record.getUser().getEmail());
-                            session.setAttribute("successMsg", "Đã cập nhật trạng thái thành công và gửi thông báo cho độc giả!");
-                        } else {
-                            session.setAttribute("errorMsg", "Không thể chuyển sang trạng thái Sẵn sàng. Không có bản sao nào khả dụng hoặc yêu cầu không ở trạng thái Chờ mượn!");
+                        String detailReason = "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.";
+                        if (res != null) {
+                            try (java.sql.Connection c = utils.DBContext.getInstance().getConnection();
+                                 java.sql.PreparedStatement ps = c.prepareStatement("SELECT 1 FROM fines WHERE user_id = ? AND status = 'UNPAID' LIMIT 1")) {
+                                ps.setInt(1, res.getUserId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    if (rs.next()) {
+                                        detailReason = "Độc giả @" + (res.getUser() != null ? res.getUser().getUsername() : res.getUserId())
+                                                + " đang có khoản phạt chưa thanh toán. Vui lòng xử lý tại menu 'Quản lý phạt' trước khi giao sách.";
+                                    } else if (!"WAITING".equalsIgnoreCase(res.getStatus())) {
+                                        detailReason = "Yêu cầu đặt trước này không ở trạng thái 'Chờ mượn' (hiện là " + res.getStatus() + ").";
+                                    }
+                                }
+                            } catch (Exception ignored) {}
                         }
+                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về: " + detailReason);
+                    }
+                } else if ("cancel".equals(action)) {
+                    // Lấy thông tin đặt trước trước khi hủy để ghi userId Reader
+                    ReservationRecord res = reservationDAO.findById(id);
+                    int targetUserId = res != null ? res.getUserId() : 0;
+                    boolean success = reservationService.cancelReservationByStaff(id);
+                    if (success) {
+                        session.setAttribute("successMsg", "Đã hủy yêu cầu đặt trước thành công.");
+                        AuditLogger.logCancelReservationByStaff(loggedUser.getUsername(), targetUserId, id);
+                    } else {
+                        session.setAttribute("errorMsg",
+                                "Không thể hủy yêu cầu không còn hoạt động.");
                     }
                 } else {
-                    String status = "WAITING";
-                    if ("cancel".equals(action)) {
-                        status = "CANCELLED";
-                    } else if ("complete".equals(action)) {
-                        status = "COMPLETED";
-                    }
-                    boolean success = reservationDAO.updateStatus(id, status);
-                    if (success) {
-                        session.setAttribute("successMsg", "Đã cập nhật trạng thái đặt chỗ thành công!");
-                    } else {
-                        session.setAttribute("errorMsg", "Cập nhật trạng thái đặt chỗ thất bại!");
-                    }
+                    session.setAttribute("errorMsg", "Thao tác đặt trước không hợp lệ.");
                 }
             }
         } catch (Exception e) {

@@ -80,6 +80,8 @@
                                                 Hết hạn nhận</option>
                                             <option value="CANCELLED" ${selectedStatus eq 'CANCELLED' ? 'selected' : ''
                                                 }>Đã hủy</option>
+                                            <option value="LOST" ${selectedStatus eq 'LOST' ? 'selected' : ''}>
+                                                Đã báo mất</option>
                                         </select>
                                     </label>
                                     <button type="submit" class="btn btn-primary borrow-filter-button">
@@ -186,6 +188,9 @@
                                                                         <c:when
                                                                             test="${borrowRecord.status eq 'CANCELLED'}">
                                                                             Đã hủy</c:when>
+                                                                        <c:when
+                                                                            test="${borrowRecord.status eq 'LOST'}">
+                                                                            Đã báo mất</c:when>
                                                                         <c:otherwise>
                                                                             <c:out value="${borrowRecord.status}" />
                                                                         </c:otherwise>
@@ -343,12 +348,23 @@
                                 <div class="borrow-modal-grid">
                                     <label><span>Mã yêu cầu</span><input type="text" readonly
                                             data-loan-field="requestId"></label>
-                                    <label><span>Mã vạch bản sao</span><input class="borrow-monospace" type="text"
-                                            readonly data-loan-field="barcode"></label>
+                                    <label><span>Mã vạch bản sao</span>
+                                        <div class="barcode-input-wrapper">
+                                            <input class="borrow-monospace" type="text" name="barcode" id="loan-barcode-input"
+                                                data-loan-field="barcode" placeholder="Quét hoặc nhập mã..." required>
+                                            <button type="button" class="scan-btn" id="start-scan-btn" title="Quét mã bằng Camera">
+                                                <i class="fa-solid fa-camera fa-lg"></i>
+                                            </button>
+                                        </div>
+                                    </label>
                                     <label><span>Thời điểm yêu cầu</span><input type="text" readonly
                                             data-loan-field="requestDate"></label>
                                     <label><span>Hạn cuối nhận sách</span><input class="borrow-deadline" type="text"
                                             readonly data-loan-field="pickupDeadline"></label>
+                                </div>
+                                <div id="qr-reader-container" style="display: none;">
+                                    <div id="qr-reader"></div>
+                                    <button type="button" id="stop-scan-btn" class="btn btn-secondary btn-sm" style="margin-top: 10px; width: 100%;">Dừng quét bằng camera</button>
                                 </div>
                                 <div class="borrow-modal-actions">
                                     <button type="button" class="btn btn-secondary" data-close-borrow-modal>Hủy
@@ -430,5 +446,6 @@
                         </section>
                     </div>
 
+                    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
                     <script src="${borrowListScriptUrl}" defer></script>
                     <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>

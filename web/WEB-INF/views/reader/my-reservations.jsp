@@ -35,6 +35,8 @@
                             <tr>
                                 <th>Tên sách</th>
                                 <th>Ngày đặt trước</th>
+                                <th>Ngày muốn nhận</th>
+                                <th>Ngày dự kiến</th>
                                 <th>Vị trí hiện tại</th>
                                 <th>Trạng thái</th>
                                 <th>Hạn thực hiện mượn</th>
@@ -52,6 +54,17 @@
                                     </td>
                                     <td data-label="Ngày đặt">
                                         <c:out value="${record.reserveDate}"/>
+                                    </td>
+                                    <td data-label="Ngày muốn nhận">
+                                        <c:out value="${record.requestedPickupDate}" default="—"/>
+                                    </td>
+                                    <td data-label="Ngày dự kiến">
+                                        <c:out value="${record.expectedPickupDate}" default="—"/>
+                                        <c:if test="${not empty record.delayNotifiedAt and record.status eq 'WAITING'}">
+                                            <small class="reservation-delayed-note">
+                                                Sách đang trả trễ; thư viện sẽ báo khi có sách.
+                                            </small>
+                                        </c:if>
                                     </td>
                                     <td data-label="Vị trí">
                                         <c:out value="${record.queuePosition gt 0 ? record.queuePosition : '—'}"/>

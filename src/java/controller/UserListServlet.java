@@ -113,7 +113,14 @@ public class UserListServlet extends HttpServlet {
         u.setAvatar(request.getParameter("avatar"));
         u.setRole(request.getParameter("role"));
 
-        userService.createUser(u, request.getParameter("password"));
+        // createUser trả về newUserId của tài khoản vừa tạo
+        int newUserId = userService.createUser(u, request.getParameter("password"));
+
+        // Ghi audit log tạo tài khoản mới
+        User logged = (User) request.getSession().getAttribute("loggedUser");
+        String operator = logged != null ? logged.getUsername() : "admin";
+        utils.AuditLogger.logCreateUser(operator, newUserId, u.getUsername(),
+                u.getRole() != null ? u.getRole() : "READER");
         request.getSession().setAttribute("successMsg", "Tạo người dùng thành công.");
     }
 
@@ -153,6 +160,14 @@ public class UserListServlet extends HttpServlet {
                 request.getParameter("role"),
                 active,
                 request.getParameter("password"));
+
+        // Ghi audit log cập nhật tài khoản
+        User logged = (User) request.getSession().getAttribute("loggedUser");
+        String operator = logged != null ? logged.getUsername() : "admin";
+        String newRole = request.getParameter("role");
+        String detail = "Cập nhật thông tin tài khoản User ID #" + id
+                + (newRole != null && !newRole.isEmpty() ? " | Vai trò mới: " + newRole : "");
+        utils.AuditLogger.logUpdateUser(operator, id, detail);
 
         request.getSession().setAttribute("successMsg", "Cập nhật thành công.");
     }

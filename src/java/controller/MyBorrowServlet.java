@@ -1,5 +1,5 @@
 /*
- * Controller HTTP hiển thị và xử lý gia hạn tại trang mượn sách cá nhân của độc giả.
+ * Controller HTTP hiển thị và xử lý thao tác tại trang mượn sách cá nhân của độc giả.
  */
 package controller;
 
@@ -12,15 +12,17 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.BorrowRenewalResult;
 import model.User;
 import service.BorrowService;
 import service.BorrowService.BorrowPageData;
 
 /**
- * Điều phối GET `/borrow/my` và POST `/borrow/my/renew` cho người dùng vai trò READER.
+ * Điều phối trang mượn cá nhân, gồm gia hạn, hủy giữ và báo mất sách của Reader.
  */
 @WebServlet(name = "MyBorrowServlet", urlPatterns = {
-    "/borrow/my", "/borrow/my/renew", "/borrow/create", "/borrow/cancel"
+    "/borrow/my", "/borrow/my/renew", "/borrow/my/report-lost",
+    "/borrow/create", "/borrow/cancel"
 })
 public class MyBorrowServlet extends HttpServlet {
 
@@ -52,10 +54,8 @@ public class MyBorrowServlet extends HttpServlet {
             request.setAttribute("maximumRenewals", BorrowService.MAXIMUM_RENEWALS);
             request.setAttribute("activePage", "borrows");
             
-            // Lấy các borrow_id đã đánh giá
-            dao.BookReviewDAO reviewDAO = new dao.BookReviewDAO();
-            java.util.Set<Integer> reviewedBorrowIds = reviewDAO.getReviewedBorrowIds(reader.getId());
-            request.setAttribute("reviewedBorrowIds", reviewedBorrowIds);
+            request.setAttribute("reviewedBorrowIds",
+                    borrowService.getReviewedBorrowIds(reader.getId()));
 
             request.getRequestDispatcher("/WEB-INF/views/reader/my-borrows.jsp").forward(request, response);
         } catch (Exception exception) {
@@ -88,11 +88,12 @@ public class MyBorrowServlet extends HttpServlet {
             String errorMessage;
             if (path.endsWith("/create")) {
                 int userId = reader.getId();
-                if (new dao.FineDAO().searchByUser(userId, "UNPAID", null).size() > 0) {
+                if (borrowService.hasUnpaidFines(userId)) {
                     success = false;
                     successMessage = "";
                     errorMessage = "Bạn phải thanh toán hết các khoản phạt trước đó mới được mượn sách mới.";
-                } else if (borrowService.getActiveBorrowCount(userId) >= 3) {
+                } else if (borrowService.getActiveBorrowCount(userId)
+                        >= BorrowService.MAXIMUM_ACTIVE_BORROWS) {
                     success = false;
                     successMessage = "";
                     errorMessage = "Không thể mượn thêm sách: Bạn đã đạt giới hạn tối đa 3 lượt mượn hoạt động.";
@@ -105,18 +106,31 @@ public class MyBorrowServlet extends HttpServlet {
                 success = borrowService.cancelBorrowRequest(parsePositiveId(request, "borrowId"), reader.getId());
                 successMessage = "Đã hủy yêu cầu mượn sách và giải phóng bản sao.";
                 errorMessage = "Không thể hủy yêu cầu. Chỉ yêu cầu đang chờ nhận mới được hủy.";
+            } else if (path.endsWith("/report-lost")) {
+                success = borrowService.reportLostBorrow(
+                        parsePositiveId(request, "borrowRecordId"),
+                        reader.getId(), reader.getUsername());
+                successMessage = "Đã ghi nhận báo mất, cập nhật tồn kho và tạo vé phạt bằng 100% giá sách.";
+                errorMessage = "Không thể báo mất. Lượt mượn không thuộc tài khoản của bạn "
+                        + "hoặc không còn ở trạng thái đang mượn.";
             } else {
-                success = borrowService.renewBorrow(parsePositiveId(request, "borrowRecordId"), reader.getId());
+                BorrowRenewalResult renewalResult = borrowService.renewBorrow(
+                        parsePositiveId(request, "borrowRecordId"), reader.getId());
+                success = renewalResult == BorrowRenewalResult.SUCCESS;
                 successMessage = "Gia hạn sách thành công. Hạn trả đã được cộng thêm 7 ngày.";
-                errorMessage = "Không thể gia hạn. Sách có thể đã quá hạn hoặc đã đạt giới hạn gia hạn.";
+                errorMessage = renewalResult == BorrowRenewalResult.BLOCKED_BY_RESERVATION
+                        ? "Không thể gia hạn vì đầu sách đã có người đặt trước. Vui lòng trả sách đúng hạn hiện tại."
+                        : "Không thể gia hạn. Sách có thể đã quá hạn hoặc đã đạt giới hạn gia hạn.";
             }
             session.setAttribute(success ? "borrowSuccessMessage" : "borrowErrorMessage",
                     success ? successMessage : errorMessage);
         } catch (NumberFormatException exception) {
             session.setAttribute("borrowErrorMessage", "Mã lượt mượn không hợp lệ.");
         } catch (Exception exception) {
-            LOGGER.log(Level.SEVERE, "Không thể gia hạn sách cho userId=" + reader.getId(), exception);
-            session.setAttribute("borrowErrorMessage", "Không thể gia hạn sách lúc này.");
+            LOGGER.log(Level.SEVERE,
+                    "Không thể xử lý thao tác mượn sách cho userId=" + reader.getId(), exception);
+            session.setAttribute("borrowErrorMessage",
+                    "Không thể xử lý thao tác mượn sách lúc này.");
         }
         response.sendRedirect(request.getContextPath() + "/borrow/my");
     }
