@@ -1,12 +1,8 @@
 /**
- * Quản lý toàn bộ logic nghiệp vụ cho tính năng Sự kiện (Event Management).
- * Thuộc tầng Service (Business Logic).
+ * Lớp Service xử lý các quy tắc nghiệp vụ liên quan đến Sự kiện (Event).
+ * Thuộc tầng Service / Business Logic.
  *
- * Chịu trách nhiệm:
- * - Kiểm tra hợp lệ dữ liệu (Validate) nghiêm ngặt trước khi ghi DB (sử dụng str.trim().isEmpty()).
- * - Lọc trạng thái hiển thị động (UPCOMING, ONGOING, ENDED, CANCELLED) bằng Java.
- * - Sắp xếp danh sách bằng Comparator trong Java (title, start_time, status).
- * - Cắt trang phân trang bằng subList() với PAGE_SIZE = 10 (giống UserListService).
+ * Đồng bộ cấu trúc 100% với UserListService để dễ dàng quản lý và bảo trì.
  */
 package service;
 
@@ -20,15 +16,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Lớp dịch vụ quản lý nghiệp vụ cho Sự kiện.
+ * Lớp xử lý nghiệp vụ cho Sự kiện.
  */
 public class EventService {
 
-    public static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 10;
+    private static final int TITLE_MIN_LEN = 3;
+    private static final int TITLE_MAX_LEN = 200;
+    private static final int DESC_MAX_LEN = 1000;
+
     private final EventDAO eventDAO = new EventDAO();
 
     /**
-     * DTO kết quả tìm kiếm và phân trang sự kiện.
+     * Đối tượng chứa kết quả tìm kiếm và phân trang để Servlet truyền sang JSP.
      */
     public static class SearchResult {
         public List<Event> events;
@@ -39,23 +39,25 @@ public class EventService {
 
     /**
      * Tìm kiếm, lọc theo trạng thái hiển thị, sắp xếp và phân trang danh sách sự kiện.
+     * Đồng bộ chuẩn 5 tham số với UserListService.search().
      *
      * @param q            Từ khóa tìm kiếm theo tiêu đề (SQL LIKE)
      * @param statusFilter Trạng thái hiển thị cần lọc ("UPCOMING", "ONGOING", "ENDED", "CANCELLED" hoặc null/rỗng)
-     * @param sortBy       Trường cần sắp xếp ("title", "start_time", "status")
+     * @param sortField    Trường cần sắp xếp ("start_time", "title", "status")
      * @param sortOrder    Thứ tự sắp xếp ("ASC" hoặc "DESC")
      * @param page         Trang hiện tại (1-indexed)
      * @return Đối tượng SearchResult chứa danh sách trang hiện tại và thông tin phân trang
      */
-    public SearchResult search(String q, String statusFilter, String sortBy, String sortOrder, int page) {
+    public SearchResult search(String q, String statusFilter, String sortField, String sortOrder, int page) {
         List<Event> allEvents;
         try {
-            allEvents = eventDAO.findActiveEvents(q);
+            // 1. Tải danh sách sự kiện từ DAO (có sắp xếp qua SQL Whitelist)
+            allEvents = eventDAO.searchEvents(q, null, sortField, sortOrder);
         } catch (Exception e) {
             throw new IllegalStateException("Không thể tải danh sách sự kiện: " + e.getMessage(), e);
         }
 
-        // 1. Lọc theo trạng thái hiển thị động (UPCOMING / ONGOING / ENDED / CANCELLED) bằng Java
+        // 2. Lọc theo trạng thái hiển thị động (UPCOMING / ONGOING / ENDED / CANCELLED) bằng Java Stream
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             String filterUpper = statusFilter.trim().toUpperCase();
             allEvents = allEvents.stream()
@@ -65,9 +67,9 @@ public class EventService {
             allEvents = new ArrayList<>(allEvents);
         }
 
-        // 2. Sắp xếp bằng Comparator trong Java (không sắp xếp bằng câu SQL ORDER BY)
+        // 3. Sắp xếp bằng Comparator Java để đảm bảo chính xác tuyệt đối cả cho Trạng thái động
         Comparator<Event> comparator;
-        String field = (sortBy != null) ? sortBy.trim().toLowerCase() : "start_time";
+        String field = (sortField != null) ? sortField.trim().toLowerCase() : "start_time";
 
         switch (field) {
             case "title":
@@ -88,7 +90,7 @@ public class EventService {
 
         allEvents.sort(comparator);
 
-        // 3. Phân trang bằng subList() trong Java với PAGE_SIZE = 10
+        // 4. Phân trang bằng subList() trong Java với PAGE_SIZE = 10
         SearchResult result = new SearchResult();
         result.totalRecords = allEvents.size();
         result.totalPages = Math.max(1, (int) Math.ceil((double) result.totalRecords / PAGE_SIZE));
@@ -110,143 +112,144 @@ public class EventService {
      * @return Đối tượng Event
      */
     public Event getEventById(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Mã sự kiện không hợp lệ.");
+        }
         try {
             Event event = eventDAO.findById(id);
             if (event == null) {
-                throw new IllegalArgumentException("Không tìm thấy sự kiện có mã #" + id);
+                throw new IllegalArgumentException("Sự kiện không tồn tại hoặc đã bị xóa.");
             }
             return event;
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("Không thể tải thông tin sự kiện: " + e.getMessage(), e);
+            throw new IllegalStateException("Lỗi khi tải thông tin sự kiện: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Tạo mới một sự kiện. Thực hiện validate dữ liệu bắt buộc ở tầng Service.
+     * Thêm mới một sự kiện vào hệ thống (Service-side validation).
      *
-     * @param event Đối tượng sự kiện chứa thông tin nhập vào
+     * @param event Đối tượng sự kiện cần thêm
      */
     public void createEvent(Event event) {
-        validateEvent(event, true);
+        validateEvent(event);
         try {
             boolean success = eventDAO.insert(event);
             if (!success) {
-                throw new IllegalStateException("Thêm mới sự kiện thất bại. Vui lòng thử lại.");
+                throw new IllegalStateException("Thêm sự kiện thất bại.");
             }
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("Lỗi hệ thống khi thêm sự kiện: " + e.getMessage(), e);
+            throw new IllegalStateException("Lỗi khi lưu sự kiện: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Cập nhật thông tin sự kiện. Thực hiện validate dữ liệu bắt buộc ở tầng Service.
+     * Cập nhật thông tin sự kiện (Service-side validation).
      *
-     * @param event Đối tượng sự kiện chứa thông tin cập nhật
+     * @param event Đối tượng sự kiện cần cập nhật
      */
     public void updateEvent(Event event) {
-        if (event.getId() <= 0) {
-            throw new IllegalArgumentException("Mã sự kiện không hợp lệ.");
+        if (event == null || event.getId() <= 0) {
+            throw new IllegalArgumentException("Thông tin sự kiện không hợp lệ.");
         }
-        // Kiểm tra sự kiện có tồn tại không
-        getEventById(event.getId());
-
-        validateEvent(event, false);
-
+        validateEvent(event);
         try {
             boolean success = eventDAO.update(event);
             if (!success) {
-                throw new IllegalStateException("Cập nhật sự kiện thất bại. Vui lòng thử lại.");
+                throw new IllegalStateException("Cập nhật sự kiện thất bại.");
             }
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("Lỗi hệ thống khi cập nhật sự kiện: " + e.getMessage(), e);
+            throw new IllegalStateException("Lỗi khi cập nhật sự kiện: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Xóa mềm sự kiện (cập nhật is_deleted = 1).
+     * Xóa mềm sự kiện (Soft delete).
      *
-     * @param id        Mã sự kiện cần xóa
+     * @param id        Mã sự kiện
      * @param updatedBy Tài khoản thực hiện xóa
      */
     public void deleteEvent(int id, String updatedBy) {
         if (id <= 0) {
             throw new IllegalArgumentException("Mã sự kiện không hợp lệ.");
         }
-        getEventById(id);
-
         try {
             boolean success = eventDAO.softDelete(id, updatedBy);
             if (!success) {
-                throw new IllegalStateException("Xóa sự kiện thất bại. Vui lòng thử lại.");
+                throw new IllegalStateException("Xóa sự kiện thất bại.");
             }
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("Lỗi hệ thống khi xóa sự kiện: " + e.getMessage(), e);
+            throw new IllegalStateException("Lỗi khi xóa sự kiện: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Kiểm tra hợp lệ (Validate) dữ liệu sự kiện theo đúng quy tắc nghiệp vụ.
-     * Toàn bộ điều kiện kiểm tra rỗng phải dùng str.trim().isEmpty().
-     *
-     * @param event    Đối tượng sự kiện cần kiểm tra
-     * @param isCreate true nếu là thao tác tạo mới, false nếu là thao tác cập nhật
+     * Kiểm tra hợp lệ cho các thông tin của sự kiện.
+     * Sử dụng str.trim().isEmpty() cho toàn bộ các trường chuỗi.
      */
-    private void validateEvent(Event event, boolean isCreate) {
+    private void validateEvent(Event event) {
         if (event == null) {
             throw new IllegalArgumentException("Dữ liệu sự kiện không được để trống.");
         }
 
-        // 1. Validate title: Bắt buộc, trim() không rỗng, độ dài 3–200 ký tự
-        if (event.getTitle() == null || event.getTitle().trim().isEmpty()) {
+        // 1. Kiểm tra Tiêu đề (not blank, length 3 - 200)
+        String title = event.getTitle();
+        if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Tiêu đề sự kiện không được để trống.");
         }
-        String trimmedTitle = event.getTitle().trim();
-        if (trimmedTitle.length() < 3 || trimmedTitle.length() > 200) {
-            throw new IllegalArgumentException("Tiêu đề sự kiện phải có độ dài từ 3 đến 200 ký tự.");
+        title = title.trim();
+        if (title.length() < TITLE_MIN_LEN || title.length() > TITLE_MAX_LEN) {
+            throw new IllegalArgumentException("Tiêu đề sự kiện phải từ " + TITLE_MIN_LEN + " đến " + TITLE_MAX_LEN + " ký tự.");
         }
-        event.setTitle(trimmedTitle);
+        event.setTitle(title);
 
-        // 2. Validate description: Không bắt buộc; nếu có, trim() sau đó <= 1000 ký tự
-        if (event.getDescription() != null && !event.getDescription().trim().isEmpty()) {
-            String trimmedDesc = event.getDescription().trim();
-            if (trimmedDesc.length() > 1000) {
-                throw new IllegalArgumentException("Mô tả sự kiện không được vượt quá 1000 ký tự.");
+        // 2. Kiểm tra Mô tả (nếu có -> max 1000 ký tự)
+        String description = event.getDescription();
+        if (description != null && !description.trim().isEmpty()) {
+            description = description.trim();
+            if (description.length() > DESC_MAX_LEN) {
+                throw new IllegalArgumentException("Mô tả sự kiện không được vượt quá " + DESC_MAX_LEN + " ký tự.");
             }
-            event.setDescription(trimmedDesc);
+            event.setDescription(description);
         } else {
             event.setDescription(null);
         }
 
-        // 3. Validate start_time: Bắt buộc
-        if (event.getStartTime() == null) {
-            throw new IllegalArgumentException("Thời gian bắt đầu sự kiện không được để trống.");
-        }
-        if (isCreate) {
-            // Khi tạo mới: phải là thời điểm tương lai (sau thời điểm hiện tại)
-            if (!event.getStartTime().isAfter(LocalDateTime.now())) {
-                throw new IllegalArgumentException("Thời gian bắt đầu sự kiện tạo mới phải ở tương lai.");
-            }
+        // 3. Kiểm tra Thời gian bắt đầu
+        LocalDateTime startTime = event.getStartTime();
+        if (startTime == null) {
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống.");
         }
 
-        // 4. Validate end_time: Bắt buộc, phải sau start_time
-        if (event.getEndTime() == null) {
-            throw new IllegalArgumentException("Thời gian kết thúc sự kiện không được để trống.");
-        }
-        if (!event.getEndTime().isAfter(event.getStartTime())) {
-            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu sự kiện.");
+        // 4. Kiểm tra Thời gian kết thúc
+        LocalDateTime endTime = event.getEndTime();
+        if (endTime == null) {
+            throw new IllegalArgumentException("Thời gian kết thúc không được để trống.");
         }
 
-        // 5. Validate status: Chỉ nhận ACTIVE hoặc CANCELLED
-        if (event.getStatus() != null && !event.getStatus().trim().isEmpty()) {
-            String statusUpper = event.getStatus().trim().toUpperCase();
-            if (!"ACTIVE".equals(statusUpper) && !"CANCELLED".equals(statusUpper)) {
-                throw new IllegalArgumentException("Trạng thái sự kiện không hợp lệ (chỉ nhận ACTIVE hoặc CANCELLED).");
-            }
-            event.setStatus(statusUpper);
-        } else {
+        // 5. Kiểm tra Thời gian kết thúc phải sau Thời gian bắt đầu
+        if (!endTime.isAfter(startTime)) {
+            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
+        }
+
+        // 6. Kiểm tra Trạng thái quản trị (ACTIVE / CANCELLED)
+        String status = event.getStatus();
+        if (status == null || status.trim().isEmpty()) {
             event.setStatus("ACTIVE");
+        } else {
+            status = status.trim().toUpperCase();
+            if (!"ACTIVE".equals(status) && !"CANCELLED".equals(status)) {
+                throw new IllegalArgumentException("Trạng thái sự kiện không hợp lệ (chỉ chấp nhận ACTIVE hoặc CANCELLED).");
+            }
+            event.setStatus(status);
         }
     }
 }

@@ -50,8 +50,19 @@ public class EventServlet extends HttpServlet {
         // 1. Đọc các tham số tìm kiếm, lọc, sắp xếp, phân trang từ URL
         String q = request.getParameter("q");
         String statusFilter = request.getParameter("status");
-        String sortBy = request.getParameter("sort");
+        String sortField = request.getParameter("sort");
         String sortOrder = request.getParameter("order");
+
+        if (sortField == null || sortField.trim().isEmpty()) {
+            sortField = "start_time";
+            
+            
+            
+            // sortOrder = "DESC";
+        }
+        if (!"DESC".equalsIgnoreCase(sortOrder)) {
+            sortOrder = "ASC";
+        }
 
         int page = 1;
         String pageStr = request.getParameter("page");
@@ -65,7 +76,7 @@ public class EventServlet extends HttpServlet {
 
         // 2. Thực hiện truy vấn qua EventService
         try {
-            EventService.SearchResult result = eventService.search(q, statusFilter, sortBy, sortOrder, page);
+            EventService.SearchResult result = eventService.search(q, statusFilter, sortField, sortOrder, page);
 
             request.setAttribute("events", result.events);
             request.setAttribute("totalRecords", result.totalRecords);
@@ -74,8 +85,9 @@ public class EventServlet extends HttpServlet {
 
             request.setAttribute("q", q != null ? q : "");
             request.setAttribute("statusFilter", statusFilter != null ? statusFilter : "");
-            request.setAttribute("sortBy", sortBy != null ? sortBy : "start_time");
-            request.setAttribute("sortOrder", sortOrder != null ? sortOrder : "ASC");
+            request.setAttribute("sortField", sortField);
+            request.setAttribute("sortBy", sortField);
+            request.setAttribute("sortOrder", sortOrder);
 
         } catch (Exception e) {
             request.setAttribute("errorMsg", "Không thể tải danh sách sự kiện: " + e.getMessage());
