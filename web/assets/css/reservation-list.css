@@ -47,7 +47,7 @@
 
 .reservation-filter-form {
     display: grid;
-    grid-template-columns: minmax(250px, 1fr) 200px auto;
+    grid-template-columns: minmax(250px, 1fr) 200px 180px auto;
     gap: 15px;
     align-items: end;
 }
@@ -151,6 +151,19 @@
 .reservation-record-id {
     font-weight: 700;
     color: #475569;
+}
+
+.reservation-priority-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #fff3cd;
+    color: #9a6700;
+    font-size: 0.8rem;
+    font-weight: 800;
 }
 
 .reservation-status {
@@ -307,12 +320,19 @@
     white-space: nowrap;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1050px) {
     .reservation-filter-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 28px;
     }
 
     .reservation-filter-button {
         width: 100%;
+    }
+}
+
+@media (max-width: 650px) {
+    .reservation-filter-form {
+        grid-template-columns: 1fr;
     }
 }

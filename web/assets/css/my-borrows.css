@@ -67,7 +67,7 @@
 .borrow-empty { text-align: center; padding: 34px !important; color: #8a94a4 !important; }
 .borrow-empty i, .borrow-empty span { display: block; }
 .borrow-empty i { font-size: 1.5rem; margin-bottom: 8px; }
-.borrow-lost-dialog { border: 0; border-radius: 16px; box-shadow: 0 24px 70px rgba(15, 23, 42, .28); color: #17213a; max-width: 480px; padding: 0; width: calc(100% - 32px); }
+.borrow-lost-dialog { border: 0; border-radius: 16px; box-shadow: 0 24px 70px rgba(15, 23, 42, .28); color: #17213a; inset: 50% auto auto 50%; margin: 0; max-height: calc(100vh - 32px); max-width: 480px; overflow-y: auto; padding: 0; position: fixed; transform: translate(-50%, -50%); width: calc(100% - 32px); }
 .borrow-lost-dialog::backdrop { background: rgba(15, 23, 42, .58); }
 .borrow-lost-dialog-content { padding: 28px; position: relative; text-align: center; }
 .borrow-lost-dialog-close { background: transparent; border: 0; color: #7a8496; cursor: pointer; font-size: 1.15rem; padding: 6px; position: absolute; right: 14px; top: 12px; }

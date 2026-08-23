@@ -142,6 +142,35 @@ public class ReservationService {
     }
 
     /**
+     * Lấy một trang reservation cho Admin hoặc Librarian theo bộ lọc quản lý.
+     *
+     * @param status trạng thái reservation cần lọc
+     * @param keyword từ khóa tên độc giả, tài khoản hoặc tên sách
+     * @param sortOrder thứ tự ưu tiên {@code ASC}, {@code DESC} hoặc {@code NEWEST}
+     * @param pageNumber số trang bắt đầu từ 1
+     * @param pageSize số bản ghi tối đa trên trang
+     * @return danh sách reservation đã kèm vị trí hàng chờ động
+     * @throws Exception khi không thể đọc dữ liệu
+     */
+    public List<ReservationRecord> getReservationsForManagement(String status, String keyword,
+            String sortOrder, int pageNumber, int pageSize) throws Exception {
+        return reservationDao.searchReservations(
+                status, keyword, sortOrder, pageNumber, pageSize);
+    }
+
+    /**
+     * Đếm reservation cho Admin hoặc Librarian theo cùng bộ lọc danh sách.
+     *
+     * @param status trạng thái reservation cần lọc
+     * @param keyword từ khóa tên độc giả, tài khoản hoặc tên sách
+     * @return tổng số reservation phù hợp
+     * @throws Exception khi không thể đọc dữ liệu
+     */
+    public int countReservationsForManagement(String status, String keyword) throws Exception {
+        return reservationDao.countReservations(status, keyword);
+    }
+
+    /**
      * Hủy yêu cầu còn hoạt động thuộc đúng độc giả.
      *
      * @param reservationId mã yêu cầu
