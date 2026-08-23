@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Truy cập dữ liệu yêu cầu đặt trước, bao gồm hàng chờ, lịch nhận dự kiến
+ * và các thao tác thay đổi trạng thái reservation.
+ */
 public class ReservationDAO {
 
     /** Điều kiện loại bản sao đang được giữ hoặc chưa được hoàn trả. */
@@ -18,6 +22,14 @@ public class ReservationDAO {
             + "WHERE br.copy_id = bc.id AND ((br.status = 'PENDING_PICKUP' "
             + "AND br.pickup_deadline >= NOW()) OR (br.status IN ('BORROWED', 'OVERDUE') "
             + "AND br.return_date IS NULL))";
+
+    /** Biểu thức tính vị trí động của reservation đang chờ trong từng đầu sách. */
+    private static final String QUEUE_POSITION_SQL = "CASE WHEN r.status='WAITING' THEN "
+            + "(SELECT COUNT(*) FROM book_reservations earlier "
+            + "WHERE earlier.book_id=r.book_id "
+            + "AND earlier.status IN ('WAITING','READY_FOR_PICKUP') "
+            + "AND (earlier.created_at<r.created_at OR (earlier.created_at=r.created_at "
+            + "AND earlier.id<=r.id))) ELSE 0 END";
 
     private ReservationRecord mapRow(ResultSet rs) throws SQLException {
         ReservationRecord record = new ReservationRecord();
@@ -90,53 +102,62 @@ public class ReservationDAO {
         return record;
     }
 
-    public List<ReservationRecord> searchReservations(String status, String keyword, int pageNum, int pageSize) throws Exception {
+    /**
+     * Tìm một trang reservation cho màn hình quản lý và tính vị trí hàng chờ động.
+     *
+     * @param status trạng thái cần lọc, để trống để lấy mọi trạng thái
+     * @param keyword từ khóa tên độc giả, tài khoản hoặc tên sách
+     * @param sortOrder thứ tự ưu tiên {@code ASC}, {@code DESC} hoặc {@code NEWEST}
+     * @param pageNum số trang bắt đầu từ 1
+     * @param pageSize số bản ghi tối đa trên một trang
+     * @return danh sách reservation phù hợp với bộ lọc
+     * @throws Exception khi không thể truy vấn dữ liệu
+     */
+    public List<ReservationRecord> searchReservations(String status, String keyword,
+            String sortOrder, int pageNum, int pageSize) throws Exception {
         List<ReservationRecord> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.requested_pickup_date, "
                 + "r.expected_pickup_date, r.expiry_date, r.status, r.notified_at, "
                 + "r.delay_notified_at, r.created_at, r.updated_at, ")
                 .append("u.username, u.full_name, u.email, u.phone, ")
-                .append("b.title, b.isbn ")
+                .append("b.title, b.isbn, ")
+                .append(QUEUE_POSITION_SQL).append(" AS queue_position ")
                 .append("FROM book_reservations r ")
                 .append("INNER JOIN users u ON r.user_id = u.id ")
                 .append("INNER JOIN books b ON r.book_id = b.id ")
                 .append("WHERE 1=1 ");
 
-        if (status != null && !status.trim().isEmpty()) {
-            sb.append("AND r.status = ? ");
-        }
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sb.append("AND (u.full_name LIKE ? OR u.username LIKE ? OR b.title LIKE ?) ");
-        }
+        appendManagementFilters(sb, status, keyword);
+        appendManagementOrder(sb, sortOrder);
+        sb.append("LIMIT ?, ?");
 
-        sb.append("ORDER BY r.created_at DESC ")
-                .append("LIMIT ?, ?");
-
-        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {
-            int idx = 1;
-            if (status != null && !status.trim().isEmpty()) {
-                ps.setString(idx++, status.trim());
-            }
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String kw = "%" + keyword.trim() + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-            }
+        try (Connection conn = DBContext.getInstance().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            int idx = bindManagementFilters(ps, status, keyword);
             int offset = (pageNum - 1) * pageSize;
             ps.setInt(idx++, offset);
-            ps.setInt(idx++, pageSize);
+            ps.setInt(idx, pageSize);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRow(rs));
+                    ReservationRecord record = mapRow(rs);
+                    record.setQueuePosition(rs.getInt("queue_position"));
+                    list.add(record);
                 }
             }
         }
         return list;
     }
 
+    /**
+     * Đếm reservation khớp cùng bộ lọc của màn hình quản lý.
+     *
+     * @param status trạng thái cần lọc, để trống để lấy mọi trạng thái
+     * @param keyword từ khóa tên độc giả, tài khoản hoặc tên sách
+     * @return tổng số reservation phù hợp
+     * @throws Exception khi không thể truy vấn dữ liệu
+     */
     public int countReservations(String status, String keyword) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT COUNT(*) ")
@@ -145,24 +166,11 @@ public class ReservationDAO {
                 .append("INNER JOIN books b ON r.book_id = b.id ")
                 .append("WHERE 1=1 ");
 
-        if (status != null && !status.trim().isEmpty()) {
-            sb.append("AND r.status = ? ");
-        }
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sb.append("AND (u.full_name LIKE ? OR u.username LIKE ? OR b.title LIKE ?) ");
-        }
+        appendManagementFilters(sb, status, keyword);
 
-        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {
-            int idx = 1;
-            if (status != null && !status.trim().isEmpty()) {
-                ps.setString(idx++, status.trim());
-            }
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String kw = "%" + keyword.trim() + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-            }
+        try (Connection conn = DBContext.getInstance().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            bindManagementFilters(ps, status, keyword);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -170,6 +178,65 @@ public class ReservationDAO {
             }
         }
         return 0;
+    }
+
+    /**
+     * Ghép các điều kiện dùng chung cho truy vấn danh sách và truy vấn đếm.
+     *
+     * @param sql câu SQL đang được xây dựng
+     * @param status trạng thái cần lọc
+     * @param keyword từ khóa cần tìm
+     */
+    private void appendManagementFilters(StringBuilder sql, String status, String keyword) {
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND r.status = ? ");
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (u.full_name LIKE ? OR u.username LIKE ? OR b.title LIKE ?) ");
+        }
+    }
+
+    /**
+     * Ghép mệnh đề sắp xếp cố định; reservation không còn trong hàng chờ luôn nằm sau
+     * các reservation có vị trí ưu tiên khi người dùng chọn sắp xếp theo ưu tiên.
+     *
+     * @param sql câu SQL đang được xây dựng
+     * @param sortOrder thứ tự ưu tiên đã được kiểm tra
+     */
+    private void appendManagementOrder(StringBuilder sql, String sortOrder) {
+        if ("ASC".equals(sortOrder)) {
+            sql.append("ORDER BY CASE WHEN queue_position > 0 THEN 0 ELSE 1 END, ")
+                    .append("queue_position ASC, r.created_at ASC, r.id ASC ");
+        } else if ("DESC".equals(sortOrder)) {
+            sql.append("ORDER BY CASE WHEN queue_position > 0 THEN 0 ELSE 1 END, ")
+                    .append("queue_position DESC, r.created_at DESC, r.id DESC ");
+        } else {
+            sql.append("ORDER BY r.created_at DESC, r.id DESC ");
+        }
+    }
+
+    /**
+     * Gán tham số theo đúng thứ tự các điều kiện quản lý đã được ghép vào SQL.
+     *
+     * @param statement câu lệnh cần gán tham số
+     * @param status trạng thái cần lọc
+     * @param keyword từ khóa cần tìm
+     * @return chỉ số tham số kế tiếp chưa được sử dụng
+     * @throws SQLException khi không thể gán tham số
+     */
+    private int bindManagementFilters(PreparedStatement statement, String status, String keyword)
+            throws SQLException {
+        int parameterIndex = 1;
+        if (status != null && !status.trim().isEmpty()) {
+            statement.setString(parameterIndex++, status.trim());
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String searchPattern = "%" + keyword.trim() + "%";
+            statement.setString(parameterIndex++, searchPattern);
+            statement.setString(parameterIndex++, searchPattern);
+            statement.setString(parameterIndex++, searchPattern);
+        }
+        return parameterIndex;
     }
 
     /**
@@ -211,11 +278,7 @@ public class ReservationDAO {
         String sql = "SELECT r.id, r.book_id, r.user_id, r.reserve_date, r.requested_pickup_date, "
                 + "r.expected_pickup_date, r.expiry_date, r.status, r.notified_at, "
                 + "r.delay_notified_at, r.created_at, r.updated_at, u.username, u.full_name, u.email, "
-                + "u.phone, b.title, b.isbn, CASE WHEN r.status='WAITING' THEN "
-                + "(SELECT COUNT(*) FROM book_reservations earlier WHERE earlier.book_id=r.book_id "
-                + "AND earlier.status IN ('WAITING','READY_FOR_PICKUP') "
-                + "AND (earlier.created_at<r.created_at OR (earlier.created_at=r.created_at "
-                + "AND earlier.id<=r.id))) ELSE 0 END queue_position "
+                + "u.phone, b.title, b.isbn, " + QUEUE_POSITION_SQL + " AS queue_position "
                 + "FROM book_reservations r INNER JOIN users u ON r.user_id=u.id "
                 + "INNER JOIN books b ON r.book_id=b.id WHERE r.user_id=? ORDER BY r.created_at DESC";
         List<ReservationRecord> records = new ArrayList<>();

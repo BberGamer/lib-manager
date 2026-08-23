@@ -1,6 +1,7 @@
 <%--
     Trang quản lý đặt trước do ReservationManagementServlet hiển thị.
-    Mong đợi request attributes reservationList, totalPages, currentPageNum, selectedStatus và keyword;
+    Mong đợi request attributes reservationList, totalPages, currentPageNum, selectedStatus,
+    sortOrder, keyword và error;
     session attributes successMsg, errorMsg và loggedUser.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -37,8 +38,14 @@
         </div>
     </section>
 
-    <div class="container reservation-management-container" style="padding-top: 28px;">
+    <div class="container reservation-management-container">
 
+        <c:if test="${not empty error}">
+            <div class="reservation-alert reservation-alert-error" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <c:out value="${error}" />
+            </div>
+        </c:if>
         <c:if test="${not empty sessionScope.successMsg}">
             <div class="reservation-alert reservation-alert-success" role="status">
                 <i class="fa-solid fa-circle-check"></i>
@@ -85,6 +92,20 @@
                         </option>
                     </select>
                 </label>
+                <label>
+                    <span>Sắp xếp</span>
+                    <select name="order">
+                        <option value="NEWEST" ${sortOrder eq 'NEWEST' ? 'selected' : ''}>
+                            Mới nhất
+                        </option>
+                        <option value="ASC" ${sortOrder eq 'ASC' ? 'selected' : ''}>
+                            Ưu tiên cao → thấp (#1 trước)
+                        </option>
+                        <option value="DESC" ${sortOrder eq 'DESC' ? 'selected' : ''}>
+                            Ưu tiên thấp → cao
+                        </option>
+                    </select>
+                </label>
                 <button type="submit" class="btn btn-primary reservation-filter-button">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     Lọc kết quả
@@ -100,6 +121,7 @@
                             <th>Mã</th>
                             <th>Độc giả</th>
                             <th>Thông tin sách</th>
+                            <th>Thứ tự ưu tiên</th>
                             <th>Ngày yêu cầu</th>
                             <th>Ngày muốn nhận</th>
                             <th>Ngày dự kiến</th>
@@ -112,7 +134,7 @@
                         <c:choose>
                             <c:when test="${empty reservationList}">
                                 <tr>
-                                    <td class="reservation-empty-state" colspan="9">
+                                    <td class="reservation-empty-state" colspan="10">
                                         <i class="fa-solid fa-hourglass-empty"></i>
                                         <span>Không tìm thấy yêu cầu đặt trước nào.</span>
                                     </td>
@@ -136,6 +158,19 @@
                                         <td>
                                             <strong><c:out value="${reservation.book.title}" /></strong>
                                             <small>ISBN: <c:out value="${reservation.book.isbn}" /></small>
+                                        </td>
+                                        <td class="reservation-priority">
+                                            <c:choose>
+                                                <c:when test="${reservation.queuePosition gt 0}">
+                                                    <span class="reservation-priority-badge">
+                                                        #<c:out value="${reservation.queuePosition}" />
+                                                    </span>
+                                                    <small>Trong hàng chờ của sách</small>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="reservation-muted">—</span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td>
                                             <c:out value="${empty reservation.reserveDate
@@ -226,6 +261,7 @@
                         <c:url var="resvPrev" value="${rolePath}/reservation/list">
                             <c:param name="status" value="${selectedStatus}" />
                             <c:param name="keyword" value="${keyword}" />
+                            <c:param name="order" value="${sortOrder}" />
                             <c:param name="page" value="${cp - 1}" />
                         </c:url>
                         <a href="${resvPrev}" aria-label="Trang trước">
@@ -242,6 +278,7 @@
                 <c:url var="resvP1" value="${rolePath}/reservation/list">
                     <c:param name="status" value="${selectedStatus}" />
                     <c:param name="keyword" value="${keyword}" />
+                    <c:param name="order" value="${sortOrder}" />
                     <c:param name="page" value="1" />
                 </c:url>
                 <a class="${cp == 1 ? 'current' : ''}" href="${resvP1}">1</a>
@@ -253,6 +290,7 @@
                         <c:url var="resvPUrl" value="${rolePath}/reservation/list">
                             <c:param name="status" value="${selectedStatus}" />
                             <c:param name="keyword" value="${keyword}" />
+                            <c:param name="order" value="${sortOrder}" />
                             <c:param name="page" value="${pageNumber}" />
                         </c:url>
                         <a class="${pageNumber eq cp ? 'current' : ''}" href="${resvPUrl}"><c:out value="${pageNumber}" /></a>
@@ -265,6 +303,7 @@
                     <c:url var="resvPLast" value="${rolePath}/reservation/list">
                         <c:param name="status" value="${selectedStatus}" />
                         <c:param name="keyword" value="${keyword}" />
+                        <c:param name="order" value="${sortOrder}" />
                         <c:param name="page" value="${tp}" />
                     </c:url>
                     <a class="${cp == tp ? 'current' : ''}" href="${resvPLast}"><c:out value="${tp}" /></a>
@@ -275,6 +314,7 @@
                         <c:url var="resvNext" value="${rolePath}/reservation/list">
                             <c:param name="status" value="${selectedStatus}" />
                             <c:param name="keyword" value="${keyword}" />
+                            <c:param name="order" value="${sortOrder}" />
                             <c:param name="page" value="${cp + 1}" />
                         </c:url>
                         <a href="${resvNext}" aria-label="Trang sau">
