@@ -24,8 +24,8 @@ import java.util.Map;
 public class EventDAO {
 
     /**
-     * Danh sách các cột hợp lệ được phép sắp xếp (Whitelisting chống SQL Injection).
-     * thêm nếu thêm trường sắp xếp mới (sortOption jsp)
+     * Danh sách các cột hợp lệ được phép sắp xếp (Whitelisting chống SQL
+     * Injection). thêm nếu thêm trường sắp xếp mới (sortOption jsp)
      */
     private static final Map<String, String> SORTABLE_COLUMNS = Map.of(
             "start_time", "start_time",
@@ -36,10 +36,11 @@ public class EventDAO {
     /**
      * Tìm kiếm danh sách sự kiện nâng cao (chưa bị xóa mềm).
      *
-     * @param q            Từ khóa tìm kiếm theo tiêu đề (SQL LIKE)
-     * @param statusFilter Trạng thái quản trị ("ACTIVE", "CANCELLED" hoặc null/rỗng)
-     * @param sortField    Tên trường cần sắp xếp (lấy từ URL)
-     * @param sortOrder    Thứ tự sắp xếp ("ASC" hoặc "DESC")
+     * @param q Từ khóa tìm kiếm theo tiêu đề (SQL LIKE)
+     * @param statusFilter Trạng thái quản trị ("ACTIVE", "CANCELLED" hoặc
+     * null/rỗng)
+     * @param sortField Tên trường cần sắp xếp (lấy từ URL)
+     * @param sortOrder Thứ tự sắp xếp ("ASC" hoặc "DESC")
      * @return Danh sách sự kiện thỏa mãn điều kiện
      * @throws Exception Khi gặp lỗi kết nối hoặc truy vấn CSDL
      */
@@ -66,8 +67,7 @@ public class EventDAO {
         String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC";
         sql.append("ORDER BY ").append(column).append(" ").append(order).append(", id DESC");
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
             if (hasKeyword) {
@@ -80,6 +80,11 @@ public class EventDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
+
+//                    Event ev = mapRow(rs);
+//                    if (ev.getId() >= 1 && ev.getId() <= 5) {
+//                        list.add(ev);
+//                    }
                 }
             }
         }
@@ -109,8 +114,7 @@ public class EventDAO {
                 + "created_by, updated_by, created_at, updated_at "
                 + "FROM events WHERE id = ? AND is_deleted = 0";
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -133,8 +137,7 @@ public class EventDAO {
         String sql = "INSERT INTO events (title, description, start_time, end_time, status, is_deleted, created_by) "
                 + "VALUES (?, ?, ?, ?, ?, 0, ?)";
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, event.getTitle());
             ps.setString(2, event.getDescription());
@@ -158,8 +161,7 @@ public class EventDAO {
         String sql = "UPDATE events SET title = ?, description = ?, start_time = ?, end_time = ?, "
                 + "status = ?, updated_by = ? WHERE id = ? AND is_deleted = 0";
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, event.getTitle());
             ps.setString(2, event.getDescription());
@@ -176,7 +178,7 @@ public class EventDAO {
     /**
      * Thao tác Xóa mềm (soft delete) một sự kiện (gán is_deleted = 1).
      *
-     * @param id        Mã sự kiện cần xóa
+     * @param id Mã sự kiện cần xóa
      * @param updatedBy Tài khoản thực hiện xóa
      * @return true nếu xóa thành công, false nếu thất bại
      * @throws Exception Khi gặp lỗi kết nối hoặc truy vấn CSDL
@@ -184,8 +186,7 @@ public class EventDAO {
     public boolean softDelete(int id, String updatedBy) throws Exception {
         String sql = "UPDATE events SET is_deleted = 1, updated_by = ? WHERE id = ?";
 
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, updatedBy);
             ps.setInt(2, id);

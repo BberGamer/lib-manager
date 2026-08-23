@@ -36,6 +36,7 @@ public class UserListServlet extends HttpServlet {
 
         try {
             UserListService.SearchResult result = userService.search(q, role, active, sortField, sortOrder, page);
+            
             request.setAttribute("users", result.users);
             request.setAttribute("totalRecords", result.totalRecords);
             request.setAttribute("totalPages", result.totalPages);

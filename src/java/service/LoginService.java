@@ -12,9 +12,9 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Dịch vụ xử lý đăng nhập cho người dùng hệ thống.
- * 
- * Lớp này chịu trách nhiệm xác thực tên đăng nhập, mật khẩu và kiểm tra
- * trạng thái hoạt động của tài khoản người dùng trước khi cấp quyền đăng nhập.
+ *
+ * Lớp này chịu trách nhiệm xác thực tên đăng nhập, mật khẩu và kiểm tra trạng
+ * thái hoạt động của tài khoản người dùng trước khi cấp quyền đăng nhập.
  */
 public class LoginService {
 
@@ -22,39 +22,21 @@ public class LoginService {
      * Ngoại lệ khi tài khoản người dùng bị khóa.
      */
     public static class AccountLockedException extends Exception {
-        /**
-         * Khởi tạo ngoại lệ tài khoản bị khóa với thông điệp.
-         * 
-         * @param message thông điệp mô tả lỗi
-         */
+
         public AccountLockedException(String message) {
             super(message);
         }
     }
 
-    /**
-     * Ngoại lệ khi thông tin đầu vào bị trống.
-     */
     public static class EmptyInputException extends Exception {
-        /**
-         * Khởi tạo ngoại lệ đầu vào trống với thông điệp.
-         * 
-         * @param message thông điệp mô tả lỗi
-         */
+
         public EmptyInputException(String message) {
             super(message);
         }
     }
 
-    /**
-     * Ngoại lệ khi thông tin đăng nhập không hợp lệ.
-     */
     public static class InvalidCredentialsException extends Exception {
-        /**
-         * Khởi tạo ngoại lệ thông tin đăng nhập không hợp lệ với thông điệp.
-         * 
-         * @param message thông điệp mô tả lỗi
-         */
+
         public InvalidCredentialsException(String message) {
             super(message);
         }
@@ -67,7 +49,8 @@ public class LoginService {
      * @param password mật khẩu thô
      * @return đối tượng User nếu đăng nhập thành công
      * @throws EmptyInputException khi tên đăng nhập hoặc mật khẩu bị trống
-     * @throws InvalidCredentialsException khi tên đăng nhập hoặc mật khẩu không chính xác
+     * @throws InvalidCredentialsException khi tên đăng nhập hoặc mật khẩu không
+     * chính xác
      * @throws AccountLockedException khi tài khoản người dùng đang bị khóa
      * @throws Exception khi có lỗi truy vấn dữ liệu từ DAO
      */
