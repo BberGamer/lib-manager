@@ -25,6 +25,9 @@ public class PolicyDao {
     private static final String COLUMNS = "id, policy_code, version, title, content, category, "
             + "publication_status, effective_from, effective_to, is_deleted, created_by, updated_by, "
             + "published_by, archived_by, created_at, updated_at, published_at, archived_at";
+    private static final String ADMIN_COLUMNS = COLUMNS + ", "
+            + "(SELECT COUNT(*) FROM policies policy_versions "
+            + "WHERE policy_versions.policy_code = policies.policy_code) AS version_count";
 
     /** Kết quả xuất bản có phân biệt xung đột khoảng hiệu lực. */
     public enum PublishResult {
@@ -45,7 +48,7 @@ public class PolicyDao {
     public List<Policy> findAll(String keyword, PolicyCategory category,
             PolicyPublicationStatus status, int offset, int limit)
             throws SQLException, ClassNotFoundException {
-        String sql = "SELECT " + COLUMNS + " FROM policies WHERE is_deleted = 0 "
+        String sql = "SELECT " + ADMIN_COLUMNS + " FROM policies WHERE is_deleted = 0 "
                 + "AND (? = '' OR LOWER(title) LIKE LOWER(?) OR LOWER(policy_code) LIKE LOWER(?)) "
                 + "AND (? IS NULL OR category = ?) AND (? IS NULL OR publication_status = ?) "
                 + "ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?";
@@ -57,7 +60,7 @@ public class PolicyDao {
             statement.setInt(9, offset);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    policies.add(mapPolicy(resultSet));
+                    policies.add(mapPolicyWithVersionCount(resultSet));
                 }
             }
         }
@@ -355,6 +358,48 @@ public class PolicyDao {
         }
     }
 
+    /**
+     * Đưa bản lưu trữ duy nhất của một điều lệ trở lại trạng thái đã xuất bản và giữ nguyên khoảng hiệu lực.
+     * @param id mã định danh bản điều lệ cần sử dụng lại
+     * @param actor tài khoản thực hiện thao tác
+     * @return true nếu bản điều lệ đang lưu trữ và không có phiên bản khác cùng mã
+     * @throws SQLException khi thao tác database thất bại
+     * @throws ClassNotFoundException khi thiếu JDBC driver
+     */
+    public boolean reuseArchivedSingleVersion(int id, String actor)
+            throws SQLException, ClassNotFoundException {
+        Connection connection = openConnection();
+        boolean previousAutoCommit = connection.getAutoCommit();
+        try {
+            connection.setAutoCommit(false);
+            Policy target = findArchivedForUpdate(connection, id);
+            if (target == null || !hasOnlyOneVersionForUpdate(connection, target.getPolicyCode())) {
+                connection.rollback();
+                return false;
+            }
+            String sql = "UPDATE policies SET publication_status = 'PUBLISHED', published_by = ?, "
+                    + "published_at = NOW(), archived_by = NULL, archived_at = NULL, updated_by = ? "
+                    + "WHERE id = ? AND publication_status = 'ARCHIVED' AND is_deleted = 0";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, actor);
+                statement.setString(2, actor);
+                statement.setInt(3, id);
+                if (statement.executeUpdate() != 1) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException exception) {
+            connection.rollback();
+            throw exception;
+        } finally {
+            connection.setAutoCommit(previousAutoCommit);
+            connection.close();
+        }
+    }
+
     /** @return true nếu xóa mềm đúng một bản draft */
     public boolean deleteDraft(int id, String actor) throws SQLException, ClassNotFoundException {
         String sql = "UPDATE policies SET is_deleted = 1, updated_by = ? WHERE id = ? "
@@ -433,6 +478,24 @@ public class PolicyDao {
         }
     }
 
+    /**
+     * Khóa bản lưu trữ để kiểm tra lại điều kiện trước khi chuyển trạng thái.
+     * @param connection kết nối thuộc giao dịch sử dụng lại điều lệ
+     * @param id mã định danh bản điều lệ
+     * @return bản lưu trữ đã khóa hoặc null nếu bản ghi không tồn tại hay sai trạng thái
+     * @throws SQLException khi không thể khóa bản ghi
+     */
+    private Policy findArchivedForUpdate(Connection connection, int id) throws SQLException {
+        String sql = "SELECT " + COLUMNS + " FROM policies WHERE id = ? AND is_deleted = 0 "
+                + "AND publication_status = 'ARCHIVED' FOR UPDATE";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapPolicy(resultSet) : null;
+            }
+        }
+    }
+
     /** @return draft cùng mã đã khóa, hoặc null nếu chưa tồn tại */
     private Policy findDraftByCodeForUpdate(Connection connection, String policyCode)
             throws SQLException {
@@ -463,6 +526,28 @@ public class PolicyDao {
             try (ResultSet resultSet = statement.executeQuery()) {
                 resultSet.next();
                 return resultSet.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Khóa toàn bộ lịch sử của một mã điều lệ, kể cả bản đã xóa mềm, trước khi đếm phiên bản.
+     * @param connection kết nối thuộc giao dịch sử dụng lại điều lệ
+     * @param policyCode mã nghiệp vụ của điều lệ
+     * @return true nếu toàn bộ lịch sử của mã điều lệ chỉ chứa một bản ghi
+     * @throws SQLException khi không thể khóa và đếm phiên bản
+     */
+    private boolean hasOnlyOneVersionForUpdate(Connection connection, String policyCode)
+            throws SQLException {
+        String sql = "SELECT id FROM policies WHERE policy_code = ? FOR UPDATE";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, policyCode);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                int versionCount = 0;
+                while (resultSet.next()) {
+                    versionCount++;
+                }
+                return versionCount == 1;
             }
         }
     }
@@ -520,6 +605,18 @@ public class PolicyDao {
         policy.setUpdatedAt(toLocalDateTime(resultSet.getTimestamp("updated_at")));
         policy.setPublishedAt(toLocalDateTime(resultSet.getTimestamp("published_at")));
         policy.setArchivedAt(toLocalDateTime(resultSet.getTimestamp("archived_at")));
+        return policy;
+    }
+
+    /**
+     * Ánh xạ bản ghi danh sách quản trị kèm số phiên bản cùng mã điều lệ.
+     * @param resultSet hàng kết quả chứa các cột quản trị bổ sung
+     * @return Policy có cờ số phiên bản phục vụ service chuẩn bị thao tác giao diện
+     * @throws SQLException khi không thể đọc dữ liệu hàng kết quả
+     */
+    private Policy mapPolicyWithVersionCount(ResultSet resultSet) throws SQLException {
+        Policy policy = mapPolicy(resultSet);
+        policy.setOnlyVersion(resultSet.getInt("version_count") == 1);
         return policy;
     }
 

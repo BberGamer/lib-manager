@@ -238,6 +238,25 @@ public class PolicyService {
         }
     }
 
+    /**
+     * Sử dụng lại điều lệ đã lưu trữ khi mã điều lệ đó chỉ có một phiên bản trong lịch sử,
+     * đồng thời giữ nguyên khoảng hiệu lực đã thiết lập.
+     * @param id mã định danh bản điều lệ cần sử dụng lại
+     * @param actor tài khoản thực hiện thao tác
+     * @throws PolicyValidationException khi điều lệ không đủ điều kiện sử dụng lại
+     * @throws PolicyException khi không thể cập nhật dữ liệu
+     */
+    public void reuseArchivedPolicy(int id, String actor)
+            throws PolicyValidationException, PolicyException {
+        try {
+            if (!policyDao.reuseArchivedSingleVersion(id, actor)) {
+                throw actionError("Chỉ có thể sử dụng lại điều lệ đã lưu trữ khi điều lệ chỉ có một phiên bản.");
+            }
+        } catch (SQLException | ClassNotFoundException exception) {
+            throw new PolicyException("Không thể sử dụng lại điều lệ mã " + id, exception);
+        }
+    }
+
     /** Xóa mềm bản draft; không cho xóa bản đã xuất bản hoặc lưu trữ. */
     public void deleteDraft(int id, String actor)
             throws PolicyValidationException, PolicyException {
@@ -295,6 +314,8 @@ public class PolicyService {
 
     /** Chuẩn bị nhãn trạng thái hiệu lực để JSP không chứa business logic. */
     private void decorateEffectiveStatus(Policy policy) {
+        policy.setReusable(policy.getPublicationStatus() == PolicyPublicationStatus.ARCHIVED
+                && policy.isOnlyVersion());
         if (policy.getPublicationStatus() == PolicyPublicationStatus.DRAFT) {
             policy.setEffectiveStatus("Bản nháp");
             return;

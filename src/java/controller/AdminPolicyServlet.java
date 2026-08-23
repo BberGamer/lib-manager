@@ -31,7 +31,8 @@ import utils.RoleGuard;
 @WebServlet(urlPatterns = {
     "/admin/policies", "/admin/policies/new", "/admin/policies/view", "/admin/policies/edit",
     "/admin/policies/create", "/admin/policies/update", "/admin/policies/publish",
-    "/admin/policies/archive", "/admin/policies/delete", "/admin/policies/revise"
+    "/admin/policies/archive", "/admin/policies/reuse", "/admin/policies/delete",
+    "/admin/policies/revise"
 })
 public class AdminPolicyServlet extends HttpServlet {
 
@@ -80,6 +81,7 @@ public class AdminPolicyServlet extends HttpServlet {
                 case "/admin/policies/update" -> update(request, response);
                 case "/admin/policies/publish" -> publish(request, response);
                 case "/admin/policies/archive" -> archive(request, response);
+                case "/admin/policies/reuse" -> reuseArchivedPolicy(request, response);
                 case "/admin/policies/delete" -> delete(request, response);
                 case "/admin/policies/revise" -> revise(request, response);
                 default -> response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -259,6 +261,18 @@ public class AdminPolicyServlet extends HttpServlet {
         performAction(request, response, "archive");
     }
 
+    /**
+     * Điều phối thao tác sử dụng lại bản điều lệ đã lưu trữ đủ điều kiện.
+     * @param request request chứa mã điều lệ
+     * @param response response dùng cho Post/Redirect/Get
+     * @throws IOException khi không thể gửi phản hồi
+     * @throws PolicyException khi service không thể xử lý dữ liệu
+     */
+    private void reuseArchivedPolicy(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, PolicyException {
+        performAction(request, response, "reuse");
+    }
+
     /** Xóa mềm một draft. */
     private void delete(HttpServletRequest request, HttpServletResponse response)
             throws IOException, PolicyException {
@@ -330,6 +344,13 @@ public class AdminPolicyServlet extends HttpServlet {
                     policyService.archivePolicy(id.get(), currentActor(request));
                     successMessage = "Đã lưu trữ điều lệ thành công.";
                     AuditLogger.logPolicyArchive(currentActor(request), id.get(), archiveTitle);
+                }
+                case "reuse" -> {
+                    String reuseTitle = policyService.findAdminPolicy(id.get())
+                            .map(p -> p.getTitle() != null ? p.getTitle() : "").orElse("");
+                    policyService.reuseArchivedPolicy(id.get(), currentActor(request));
+                    successMessage = "Đã đưa điều lệ trở lại sử dụng theo khoảng hiệu lực đã thiết lập.";
+                    AuditLogger.logPolicyReuse(currentActor(request), id.get(), reuseTitle);
                 }
                 default -> {
                     // delete: lấy title trước khi xóa
