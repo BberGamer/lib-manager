@@ -1,4 +1,4 @@
-/* Xác nhận các thao tác xuất bản, lưu trữ và xóa điều lệ trên trang quản trị. */
+/* Xác nhận các thao tác xuất bản, lưu trữ, sử dụng lại và xóa điều lệ trên trang quản trị. */
 document.querySelectorAll('[data-confirm-action]').forEach((actionForm) => {
     /** Ngăn gửi form khi Admin chưa xác nhận hành động trạng thái. */
     const confirmPolicyAction = (event) => {

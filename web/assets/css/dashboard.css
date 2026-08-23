@@ -208,6 +208,22 @@
     font-size: 0.75rem;
 }
 
+/* Nhãn cho thao tác sử dụng lại điều lệ trong trang nhật ký kiểm toán. */
+.audit-action-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.audit-action-policy-reuse {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
 /* Loading Overlay for send notice */
 .loading-overlay {
     display: none;
