@@ -2,10 +2,7 @@
  * Lớp DAO quản lý việc truy vấn và thao tác dữ liệu bảng events trong CSDL.
  * Thuộc tầng Persistence (DAO).
  *
- * Theo quy tắc thiết kế:
- * - Sử dụng PreparedStatement và try-with-resources để bảo mật và quản lý tài nguyên.
- * - Chỉ duy nhất 1 phương thức load toàn bộ sự kiện chưa xóa (is_deleted = 0) kết hợp tìm kiếm tiêu đề bằng SQL LIKE.
- * - Xóa sự kiện thực hiện bằng xóa mềm (soft delete: update is_deleted = 1).
+ * Đồng bộ cấu trúc 100% với UserDAO để dễ dàng quản lý và bảo trì.
  */
 package dao;
 
@@ -19,6 +16,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Lớp thao tác CSDL cho đối tượng Sự kiện (Event).
@@ -26,14 +24,26 @@ import java.util.List;
 public class EventDAO {
 
     /**
-     * Tải tất cả các sự kiện chưa bị xóa mềm (is_deleted = 0) từ CSDL.
-     * Hỗ trợ tìm kiếm theo tiêu đề sự kiện bằng câu lệnh SQL LIKE.
+     * Danh sách các cột hợp lệ được phép sắp xếp (Whitelisting chống SQL Injection).
+     * thêm nếu thêm trường sắp xếp mới (sortOption jsp)
+     */
+    private static final Map<String, String> SORTABLE_COLUMNS = Map.of(
+            "start_time", "start_time",
+            "title", "title",
+            "status", "status"
+    );
+
+    /**
+     * Tìm kiếm danh sách sự kiện nâng cao (chưa bị xóa mềm).
      *
-     * @param keyword Từ khóa tìm kiếm theo tiêu đề (có thể null hoặc rỗng)
-     * @return Danh sách các sự kiện thỏa mãn điều kiện
+     * @param q            Từ khóa tìm kiếm theo tiêu đề (SQL LIKE)
+     * @param statusFilter Trạng thái quản trị ("ACTIVE", "CANCELLED" hoặc null/rỗng)
+     * @param sortField    Tên trường cần sắp xếp (lấy từ URL)
+     * @param sortOrder    Thứ tự sắp xếp ("ASC" hoặc "DESC")
+     * @return Danh sách sự kiện thỏa mãn điều kiện
      * @throws Exception Khi gặp lỗi kết nối hoặc truy vấn CSDL
      */
-    public List<Event> findActiveEvents(String keyword) throws Exception {
+    public List<Event> searchEvents(String q, String statusFilter, String sortField, String sortOrder) throws Exception {
         List<Event> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT id, title, description, start_time, end_time, status, is_deleted, "
@@ -41,17 +51,30 @@ public class EventDAO {
                 + "FROM events WHERE is_deleted = 0 "
         );
 
-        boolean hasKeyword = (keyword != null && !keyword.trim().isEmpty());
+        boolean hasKeyword = (q != null && !q.trim().isEmpty());
         if (hasKeyword) {
             sql.append("AND title LIKE ? ");
         }
-        sql.append("ORDER BY id DESC");
+
+        boolean hasStatus = (statusFilter != null && !statusFilter.trim().isEmpty());
+        if (hasStatus) {
+            sql.append("AND status = ? ");
+        }
+
+        // Lấy tên cột sắp xếp hợp lệ từ Whitelist SORTABLE_COLUMNS để bảo mật
+        String column = SORTABLE_COLUMNS.getOrDefault(sortField, "start_time");
+        String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC";
+        sql.append("ORDER BY ").append(column).append(" ").append(order).append(", id DESC");
 
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
+            int idx = 1;
             if (hasKeyword) {
-                ps.setString(1, "%" + keyword.trim() + "%");
+                ps.setString(idx++, "%" + q.trim() + "%");
+            }
+            if (hasStatus) {
+                ps.setString(idx++, statusFilter.trim());
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -61,6 +84,17 @@ public class EventDAO {
             }
         }
         return list;
+    }
+
+    /**
+     * Tải tất cả các sự kiện chưa bị xóa mềm (dùng cho Service nếu cần).
+     *
+     * @param keyword Từ khóa tìm kiếm theo tiêu đề
+     * @return Danh sách sự kiện
+     * @throws Exception Khi gặp lỗi truy vấn
+     */
+    public List<Event> findActiveEvents(String keyword) throws Exception {
+        return searchEvents(keyword, null, "start_time", "ASC");
     }
 
     /**
@@ -116,7 +150,7 @@ public class EventDAO {
     /**
      * Cập nhật thông tin sự kiện trong CSDL.
      *
-     * @param event Đối tượng sự kiện chứa thông tin cập nhật
+     * @param event Đối tượng sự kiện chứa thông tin mới
      * @return true nếu cập nhật thành công, false nếu thất bại
      * @throws Exception Khi gặp lỗi kết nối hoặc truy vấn CSDL
      */
@@ -140,15 +174,15 @@ public class EventDAO {
     }
 
     /**
-     * Xóa mềm sự kiện bằng cách cập nhật is_deleted = 1.
+     * Thao tác Xóa mềm (soft delete) một sự kiện (gán is_deleted = 1).
      *
-     * @param id Mã sự kiện cần xóa
-     * @param updatedBy Tài khoản người thực hiện xóa
-     * @return true nếu xóa mềm thành công, false nếu thất bại
+     * @param id        Mã sự kiện cần xóa
+     * @param updatedBy Tài khoản thực hiện xóa
+     * @return true nếu xóa thành công, false nếu thất bại
      * @throws Exception Khi gặp lỗi kết nối hoặc truy vấn CSDL
      */
     public boolean softDelete(int id, String updatedBy) throws Exception {
-        String sql = "UPDATE events SET is_deleted = 1, updated_by = ? WHERE id = ? AND is_deleted = 0";
+        String sql = "UPDATE events SET is_deleted = 1, updated_by = ? WHERE id = ?";
 
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -161,11 +195,7 @@ public class EventDAO {
     }
 
     /**
-     * Ánh xạ một dòng dữ liệu từ ResultSet sang đối tượng Event.
-     *
-     * @param rs ResultSet tại vị trí con trỏ hiện tại
-     * @return Đối tượng Event
-     * @throws Exception Khi truy xuất dữ liệu từ ResultSet bị lỗi
+     * Hàm helper ánh xạ một dòng từ ResultSet sang đối tượng Event.
      */
     private Event mapRow(ResultSet rs) throws Exception {
         Event event = new Event();

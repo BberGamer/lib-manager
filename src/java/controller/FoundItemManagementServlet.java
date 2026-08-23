@@ -246,6 +246,7 @@ public class FoundItemManagementServlet extends HttpServlet {
             foundItem.setImagePath(UploadUtility.saveSecureImage(
                     request.getPart("imageFile"), request.getServletContext()));
             FoundItem createdItem = foundItemService.createFoundItem(foundItem, user.getId());
+            utils.AuditLogger.logCreateFoundItem(user.getUsername(), createdItem.getId(), createdItem.getItemName());
             request.getSession(false).setAttribute(FLASH_SUCCESS,
                     "Đã tiếp nhận đồ để quên có mã LF-" + createdItem.getId() + ".");
             redirectToList(request, response);
@@ -279,8 +280,10 @@ public class FoundItemManagementServlet extends HttpServlet {
             if (!"APPROVE".equals(decision) && !"REJECT".equals(decision)) {
                 throw new NumberFormatException();
             }
-            foundItemService.reviewClaim(claimId, user.getId(), "APPROVE".equals(decision));
-            request.getSession(false).setAttribute(FLASH_SUCCESS, "APPROVE".equals(decision)
+            boolean isApproved = "APPROVE".equals(decision);
+            foundItemService.reviewClaim(claimId, user.getId(), isApproved);
+            utils.AuditLogger.logVerifyFoundItemClaim(user.getUsername(), 0, itemId, isApproved);
+            request.getSession(false).setAttribute(FLASH_SUCCESS, isApproved
                     ? "Đã xác minh yêu cầu. Mời Reader đến quầy để nhận đồ."
                     : "Đã từ chối yêu cầu. Đồ vật đã trở lại trạng thái có thể nhận.");
         } catch (NumberFormatException exception) {
@@ -311,6 +314,7 @@ public class FoundItemManagementServlet extends HttpServlet {
             itemId = parsePositiveInt(request.getParameter("itemId")).orElseThrow(NumberFormatException::new);
             int claimId = parsePositiveInt(request.getParameter("claimId")).orElseThrow(NumberFormatException::new);
             foundItemService.completeHandover(claimId, user.getId());
+            utils.AuditLogger.logHandoverFoundItem(user.getUsername(), 0, itemId);
             request.getSession(false).setAttribute(FLASH_SUCCESS, "Đã xác nhận giao đồ hoàn tất.");
         } catch (NumberFormatException exception) {
             request.getSession(false).setAttribute("flashError", "Yêu cầu bàn giao không hợp lệ.");

@@ -137,6 +137,34 @@ public class AuthorDAOImpl implements AuthorDAO {
 
     /** {@inheritDoc} */
     @Override
+    public Optional<Author> restoreDeleted(Author author, String actor)
+            throws SQLException, ClassNotFoundException {
+        String updateSql = "UPDATE authors SET name = ?, nationality = ?, birth_date = ?, bio = ?, avatar_url = ?, "
+                + "is_deleted = 0, updated_by = ?, updated_at = NOW() "
+                + "WHERE LOWER(name) = LOWER(?) AND is_deleted = 1 LIMIT 1";
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(updateSql)) {
+            bindAuthor(statement, author);
+            statement.setString(6, actor);
+            statement.setString(7, author.getName());
+            if (statement.executeUpdate() == 0) {
+                return Optional.empty();
+            }
+        }
+
+        String selectSql = "SELECT " + COLUMNS + " FROM authors "
+                + "WHERE LOWER(name) = LOWER(?) AND is_deleted = 0 LIMIT 1";
+        try (Connection connection = openConnection();
+                PreparedStatement statement = connection.prepareStatement(selectSql)) {
+            statement.setString(1, author.getName());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? Optional.of(mapAuthor(resultSet)) : Optional.empty();
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public boolean update(Author author, String actor) throws SQLException, ClassNotFoundException {
         String sql = "UPDATE authors SET name = ?, nationality = ?, birth_date = ?, bio = ?, avatar_url = ?, "
                 + "updated_by = ? WHERE id = ? AND is_deleted = 0";
@@ -164,11 +192,13 @@ public class AuthorDAOImpl implements AuthorDAO {
 
     /** {@inheritDoc} */
     @Override
-    public boolean deleteById(int id) throws SQLException, ClassNotFoundException {
-        String sql = "DELETE FROM authors WHERE id = ? AND is_deleted = 0";
+    public boolean deleteById(int id, String actor) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE authors SET is_deleted = 1, updated_by = ?, updated_at = NOW() "
+                + "WHERE id = ? AND is_deleted = 0";
         try (Connection connection = openConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, id);
+            statement.setString(1, actor);
+            statement.setInt(2, id);
             return statement.executeUpdate() == 1;
         }
     }

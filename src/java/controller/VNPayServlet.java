@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Fine;
 import model.User;
-import service.FineService;
+import service.VNPayService;
 import utils.VNPayConfig;
 
 /**
@@ -36,7 +36,7 @@ import utils.VNPayConfig;
 public class VNPayServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(VNPayServlet.class.getName());
-    private final FineService fineService = new FineService();
+    private final VNPayService vnPayService = new VNPayService();
 
     /**
      * Tiếp nhận yêu cầu GET theo servlet path tương ứng.
@@ -101,7 +101,7 @@ public class VNPayServlet extends HttpServlet {
 
         Fine fine;
         try {
-            fine = fineService.validateFineForPayment(fineId, user.getId());
+            fine = vnPayService.validateFineForPayment(fineId, user.getId());
         } catch (IllegalArgumentException e) {
             setFlashMessage(request, "fineErrorMessage", e.getMessage());
             response.sendRedirect(request.getContextPath() + "/fine/my");
@@ -163,9 +163,13 @@ public class VNPayServlet extends HttpServlet {
         if (isValidSignature) {
             if ("00".equals(responseCode)) {
                 if (fineId > 0) {
-                    boolean updated = fineService.processPaymentSuccess(
+                    boolean updated = vnPayService.processPaymentSuccess(
                             fineId, "ONLINE", "Thanh toán thành công qua VNPay (Mã GD: " + transactionNo + ")", "VNPay Client Return");
                     if (updated) {
+                        // Ghi audit log thanh toán phạt online thành công
+                        model.Fine paidFine = vnPayService.getFineById(fineId);
+                        int targetUserId = paidFine != null ? paidFine.getUserId() : 0;
+                        utils.AuditLogger.logFinePaidOnline(targetUserId, fineId, transactionNo);
                         setFlashMessage(request, "fineSuccessMessage",
                                 "Thanh toán khoản phạt #F" + fineId + " thành công qua VNPay! Mã giao dịch: " + transactionNo);
                     } else {
@@ -208,7 +212,7 @@ public class VNPayServlet extends HttpServlet {
 
         String txnRef = request.getParameter("vnp_TxnRef");
         int fineId = parseFineIdFromTxnRef(txnRef);
-        Fine fine = fineService.getFineById(fineId);
+        Fine fine = vnPayService.getFineById(fineId);
 
         if (fine == null) {
             response.getWriter().write("{\"RspCode\":\"01\",\"Message\":\"Order not found\"}");
@@ -233,7 +237,7 @@ public class VNPayServlet extends HttpServlet {
         String transactionNo = request.getParameter("vnp_TransactionNo");
 
         if ("00".equals(responseCode)) {
-            fineService.processPaymentSuccess(
+            vnPayService.processPaymentSuccess(
                     fineId, "ONLINE", "Xác nhận thanh toán qua VNPay IPN (Mã GD: " + transactionNo + ")", "VNPay IPN Callback");
         }
 

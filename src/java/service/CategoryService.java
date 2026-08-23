@@ -160,13 +160,14 @@ public class CategoryService {
     }
 
     /**
-     * Xóa vật lý thể loại nếu không có bất kỳ sách nào tham chiếu.
+     * Xóa mềm thể loại nếu không có bất kỳ sách nào tham chiếu.
      * @param id mã thể loại
+     * @param actor tài khoản quản trị thực hiện thao tác
      * @return {@code true} nếu xóa thành công
      * @throws CategoryValidationException khi thể loại còn được sách tham chiếu
      * @throws CategoryException khi không thể kiểm tra hoặc xóa dữ liệu
      */
-    public boolean deleteCategory(int id)
+    public boolean deleteCategory(int id, String actor)
             throws CategoryValidationException, CategoryException {
         try {
             Map<String, String> errors = new LinkedHashMap<>();
@@ -174,7 +175,7 @@ public class CategoryService {
                 errors.put("delete", "Không thể xóa danh mục vì vẫn còn sách tham chiếu.");
             }
             rejectInvalid(errors);
-            return categoryDao.deleteById(id);
+            return categoryDao.deleteById(id, actor);
         } catch (SQLException | ClassNotFoundException exception) {
             throw new CategoryException("Không thể xóa thể loại mã " + id, exception);
         }

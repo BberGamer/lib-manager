@@ -13,6 +13,7 @@ package controller;
 import model.Event;
 import model.User;
 import service.EventService;
+import utils.AuditLogger;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -50,8 +51,19 @@ public class EventServlet extends HttpServlet {
         // 1. Đọc các tham số tìm kiếm, lọc, sắp xếp, phân trang từ URL
         String q = request.getParameter("q");
         String statusFilter = request.getParameter("status");
-        String sortBy = request.getParameter("sort");
+        String sortField = request.getParameter("sort");
         String sortOrder = request.getParameter("order");
+
+        if (sortField == null || sortField.trim().isEmpty()) {
+            sortField = "start_time";
+            
+            
+            
+            // sortOrder = "DESC";
+        }
+        if (!"DESC".equalsIgnoreCase(sortOrder)) {
+            sortOrder = "ASC";
+        }
 
         int page = 1;
         String pageStr = request.getParameter("page");
@@ -65,7 +77,7 @@ public class EventServlet extends HttpServlet {
 
         // 2. Thực hiện truy vấn qua EventService
         try {
-            EventService.SearchResult result = eventService.search(q, statusFilter, sortBy, sortOrder, page);
+            EventService.SearchResult result = eventService.search(q, statusFilter, sortField, sortOrder, page);
 
             request.setAttribute("events", result.events);
             request.setAttribute("totalRecords", result.totalRecords);
@@ -74,8 +86,9 @@ public class EventServlet extends HttpServlet {
 
             request.setAttribute("q", q != null ? q : "");
             request.setAttribute("statusFilter", statusFilter != null ? statusFilter : "");
-            request.setAttribute("sortBy", sortBy != null ? sortBy : "start_time");
-            request.setAttribute("sortOrder", sortOrder != null ? sortOrder : "ASC");
+            request.setAttribute("sortField", sortField);
+            request.setAttribute("sortBy", sortField);
+            request.setAttribute("sortOrder", sortOrder);
 
         } catch (Exception e) {
             request.setAttribute("errorMsg", "Không thể tải danh sách sự kiện: " + e.getMessage());
@@ -146,6 +159,7 @@ public class EventServlet extends HttpServlet {
                 event.setCreatedBy(loggedUser.getUsername());
 
                 eventService.createEvent(event);
+                AuditLogger.logEventCreate(loggedUser.getUsername(), event.getId(), event.getTitle());
                 session.setAttribute("successMsg", "Thêm sự kiện mới thành công!");
 
             } else if ("update".equalsIgnoreCase(action)) {
@@ -159,11 +173,18 @@ public class EventServlet extends HttpServlet {
                 event.setUpdatedBy(loggedUser.getUsername());
 
                 eventService.updateEvent(event);
+                AuditLogger.logEventUpdate(loggedUser.getUsername(), id, event.getTitle());
                 session.setAttribute("successMsg", "Cập nhật sự kiện thành công!");
 
             } else if ("delete".equalsIgnoreCase(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
+                String eventTitle = "";
+                try {
+                    Event ev = eventService.getEventById(id);
+                    if (ev != null && ev.getTitle() != null) eventTitle = ev.getTitle();
+                } catch (Exception ignored) {}
                 eventService.deleteEvent(id, loggedUser.getUsername());
+                AuditLogger.logEventDelete(loggedUser.getUsername(), id, eventTitle);
                 session.setAttribute("successMsg", "Xóa sự kiện thành công!");
 
             } else {

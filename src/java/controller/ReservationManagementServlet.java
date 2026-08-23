@@ -1,5 +1,13 @@
 package controller;
 
+import dao.ReservationDAO;
+import model.ReservationRecord;
+import model.User;
+import utils.AuditLogger;
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -21,8 +29,7 @@ import service.ReservationService;
  */
 public class ReservationManagementServlet extends HttpServlet {
 
-    private static final Logger LOGGER
-            = Logger.getLogger(ReservationManagementServlet.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ReservationManagementServlet.class.getName());
     private static final int DEFAULT_PAGE_SIZE = 15;
     private static final int MAXIMUM_KEYWORD_LENGTH = 200;
     private static final Set<String> SUPPORTED_STATUSES = Set.of(
@@ -34,10 +41,10 @@ public class ReservationManagementServlet extends HttpServlet {
     /**
      * Hiển thị danh sách reservation theo từ khóa, trạng thái và thứ tự ưu tiên.
      *
-     * @param request request chứa bộ lọc danh sách
+     * @param request  request chứa bộ lọc danh sách
      * @param response response dùng để forward sang JSP hoặc trả lỗi HTTP
      * @throws ServletException khi không thể forward request
-     * @throws IOException khi không thể ghi response
+     * @throws IOException      khi không thể ghi response
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -119,10 +126,10 @@ public class ReservationManagementServlet extends HttpServlet {
     /**
      * Xử lý xác nhận sách đã về hoặc hủy reservation theo thao tác của nhân viên.
      *
-     * @param request request chứa mã reservation và hành động
+     * @param request  request chứa mã reservation và hành động
      * @param response response dùng để chuyển hướng theo Post/Redirect/Get
      * @throws ServletException khi servlet không thể xử lý request
-     * @throws IOException khi không thể chuyển hướng
+     * @throws IOException      khi không thể chuyển hướng
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -143,25 +150,52 @@ public class ReservationManagementServlet extends HttpServlet {
 
         String path = request.getServletPath();
         String prefix = loggedUser.isAdmin() ? "/admin" : "/librarian";
-        
+
         try {
             if (path.endsWith("/reservation/update")) {
                 int id = Integer.parseInt(request.getParameter("id"));
                 String action = request.getParameter("action");
                 if ("ready".equals(action)) {
+                    // Lấy thông tin đặt trước để ghi userId Reader
+                    ReservationRecord res = reservationDAO.findById(id);
+                    int targetUserId = res != null ? res.getUserId() : 0;
                     boolean success = reservationService.markReservationReady(
                             id, loggedUser.getUsername(), true);
                     if (success) {
                         session.setAttribute("successMsg",
                                 "Sách đã về và được chuyển sang danh sách chờ giao sách.");
+                        AuditLogger.logConfirmReservation(loggedUser.getUsername(), targetUserId, id);
                     } else {
-                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về. "
-                                + "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.");
+                        String detailReason = "Bản sao hoặc yêu cầu đặt trước không còn hợp lệ.";
+                        if (res != null) {
+                            try (java.sql.Connection c = utils.DBContext.getInstance().getConnection();
+                                    java.sql.PreparedStatement ps = c.prepareStatement(
+                                            "SELECT 1 FROM fines WHERE user_id = ? AND status = 'UNPAID' LIMIT 1")) {
+                                ps.setInt(1, res.getUserId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    if (rs.next()) {
+                                        detailReason = "Độc giả @"
+                                                + (res.getUser() != null ? res.getUser().getUsername()
+                                                        : res.getUserId())
+                                                + " đang có khoản phạt chưa thanh toán. Vui lòng xử lý tại menu 'Quản lý phạt' trước khi giao sách.";
+                                    } else if (!"WAITING".equalsIgnoreCase(res.getStatus())) {
+                                        detailReason = "Yêu cầu đặt trước này không ở trạng thái 'Chờ mượn' (hiện là "
+                                                + res.getStatus() + ").";
+                                    }
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        session.setAttribute("errorMsg", "Không thể xác nhận sách đã về: " + detailReason);
                     }
                 } else if ("cancel".equals(action)) {
+                    // Lấy thông tin đặt trước trước khi hủy để ghi userId Reader
+                    ReservationRecord res = reservationDAO.findById(id);
+                    int targetUserId = res != null ? res.getUserId() : 0;
                     boolean success = reservationService.cancelReservationByStaff(id);
                     if (success) {
                         session.setAttribute("successMsg", "Đã hủy yêu cầu đặt trước thành công.");
+                        AuditLogger.logCancelReservationByStaff(loggedUser.getUsername(), targetUserId, id);
                     } else {
                         session.setAttribute("errorMsg",
                                 "Không thể hủy yêu cầu không còn hoạt động.");
@@ -181,7 +215,8 @@ public class ReservationManagementServlet extends HttpServlet {
     }
 
     /**
-     * Chuẩn hóa tham số văn bản để các tầng sau nhận giá trị không null và đã bỏ khoảng trắng.
+     * Chuẩn hóa tham số văn bản để các tầng sau nhận giá trị không null và đã bỏ
+     * khoảng trắng.
      *
      * @param value giá trị request cần chuẩn hóa
      * @return chuỗi đã trim hoặc chuỗi rỗng nếu tham số không tồn tại
@@ -193,7 +228,7 @@ public class ReservationManagementServlet extends HttpServlet {
     /**
      * Đọc số nguyên dương, dùng giá trị mặc định khi tham số trống.
      *
-     * @param value tham số cần đọc
+     * @param value        tham số cần đọc
      * @param defaultValue giá trị dùng khi tham số trống
      * @return số nguyên dương đã đọc hoặc giá trị mặc định
      * @throws NumberFormatException khi giá trị không phải số nguyên dương

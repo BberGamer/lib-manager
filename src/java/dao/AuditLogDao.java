@@ -45,7 +45,7 @@ public class AuditLogDao {
             params.add(toDate.trim() + " 23:59:59");
         }
 
-        sql.append("ORDER BY al.id ASC, al.created_at ASC LIMIT ?, ?");
+        sql.append("ORDER BY al.id DESC, al.created_at DESC LIMIT ?, ?");
         params.add((pageNum - 1) * pageSize);
         params.add(pageSize);
 

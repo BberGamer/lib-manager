@@ -5,6 +5,7 @@ import model.BorrowRecord;
 import model.User;
 import service.BorrowService;
 import service.ReservationService;
+import utils.AuditLogger;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -134,9 +135,16 @@ public class BorrowManagementServlet extends HttpServlet {
         }
 
         boolean success = borrowService.confirmPickup(borrowId, barcode.trim(), operator);
-        request.getSession().setAttribute(success ? "successMsg" : "errorMsg",
-                success ? "Đã xác nhận giao sách thành công."
-                        : "Không thể xác nhận giao sách. Mã vạch bản sao có thể không hợp lệ, không đúng đầu sách hoặc đã có người mượn/giữ.");
+        if (success) {
+            request.getSession().setAttribute("successMsg", "Đã xác nhận giao sách thành công.");
+            // Lấy thông tin mượn để ghi userId của độc giả
+            BorrowRecord record = borrowRecordDAO.findById(borrowId);
+            int targetUserId = record != null ? record.getUserId() : 0;
+            AuditLogger.logBorrowConfirmPickup(operator, targetUserId, borrowId, barcode.trim());
+        } else {
+            request.getSession().setAttribute("errorMsg",
+                    "Không thể xác nhận giao sách. Mã vạch bản sao có thể không hợp lệ, không đúng đầu sách hoặc đã có người mượn/giữ.");
+        }
         response.sendRedirect(request.getContextPath() + prefix + "/borrow/list");
     }
 
@@ -150,10 +158,15 @@ public class BorrowManagementServlet extends HttpServlet {
             condition = "GOOD";
         }
 
+        // Lấy thông tin mượn trước khi xử lý để có userId
+        BorrowRecord record = borrowRecordDAO.findById(id);
+        int targetUserId = record != null ? record.getUserId() : 0;
+
         dao.BorrowRecordDAO.ReturnResult result = borrowService.confirmReturn(id, operator, condition, note);
         if (result.success) {
             session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
-            
+            AuditLogger.logBorrowConfirmReturn(operator, targetUserId, id, condition);
+
             if (result.activatedReservationId != -1) {
                 reservationService.notifyReservationReady(
                         result.activatedReservationId, result.activatedUserId,
