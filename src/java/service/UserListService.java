@@ -40,12 +40,26 @@ public class UserListService {
 
     public SearchResult search(String q, String role, Integer active,
                                 String sortField, String sortOrder, int page) {
+         // Tải danh sách user từ DAO 
         List<User> all;
         try {
             all = dao.searchUsers(q, role, active, sortField, sortOrder);
         } catch (Exception e) {
             throw new IllegalStateException("Không thể tải danh sách người dùng: " + e.getMessage(), e);
         }
+
+//        // Lọc danh sách 
+//        List<User> filtered = new java.util.ArrayList<>();
+//        for (User u : all) {
+//            if ("READER".equalsIgnoreCase(u.getRole()) && u.getId() >= 12 && u.getId() <= 14) {
+//                filtered.add(u);
+//            }
+//        }
+//        all = filtered;
+//        
+//        
+        
+    
 
         SearchResult r = new SearchResult();
         r.totalRecords = all.size();
