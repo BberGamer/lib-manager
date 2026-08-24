@@ -137,8 +137,8 @@ public class UserListServlet extends HttpServlet {
         User logged = (User) request.getSession().getAttribute("loggedUser");
         userService.deleteUser(id, logged);
         String operator = logged != null ? logged.getUsername() : "admin";
-        utils.AuditLogger.log("DELETE_USER", operator, id, "Vô hiệu hóa tài khoản (chuyển active = 0) cho User ID #" + id);
-        request.getSession().setAttribute("successMsg", "Xóa người dùng thành công (tài khoản đã chuyển sang trạng thái Khóa).");
+        utils.AuditLogger.log("DELETE_USER", operator, id, "Xóa mềm tài khoản (chuyển is_deleted = 1) cho User ID #" + id);
+        request.getSession().setAttribute("successMsg", "Xóa người dùng thành công.");
     }
 
     private void handleToggleActive(HttpServletRequest request, String action) {
