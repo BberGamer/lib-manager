@@ -3,25 +3,20 @@ package controller;
 import dao.ReservationDAO;
 import model.ReservationRecord;
 import model.User;
+import service.ReservationService;
 import utils.AuditLogger;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import model.ReservationRecord;
-import model.User;
-import service.ReservationService;
 
 /**
  * Điều phối màn hình quản lý reservation cho Admin và Librarian; đọc bộ lọc,
@@ -36,6 +31,7 @@ public class ReservationManagementServlet extends HttpServlet {
             "WAITING", "READY_FOR_PICKUP", "COMPLETED", "CANCELLED", "EXPIRED");
     private static final Set<String> SUPPORTED_SORT_ORDERS = Set.of("NEWEST", "ASC", "DESC");
 
+    private final ReservationDAO reservationDAO = new ReservationDAO();
     private final ReservationService reservationService = new ReservationService();
 
     /**
