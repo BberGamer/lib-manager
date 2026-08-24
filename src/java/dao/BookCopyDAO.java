@@ -161,7 +161,7 @@ public class BookCopyDAO {
     }
 
     public boolean addCopy(BookCopy copy) {
-        String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, note, area, shelf, slot, is_deleted, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW(), NOW())";
+        String insertCopySql = "INSERT INTO book_copies (book_id, barcode, book_condition, note, area, shelf, slot, is_deleted, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NOW(), NOW())";
         String updateBookQtySql = "UPDATE books SET quantity = quantity + 1, available = available + 1 WHERE id = ?";
         
         try (Connection conn = DBContext.getInstance().getConnection()) {
