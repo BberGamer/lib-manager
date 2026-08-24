@@ -415,8 +415,9 @@ public class BorrowRecordDAO {
         String copySql = "UPDATE book_copies SET book_condition='LOST',is_deleted=1,"
                 + "updated_by=?,updated_at=NOW() "
                 + "WHERE id=? AND is_deleted=0 AND book_condition<>'LOST'";
-        String bookSql = "UPDATE books SET quantity=GREATEST(0,quantity-1),updated_by=?,"
-                + "updated_at=NOW() WHERE id=? AND is_deleted=0";
+        String bookSql = "UPDATE books SET available=LEAST(available,GREATEST(0,quantity-1)),"
+                + "quantity=GREATEST(0,quantity-1),updated_by=?,updated_at=NOW() "
+                + "WHERE id=? AND is_deleted=0";
 
         int bookId;
         int copyId;

@@ -7,7 +7,7 @@
 
                 <c:set var="isManagePageAttr" value="true" scope="request" />
                 <c:set var="activePage" value="reservation" scope="request" />
-                <c:set var="pageStylesheet" value="/assets/css/reservation-list.css" scope="request" />
+                <c:set var="pageStylesheet" value="/assets/css/reservation-list.css?v=4" scope="request" />
                 <%@ include file="/WEB-INF/views/fragments/header.jsp" %>
                     <c:url var="reservationListUrl" value="${rolePath}/reservation/list" />
                     <c:url var="reservationUpdateUrl" value="${rolePath}/reservation/update" />
@@ -120,7 +120,7 @@
                                     <table class="reservation-table">
                                         <thead>
                                             <tr>
-                                                <th style="width: 55px;">Mã</th>
+                                                <th class="reservation-record-heading">Mã</th>
                                                 <th>Độc giả</th>
                                                 <th>Thông tin sách</th>
                                                 <th>Thứ tự ưu tiên</th>
@@ -145,11 +145,11 @@
                                                 <c:otherwise>
                                                     <c:forEach var="reservation" items="${reservationList}">
                                                         <tr>
-                                                            <td class="reservation-record-id">
+                                                            <td class="reservation-record-id" data-label="Mã">
                                                                 #
                                                                 <c:out value="${reservation.id}" />
                                                             </td>
-                                                            <td>
+                                                            <td data-label="Độc giả">
                                                                 <strong>
                                                                     <c:out value="${reservation.user.fullName}" />
                                                                 </strong>
@@ -162,7 +162,7 @@
                                                                     </c:if>
                                                                 </small>
                                                             </td>
-                                                            <td>
+                                                            <td data-label="Thông tin sách">
                                                                 <strong>
                                                                     <c:out value="${reservation.book.title}" />
                                                                 </strong>
@@ -170,7 +170,7 @@
                                                                     <c:out value="${reservation.book.isbn}" />
                                                                 </small>
                                                             </td>
-                                                            <td class="reservation-priority">
+                                                            <td class="reservation-priority" data-label="Thứ tự ưu tiên">
                                                                 <c:choose>
                                                                     <c:when test="${reservation.queuePosition gt 0}">
                                                                         <span class="reservation-priority-badge">
@@ -185,9 +185,8 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
-                                                            <td>
-                                                                <span
-                                                                    style="display: block; font-weight: 500; white-space: nowrap;">
+                                                            <td class="reservation-date-cell" data-label="Ngày yêu cầu">
+                                                                <span class="reservation-date-value">
                                                                     <c:choose>
                                                                         <c:when
                                                                             test="${not empty reservation.reserveDate}">
@@ -197,37 +196,43 @@
                                                                         <c:otherwise>-</c:otherwise>
                                                                     </c:choose>
                                                                 </span>
-                                                                <c:if
-                                                                    test="${not empty reservation.requestedPickupDate}">
-                                                                    <small style="color: #64748b; white-space: nowrap;">
-                                                                        Nhận:
-                                                                        <c:out
-                                                                            value="${reservation.requestedPickupDate}" />
-                                                                    </small>
-                                                                </c:if>
                                                             </td>
-                                                            <td>
-                                                                <span
-                                                                    style="display: block; font-weight: 500; white-space: nowrap;">
+                                                            <td class="reservation-date-cell" data-label="Ngày muốn nhận">
+                                                                <span class="reservation-date-value">
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${not empty reservation.requestedPickupDate}">
+                                                                            <c:out
+                                                                                value="${reservation.requestedPickupDate}" />
+                                                                        </c:when>
+                                                                        <c:otherwise>-</c:otherwise>
+                                                                    </c:choose>
+                                                                </span>
+                                                            </td>
+                                                            <td class="reservation-date-cell" data-label="Ngày dự kiến">
+                                                                <span class="reservation-date-value">
                                                                     <c:choose>
                                                                         <c:when
                                                                             test="${not empty reservation.expectedPickupDate}">
-                                                                            Dự kiến:
                                                                             <c:out
                                                                                 value="${reservation.expectedPickupDate}" />
                                                                         </c:when>
                                                                         <c:otherwise>-</c:otherwise>
                                                                     </c:choose>
                                                                 </span>
-                                                                <c:if test="${not empty reservation.expiryDate}">
-                                                                    <small
-                                                                        style="color: #ef4444; font-weight: 500; white-space: nowrap;">
-                                                                        Hạn:
-                                                                        <c:out value="${reservation.expiryDate}" />
-                                                                    </small>
-                                                                </c:if>
                                                             </td>
-                                                            <td style="text-align: center;">
+                                                            <td class="reservation-date-cell reservation-expiry-date"
+                                                                data-label="Ngày hết hạn">
+                                                                <span class="reservation-date-value">
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty reservation.expiryDate}">
+                                                                            <c:out value="${reservation.expiryDate}" />
+                                                                        </c:when>
+                                                                        <c:otherwise>-</c:otherwise>
+                                                                    </c:choose>
+                                                                </span>
+                                                            </td>
+                                                            <td class="reservation-status-cell" data-label="Trạng thái">
                                                                 <span class="reservation-status
                                                   reservation-status-${fn:toLowerCase(reservation.status)}">
                                                                     <c:choose>
@@ -255,35 +260,31 @@
                                                                     </c:choose>
                                                                 </span>
                                                             </td>
-                                                            <td class="reservation-actions">
+                                                            <td class="reservation-actions" data-label="Thao tác">
                                                                 <c:choose>
                                                                     <c:when test="${reservation.status eq 'WAITING'}">
                                                                         <div class="reservation-action-group">
                                                                             <form action="${reservationUpdateUrl}"
-                                                                                method="post"
-                                                                                style="display: inline-block; margin: 0;">
+                                                                                method="post">
                                                                                 <input type="hidden" name="id"
                                                                                     value="${reservation.id}">
                                                                                 <input type="hidden" name="action"
                                                                                     value="ready">
                                                                                 <button type="submit"
-                                                                                    class="btn btn-sm btn-primary"
-                                                                                    style="white-space: nowrap;">
+                                                                                    class="btn btn-sm btn-primary">
                                                                                     <i
                                                                                         class="fa-solid fa-circle-check"></i>
                                                                                     Sách đã về
                                                                                 </button>
                                                                             </form>
                                                                             <form action="${reservationUpdateUrl}"
-                                                                                method="post"
-                                                                                style="display: inline-block; margin: 0;">
+                                                                                method="post">
                                                                                 <input type="hidden" name="id"
                                                                                     value="${reservation.id}">
                                                                                 <input type="hidden" name="action"
                                                                                     value="cancel">
                                                                                 <button type="submit"
-                                                                                    class="btn btn-sm reservation-cancel-button"
-                                                                                    style="white-space: nowrap;">
+                                                                                    class="btn btn-sm reservation-cancel-button">
                                                                                     <i class="fa-solid fa-ban"></i>
                                                                                     Hủy
                                                                                 </button>
@@ -292,14 +293,12 @@
                                                                     </c:when>
                                                                     <c:when
                                                                         test="${reservation.status eq 'READY_FOR_PICKUP'}">
-                                                                        <span class="reservation-muted"
-                                                                            style="white-space: nowrap;">
+                                                                        <span class="reservation-muted reservation-action-label">
                                                                             Chờ giao sách
                                                                         </span>
                                                                     </c:when>
                                                                     <c:otherwise>
-                                                                        <span class="reservation-muted"
-                                                                            style="white-space: nowrap;">Hoàn tất</span>
+                                                                        <span class="reservation-muted reservation-action-label">Hoàn tất</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
