@@ -116,6 +116,7 @@
                                         </p>
                                     </div>
                                 </c:if>
+                                    <%-- <c:if test="${fine.status eq 'UNPAID' and not empty fine.borrowRecord.returnDate}">     --%>        
                                 <c:if test="${fine.status eq 'UNPAID'}">
                                     <div class="fine-detail-pay-box">
                                         <c:url var="payUrl" value="/vnpay-pay">

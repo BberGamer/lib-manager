@@ -164,6 +164,9 @@
                                                             </td>
                                                              <td data-label="Thao tác">
                                                                  <a class="fine-detail-link" href="${detailUrl}">Xem chi tiết</a>
+                                                                 
+                                                                 <%-- <c:if test="${fine.status eq 'UNPAID' and not empty fine.borrowRecord.returnDate}"> --%>    
+                                                                 
                                                                  <c:if test="${fine.status eq 'UNPAID'}">
                                                                      <c:url var="payUrl" value="/vnpay-pay">
                                                                          <c:param name="fineId" value="${fine.id}" />
