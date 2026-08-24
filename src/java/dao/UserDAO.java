@@ -277,7 +277,7 @@ public class UserDAO {
 
         // Lấy tên cột sắp xếp hợp lệ từ Whitelist SORTABLE_COLUMNS để bảo mật
         String column = SORTABLE_COLUMNS.getOrDefault(sortField, "username");
-        String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC"; // nếu sắp xếp giảm
+        String order = "DESC".equalsIgnoreCase(sortOrder) ? "DESC" : "ASC"; // nếu sắp xếp giảm ASC
         sb.append(" ORDER BY ").append(column).append(" ").append(order).append(", id DESC");
 
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sb.toString())) {

@@ -357,14 +357,16 @@
 
                         <%-- Pagging --%>
 
-
+                        
                            <% if (totalPages <= 7) { 
+                            // Nếu ít hơn 7 trang: in hết từ 1 -> totalPages
                                 for (int pg = 1; pg <= totalPages; pg++) { %>
                                     <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
                                         <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
                                     </li>
                                 <% } 
                             } else { 
+                            // Nếu nhiều hơn 7 trang: in 2 trang đầu (1, 2)
                                 for (int pg = 1; pg <= 2; pg++) { %>
                                     <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
                                         <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
@@ -376,7 +378,10 @@
                                             <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
                                         </li>
                                     <% } %>
+                                    <%-- In dấu ba chấm (...) ở giữa --%>
                                     <li class="page-item disabled"><span class="page-link">…</span></li>
+                                    
+                            <%-- In 2 trang cuối (totalPages - 1, totalPages) --%>
                                 <% } else if (currentPageNum >= totalPages - 3) { %>
                                     <li class="page-item disabled"><span class="page-link">…</span></li>
                                     <% for (int pg = totalPages - 4; pg <= totalPages - 2; pg++) { %>
@@ -385,7 +390,11 @@
                                         </li>
                                     <% } 
                                 } else { %>
+                                
+                                
+                                
                                     <li class="page-item disabled"><span class="page-link">…</span></li>
+                                    
                                     <% for (int pg = currentPageNum - 1; pg <= currentPageNum + 1; pg++) { %>
                                         <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
                                             <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
@@ -518,3 +527,49 @@
 <% } %>
 
 <%@ include file="/WEB-INF/views/fragments/footer.jsp" %>
+
+
+
+
+
+
+<%-- 1. In 2 trang đầu (Trang 1 và Trang 2) 
+<% for (int pg = 1; pg <= Math.min(2, totalPages); pg++) { %>
+    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
+        <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+    </li>
+<% } %>
+
+<%-- 2. In dấu ba chấm (...) ở giữa 
+<% if (totalPages > 3) { %>
+    <li class="page-item disabled"><span class="page-link">…</span></li>
+<% } %>
+
+<%-- 3. In trang cuối cùng (Trang 6) 
+<% if (totalPages > 2) { %>
+    <li class="page-item <%= currentPageNum == totalPages ? "active" : "" %>">
+        <a class="page-link" href="<%= baseUrl %><%= totalPages %>"><%= totalPages %></a>
+    </li>
+<% } %> --%>
+
+
+
+
+<%-- 1. In 2 trang đầu (Trang 1 và 2) 
+<% for (int pg = 1; pg <= Math.min(2, totalPages); pg++) { %>
+    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
+        <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+    </li>
+<% } %>
+
+<%-- 2. Dấu 3 chấm (Đã sửa > 3 thành > 4) 
+<% if (totalPages > 4) { %>
+    <li class="page-item disabled"><span class="page-link">…</span></li>
+<% } %>
+
+<%-- 3. In 2 trang cuối (Đã sửa từ if sang for) 
+<% for (int pg = Math.max(3, totalPages - 1); pg <= totalPages; pg++) { %>
+    <li class="page-item <%= pg == currentPageNum ? "active" : "" %>">
+        <a class="page-link" href="<%= baseUrl %><%= pg %>"><%= pg %></a>
+    </li>
+<% } %> --%>

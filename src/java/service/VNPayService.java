@@ -24,7 +24,7 @@ public class VNPayService {
 
     
     public Fine validateFineForPayment(int fineId, int userId) throws Exception {
-        // Step 1: Validate sự tồn tại và quyền sở hữu khoản phạt (chính chủ)
+        // Step 1: Validate khoản phạt phải tồn tại và phải thuộc về đúng userId
         Fine fine = fineDao.findByIdAndUserId(fineId, userId);
         if (fine == null) {
             throw new IllegalArgumentException("Khoản phạt không tồn tại hoặc bạn không có quyền truy cập.");
