@@ -409,7 +409,7 @@ public class BorrowRecordDAO {
                 + "WHERE br.id=? AND br.user_id=? AND br.status IN ('BORROWED','OVERDUE') "
                 + "AND br.return_date IS NULL AND bc.is_deleted=0 "
                 + "AND bc.book_condition<>'LOST' FOR UPDATE";
-        String borrowSql = "UPDATE borrow_records SET status='LOST',updated_at=NOW() "
+        String borrowSql = "UPDATE borrow_records SET return_date=CURDATE(),status='LOST',updated_at=NOW() "
                 + "WHERE id=? AND user_id=? AND status IN ('BORROWED','OVERDUE') "
                 + "AND return_date IS NULL";
         String copySql = "UPDATE book_copies SET book_condition='LOST',is_deleted=1,"
