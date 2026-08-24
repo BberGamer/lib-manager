@@ -68,8 +68,8 @@ public class LoginService {
         UserDAO dao = new UserDAO();
         User user = dao.getUserByUsername(username);
 
-        // 1. Kiểm tra tồn tại
-        if (user == null) {
+        // 1. Kiểm tra tồn tại và kiểm tra trạng thái Xóa mềm (is_deleted = 1)
+        if (user == null || user.getIsDeleted() == 1) {
             throw new InvalidCredentialsException("Tên đăng nhập hoặc mật khẩu không đúng!");
         }
 
@@ -78,7 +78,7 @@ public class LoginService {
             throw new InvalidCredentialsException("Tên đăng nhập hoặc mật khẩu không đúng!");
         }
 
-        // 3. Kiểm tra trạng thái tài khoản
+        // 3. Kiểm tra trạng thái Khóa tài khoản (active != 1)
         if (user.getActive() != 1) {
             throw new AccountLockedException("Tài khoản của bạn đã bị khoá. Vui lòng liên hệ thủ thư!");
         }

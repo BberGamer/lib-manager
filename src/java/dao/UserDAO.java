@@ -9,9 +9,9 @@ import utils.DBContext;
 
 public class UserDAO {
 
-    // Lấy thông tin người dùng theo ID(thêm)
+    // Lấy thông tin người dùng theo ID
     public User getUserById(int id) throws Exception {
-        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE id = ?";
+        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active, is_deleted FROM users WHERE id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -23,12 +23,12 @@ public class UserDAO {
         return null;
     }
 
-    // Lấy thông tin người dùng theo Tên đăng nhập (username)
+    // Lấy thông tin người dùng theo Tên đăng nhập (username) hoặc Email
     public User getUserByUsername(String username) throws Exception {
-        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE username = ? OR email = ?";
+        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active, is_deleted FROM users WHERE (username = ? OR email = ?)";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
-            ps.setString(2, username); // thêm nếu (OR = ? ...)
+            ps.setString(2, username);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
@@ -170,9 +170,18 @@ public class UserDAO {
         return null; // Không có giao dịch dở dang nào
     }
 
-    // Xóa mềm người dùng theo ID (chuyển active = 0, lưu giữ bản ghi trong DB)
+    /**
+     * Xóa mềm người dùng theo ID bằng cách cập nhật is_deleted = 1.
+     * Tách biệt hoàn toàn với tính năng Khóa/Mở khóa tài khoản (active = 0).
+     * Giúp bảo tồn bản ghi trong CSDL tránh vi phạm ràng buộc khóa ngoại.
+     *
+     * @param userId ID người dùng cần xóa mềm
+     * @return true nếu cập nhật trạng thái xóa mềm thành công, ngược lại false
+     * @throws Exception khi xảy ra lỗi kết nối hoặc truy vấn CSDL
+     */
     public boolean deleteUser(int userId) throws Exception {
-        String sql = "UPDATE users SET active = 0 WHERE id = ?";
+        // Thực hiện Xóa mềm bằng cột is_deleted = 1 chuẩn doanh nghiệp
+        String sql = "UPDATE users SET is_deleted = 1 WHERE id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             return ps.executeUpdate() > 0;
@@ -232,7 +241,7 @@ public class UserDAO {
     // Check studentId đã tồn tại chưa, lấy thông tin User đang sở hữu studentId đó (nếu có)
 
     public User getUserByStudentId(String studentId) throws Exception {
-        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE student_id = ?";
+        String sql = "SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active, is_deleted FROM users WHERE student_id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, studentId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -263,8 +272,8 @@ public class UserDAO {
     public List<User> searchUsers(String q, String role, Integer active, String sortField, String sortOrder) throws Exception {
         List<User> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        // Hiện thị danh sách
-        sb.append("SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active FROM users WHERE 1=1 ");
+        // Chỉ hiển thị các người dùng chưa bị xóa mềm (is_deleted = 0)
+        sb.append("SELECT id, username, password, full_name, email, phone, student_id, avatar, role, active, is_deleted FROM users WHERE (is_deleted IS NULL OR is_deleted = 0) ");
         if (q != null && !q.trim().isEmpty()) {
             sb.append(" AND (username LIKE ? OR full_name LIKE ? OR email LIKE ?)"); // nếu thêm lọc thanh tìm
         }

@@ -241,7 +241,7 @@ public class UserListService {
     }
 
     /**
-     * Xóa người dùng (Xóa mềm - Chuyển active = 0).
+     * Xóa người dùng (Xóa mềm - Chuyển is_deleted = 1).
      * Bổ sung kiểm tra không cho phép xóa tài khoản của chính mình (Admin) hoặc tài khoản Thủ thư (Librarian).
      * Bổ sung bước kiểm tra dữ liệu liên quan dở dang (sách đang mượn, nợ tiền phạt, sách đang đặt).
      *
@@ -274,7 +274,7 @@ public class UserListService {
                 throw new IllegalStateException(pendingErr);
             }
 
-            // Bước 2: Thực hiện Xóa mềm (UPDATE users SET active = 0)
+            // Bước 2: Thực hiện Xóa mềm (UPDATE users SET is_deleted = 1)
             boolean ok = dao.deleteUser(id);
             if (!ok) throw new IllegalStateException("Xóa thất bại: không tìm thấy người dùng.");
         } catch (IllegalArgumentException | IllegalStateException e) {

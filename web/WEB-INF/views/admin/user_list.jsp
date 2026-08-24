@@ -301,9 +301,9 @@
                                             <i class="fa-solid <%= isAct ? "fa-lock" : "fa-lock-open" %>"></i> <%= isAct ? "Khóa" : "Mở khóa" %>
                                         </button>
                                     </form>
-                                    <%-- Form Xóa mềm người dùng (POST action=delete, kiểm tra các giao dịch dở dang và chuyển active = 0) --%>
+                                    <%-- Form Xóa mềm người dùng (POST action=delete, kiểm tra các giao dịch dở dang và chuyển is_deleted = 1) --%>
                                     <form method="post" action="<%= ctx %>/users" class="user-action-form"
-                                          onsubmit="return confirm('Xác nhận xóa người dùng <%= u.getUsername().replace("'", "\\'") %> (tài khoản sẽ chuyển sang trạng thái Khóa)?')">
+                                          onsubmit="return confirm('Xác nhận xóa người dùng <%= u.getUsername().replace("'", "\\'") %> (tài khoản sẽ chuyển sang trạng thái Xóa mềm)?')">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="id" value="<%= u.getId() %>">
                                         <button type="submit" class="user-action-delete">
