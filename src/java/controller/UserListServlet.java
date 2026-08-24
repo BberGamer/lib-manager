@@ -8,7 +8,7 @@ import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import service.UserListService;
 
-@WebServlet(name = "UserListServlet", urlPatterns = {"/users", "/admin/users", "/librarian/users"})
+@WebServlet(name = "UserListServlet", urlPatterns = {"/users", "/admin/users"})
 public class UserListServlet extends HttpServlet {
 
     private final UserListService userService = new UserListService();
@@ -16,9 +16,16 @@ public class UserListServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+         // 1. Kiểm tra xác thực đăng nhập
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        //  2. Bắt buộc quyền Admin mới được XEM danh sách người dùng
+        User loggedUser = (User) session.getAttribute("loggedUser");
+        if (!loggedUser.isAdmin()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang quản lý người dùng.");
             return;
         }
 
