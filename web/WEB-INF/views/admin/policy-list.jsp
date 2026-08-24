@@ -178,6 +178,19 @@
                                                         </button>
                                                     </form>
                                                 </c:if>
+                                                <c:if test="${policy.reusable}">
+                                                    <form method="post"
+                                                          action="${pageContext.request.contextPath}/admin/policies/reuse"
+                                                          data-confirm-action
+                                                          data-confirm-message="Sử dụng lại điều lệ này theo khoảng hiệu lực đã thiết lập?">
+                                                        <input type="hidden" name="id" value="${policy.id}">
+                                                        <button class="policy-action policy-action-reuse"
+                                                                type="submit"
+                                                                title="Sử dụng lại">
+                                                            <i class="fa-solid fa-rotate-left"></i> Sử dụng lại
+                                                        </button>
+                                                    </form>
+                                                </c:if>
                                             </div>
                                         </td>
                                     </tr>

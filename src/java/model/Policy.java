@@ -28,6 +28,8 @@ public class Policy {
     private LocalDateTime publishedAt;
     private LocalDateTime archivedAt;
     private String effectiveStatus;
+    private boolean onlyVersion;
+    private boolean reusable;
 
     /** Khởi tạo mô hình rỗng cho biểu mẫu và mapper JDBC. */
     public Policy() {
@@ -111,4 +113,12 @@ public class Policy {
     public String getEffectiveStatus() { return effectiveStatus; }
     /** @param effectiveStatus nhãn hiệu lực cần gán */
     public void setEffectiveStatus(String effectiveStatus) { this.effectiveStatus = effectiveStatus; }
+    /** @return true nếu mã điều lệ này chỉ có một phiên bản trong toàn bộ lịch sử */
+    public boolean isOnlyVersion() { return onlyVersion; }
+    /** @param onlyVersion kết quả kiểm tra số phiên bản cùng mã điều lệ */
+    public void setOnlyVersion(boolean onlyVersion) { this.onlyVersion = onlyVersion; }
+    /** @return true nếu giao diện được phép hiển thị thao tác sử dụng lại */
+    public boolean isReusable() { return reusable; }
+    /** @param reusable quyền sử dụng lại đã được service xác định cho giao diện */
+    public void setReusable(boolean reusable) { this.reusable = reusable; }
 }

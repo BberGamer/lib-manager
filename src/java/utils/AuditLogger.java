@@ -198,6 +198,17 @@ public class AuditLogger {
                 "Mã điều lệ #" + policyId + " | Lưu trữ điều lệ: " + title);
     }
 
+    /**
+     * Ghi nhận Admin sử dụng lại điều lệ đã lưu trữ.
+     * @param performedBy tài khoản thực hiện
+     * @param policyId mã định danh điều lệ
+     * @param title tiêu đề điều lệ tại thời điểm thao tác
+     */
+    public static void logPolicyReuse(String performedBy, int policyId, String title) {
+        log("POLICY_REUSE", performedBy, 0,
+                "Mã điều lệ #" + policyId + " | Sử dụng lại điều lệ: " + title);
+    }
+
     /** Admin xóa bản nháp điều lệ */
     public static void logPolicyDelete(String performedBy, int policyId, String title) {
         log("POLICY_DELETE", performedBy, 0,

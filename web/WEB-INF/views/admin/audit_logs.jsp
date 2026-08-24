@@ -1,3 +1,7 @@
+<%--
+    Trang nhật ký kiểm toán do AuditLogServlet hiển thị;
+    nhận logs, totalLogs, distinctActions và các giá trị bộ lọc từ request.
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List, java.util.Map" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -94,6 +98,7 @@
                                     <c:when test="${act eq 'POLICY_CREATE'}">Tạo nháp điều lệ (POLICY_CREATE)</c:when>
                                     <c:when test="${act eq 'POLICY_PUBLISH'}">Xuất bản điều lệ (POLICY_PUBLISH)</c:when>
                                     <c:when test="${act eq 'POLICY_ARCHIVE'}">Lưu trữ điều lệ (POLICY_ARCHIVE)</c:when>
+                                    <c:when test="${act eq 'POLICY_REUSE'}">Sử dụng lại điều lệ (POLICY_REUSE)</c:when>
                                     <c:when test="${act eq 'POLICY_DELETE'}">Xóa nháp điều lệ (POLICY_DELETE)</c:when>
                                     <c:when test="${act eq 'POLICY_REVISE'}">Sửa đổi điều lệ (POLICY_REVISE)</c:when>
                                     <c:when test="${act eq 'NOTIFICATION_BROADCAST'}">Phát thông báo hệ thống (BROADCAST)</c:when>
@@ -388,6 +393,11 @@
                                                 <c:when test="${log.action eq 'POLICY_ARCHIVE'}">
                                                     <span style="background: #f5f5f4; color: #44403c; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
                                                         <i class="fa-solid fa-box-archive"></i> Lưu trữ điều lệ
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${log.action eq 'POLICY_REUSE'}">
+                                                    <span class="audit-action-badge audit-action-policy-reuse">
+                                                        <i class="fa-solid fa-rotate-left"></i> Sử dụng lại điều lệ
                                                     </span>
                                                 </c:when>
                                                 <c:when test="${log.action eq 'POLICY_DELETE'}">
