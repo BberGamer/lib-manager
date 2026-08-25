@@ -4,7 +4,6 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <c:set var="isManagePageAttr" value="true" scope="request" />
 <c:set var="activePage" value="shelf" scope="request" />
 <c:set var="pageTitle" value="Chi tiết kệ – FPT Library" scope="request" />
@@ -62,14 +61,13 @@
                         <th>Đầu sách</th>
                         <th>ISBN</th>
                         <th>Ngăn</th>
-                        <th>Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty shelf.bookCopies}">
                             <tr>
-                                <td colspan="5" class="shelf-table-empty">Kệ chưa có sách.</td>
+                                <td colspan="4" class="shelf-table-empty">Kệ chưa có sách.</td>
                             </tr>
                         </c:when>
                         <c:otherwise>
@@ -87,18 +85,6 @@
                                     </td>
                                     <td><c:out value="${copy.book.isbn}" /></td>
                                     <td><c:out value="${copy.slot}" /></td>
-                                    <td>
-                                        <span class="copy-status is-${fn:toLowerCase(copy.status)}">
-                                            <c:choose>
-                                                <c:when test="${copy.status eq 'AVAILABLE'}">Có sẵn</c:when>
-                                                <c:when test="${copy.status eq 'BORROWED'}">Đang mượn</c:when>
-                                                <c:when test="${copy.status eq 'RESERVED'}">Đã đặt trước</c:when>
-                                                <c:when test="${copy.status eq 'MAINTENANCE'}">Bảo trì</c:when>
-                                                <c:when test="${copy.status eq 'LOST'}">Thất lạc</c:when>
-                                                <c:otherwise><c:out value="${copy.status}" /></c:otherwise>
-                                            </c:choose>
-                                        </span>
-                                    </td>
                                 </tr>
                             </c:forEach>
                         </c:otherwise>
