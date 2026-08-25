@@ -84,6 +84,8 @@
     <!-- ===== BOOK FORM ===== -->
     <form id="bookForm" action="<%= isEdit ? ctx + rolePath + "/book/edit" : ctx + rolePath + "/book/add" %>" method="post" enctype="multipart/form-data" novalidate>
         <input type="hidden" name="action" value="<%= isEdit ? "update" : "create" %>">
+        <input type="hidden" name="quantity" id="quantityInput" value="<%= quantity %>">
+        <input type="hidden" name="available" id="availableInput" value="<%= available %>">
         <% if (isEdit) { %>
             <input type="hidden" name="id" value="<%= bookId %>">
         <% } %>
@@ -189,50 +191,20 @@
                                        min="0">
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- ===== RIGHT COLUMN: Inventory & Description ===== -->
-            <div class="book-form-column">
-                <!-- Inventory -->
-                <div class="detail-card">
-                    <div class="detail-card-header">
-                        <i class="fa-solid fa-boxes-stacked"></i> Tồn kho & Vị trí
-                    </div>
-                    <div class="detail-card-body">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="quantityInput" class="form-label">Tổng số lượng</label>
-                                <input type="number" id="quantityInput" name="quantity" class="form-control"
-                                       value="<%= quantity %>" min="0" onchange="syncAvailable()"
-                                       <%= hasCopies ? "readonly style='background-color: var(--bg-card); cursor: not-allowed; opacity: 0.85; border-color: var(--border-light);'" : "" %>>
-                            </div>
-                            <div class="form-group">
-                                <label for="availableInput" class="form-label">Số lượng có sẵn</label>
-                                <input type="number" id="availableInput" name="available" class="form-control"
-                                       value="<%= available %>" min="0"
-                                       <%= hasCopies ? "readonly style='background-color: var(--bg-card); cursor: not-allowed; opacity: 0.85; border-color: var(--border-light);'" : "" %>>
-                            </div>
-                        </div>
-                        <% if (hasCopies) { %>
-                            <div style="margin-top: 10px; font-size: 0.82rem; color: #f5a623; display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                <span>Số lượng được đồng bộ tự động từ các bản sao vật lý.</span>
-                            </div>
-                        <% } %>
-
+                        <!-- Môn học liên quan -->
                         <div class="form-group">
                             <label for="subjectInput" class="form-label">Môn học liên quan</label>
                             <input type="text" id="subjectInput" name="subject" class="form-control"
                                    value="<%= subject %>" placeholder="VD: Lập trình Web"
                                    maxlength="100">
                         </div>
-
-
                     </div>
                 </div>
+            </div>
 
+            <!-- ===== RIGHT COLUMN: Inventory & Description ===== -->
+            <div class="book-form-column">
                 <!-- Description & Cover -->
                 <div class="detail-card">
                     <div class="detail-card-header">
@@ -318,13 +290,7 @@ function updateCategoryId() {
     document.getElementById('categoryIdInput').value = opt ? (opt.getAttribute('data-id') || '') : '';
 }
 
-// ---- Available auto-sync (for new books) ----
-function syncAvailable() {
-    <% if (!isEdit) { %>
-    var qty = parseInt(document.getElementById('quantityInput').value) || 0;
-    document.getElementById('availableInput').value = qty;
-    <% } %>
-}
+// (Xóa hàm syncAvailable vì số lượng đã được đồng bộ tự động và chuyển thành input hidden)
 
 // ---- Client-side validation ----
 document.getElementById('bookForm').addEventListener('submit', function(e) {
