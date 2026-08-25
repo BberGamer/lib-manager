@@ -62,12 +62,25 @@ public class EventService {
 //        }
 //        allEvents = filteredEvents;
 
+
+// List<Event> upcomingEvents = new ArrayList<>();
+// for (Event ev : allEvents) {
+//     if ("UPCOMING".equals(ev.getDisplayStatus())) {
+//         upcomingEvents.add(ev);
+//     }
+// }
+// allEvents = upcomingEvents;
+
         // 2. Lọc theo trạng thái hiển thị động (UPCOMING / ONGOING / ENDED / CANCELLED) 
         if (statusFilter != null && !statusFilter.trim().isEmpty()) {
             String filterUpper = statusFilter.trim().toUpperCase();
-            allEvents = allEvents.stream()
-                    .filter(e -> filterUpper.equals(e.getDisplayStatus()))
-                    .collect(Collectors.toList());
+            List<Event> filteredList = new ArrayList<>();
+            for (Event e : allEvents) {
+                if (filterUpper.equals(e.getDisplayStatus())) {
+                    filteredList.add(e);
+                }
+            }
+            allEvents = filteredList;
         } else {
             allEvents = new ArrayList<>(allEvents);
         }
