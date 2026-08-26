@@ -106,8 +106,11 @@ function populateViewModal(btn) {
     document.getElementById('viewDescription').textContent = btn.getAttribute('data-description') || '(Không có mô tả)';
     document.getElementById('viewStartTime').textContent = btn.getAttribute('data-start-time') || '';
     document.getElementById('viewEndTime').textContent = btn.getAttribute('data-end-time') || '';
-    document.getElementById('viewCreatedBy').textContent = btn.getAttribute('data-created-by') || '';
-    document.getElementById('viewUpdatedBy').textContent = btn.getAttribute('data-updated-by') || 'N/A';
+    const createdByEl = document.getElementById('viewCreatedBy');
+    if (createdByEl) createdByEl.textContent = btn.getAttribute('data-created-by') || '';
+
+    const updatedByEl = document.getElementById('viewUpdatedBy');
+    if (updatedByEl) updatedByEl.textContent = btn.getAttribute('data-updated-by') || 'N/A';
 
     const displayStatus = btn.getAttribute('data-display-status') || '';
     const statusContainer = document.getElementById('viewDisplayStatus');

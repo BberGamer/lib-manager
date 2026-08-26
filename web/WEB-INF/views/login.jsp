@@ -38,14 +38,14 @@
                                         <%-- Ô nhập tên đăng nhập (dùng HTML5 required để ngăn gửi form trống) --%>
                                         <div class="form-group">
                                             <label for="username">Tên đăng nhập hoặc Email </label>
-                                            <input type="text" id="username" name="username" required
+                                            <input type="text" id="username" name="username" value="${not empty username ? username : param.username}" 
                                                 placeholder="Nhập tên đăng nhập" class="form-control">
                                         </div>
 
                                         <%-- Ô nhập mật khẩu --%>
                                         <div class="form-group">
                                             <label for="password">Mật khẩu</label>
-                                            <input type="password" id="password" name="password" required
+                                            <input type="password" id="password" name="password" 
                                                 placeholder="Nhập mật khẩu" class="form-control">
                                         </div>
 

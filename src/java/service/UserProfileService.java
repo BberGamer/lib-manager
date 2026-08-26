@@ -145,6 +145,10 @@ public class UserProfileService {
             }
         }
 
+        if (hashPassword(newPassword).equals(user.getPassword())) {
+            return "Mật khẩu mới không được trùng với mật khẩu hiện tại.";
+        }
+
         String hashed = hashPassword(newPassword);
         boolean ok = userDAO.updatePassword(user.getId(), hashed);
         if (ok) {

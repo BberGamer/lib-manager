@@ -180,7 +180,7 @@ public class UserDAO {
      * @throws Exception khi xảy ra lỗi kết nối hoặc truy vấn CSDL
      */
     public boolean deleteUser(int userId) throws Exception {
-        // Thực hiện Xóa mềm bằng cột is_deleted = 1 
+        // Thực hiện Xóa mềm bằng cột is_deleted = 1 , 0 = Chưa xóa, 1 = Đã xóa mềm
         String sql = "UPDATE users SET is_deleted = 1 WHERE id = ?";
         try (Connection conn = DBContext.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
