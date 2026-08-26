@@ -258,6 +258,7 @@ public class EventService {
         if (event.getId() <= 0 && startTime.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Thời gian bắt đầu sự kiện không được ở trong quá khứ.");
         }
+//        if (event.getId() <= 0 && startTime.isBefore(LocalDateTime.now().withSecond(0).withNano(0))) làm tròn giây
 
         // 4. Kiểm tra Thời gian kết thúc
         LocalDateTime endTime = event.getEndTime();

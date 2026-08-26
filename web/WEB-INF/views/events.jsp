@@ -242,13 +242,13 @@
                                         <button type="button" class="user-action-view"
                                                 data-action="open-view-modal"
                                                 data-id="<%= item.getId() %>"
-                                                data-title="<%= item.getTitle() %>"
-                                                data-description="<%= item.getDescription() != null ? item.getDescription() : "" %>"
+                                                data-title="<%= item.getTitle() != null ? item.getTitle().replace("\"", "&quot;").replace("\n", " ") : "" %>"
+                                                data-description="<%= item.getDescription() != null ? item.getDescription().replace("\"", "&quot;").replace("\n", " ") : "" %>"
                                                 data-start-time="<%= startTimeStr %>"
                                                 data-end-time="<%= endTimeStr %>"
                                                 data-display-status="<%= displayStatus %>"
-                                                data-created-by="<%= item.getCreatedBy() != null ? item.getCreatedBy() : "" %>"
-                                                data-updated-by="<%= item.getUpdatedBy() != null ? item.getUpdatedBy() : "" %>"
+                                                data-created-by="<%= item.getCreatedBy() != null ? item.getCreatedBy().replace("\"", "&quot;") : "" %>"
+                                                data-updated-by="<%= item.getUpdatedBy() != null ? item.getUpdatedBy().replace("\"", "&quot;") : "" %>"
                                                 title="Xem chi tiết">
                                             <i class="fa-solid fa-eye"></i> Xem
                                         </button>
@@ -428,8 +428,7 @@
                 <div class="detail-label">Mô tả sự kiện</div>
                 <div id="viewDescription" class="detail-value" style="white-space: pre-wrap;"></div>
             </div>
-            <% if (canManage) { %>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+                <div style="display: <%= canManage ? "grid" : "none" %>; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
                     <div class="detail-group" style="margin:0;">
                         <div class="detail-label">Tài khoản tạo</div>
                         <div id="viewCreatedBy" class="detail-value"></div>
@@ -439,7 +438,6 @@
                         <div id="viewUpdatedBy" class="detail-value"></div>
                     </div>
                 </div>
-            <% } %>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline" data-action="close-modal">Đóng</button>
