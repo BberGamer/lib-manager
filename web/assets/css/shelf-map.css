@@ -191,33 +191,6 @@
     font-weight: 600;
 }
 
-.copy-status {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 10px;
-    border-radius: 99px;
-    font-size: 0.74rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.copy-status.is-available {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16803b;
-}
-
-.copy-status.is-borrowed,
-.copy-status.is-reserved {
-    background: rgba(245, 158, 11, 0.12);
-    color: #a15c00;
-}
-
-.copy-status.is-maintenance,
-.copy-status.is-lost {
-    background: rgba(255, 71, 87, 0.1);
-    color: var(--danger);
-}
-
 .shelf-empty-state {
     padding: 72px 24px;
 }
