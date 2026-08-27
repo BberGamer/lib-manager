@@ -406,10 +406,19 @@
                                     </script>
                                 </div>
                             </div>
-                        <% } else if (myReview == null) { %>
-                            <div class="alert alert-info" style="margin-bottom: 35px;">
-                                <i class="fa-solid fa-circle-info"></i> Bạn cần mượn và trả sách này trước khi có thể đánh giá.
-                            </div>
+                        <% } else { %>
+                            <%
+                                Boolean hasBorrowed = (Boolean) request.getAttribute("hasBorrowed");
+                                if (Boolean.TRUE.equals(hasBorrowed)) {
+                            %>
+                                <div class="alert alert-info" style="margin-bottom: 35px;">
+                                    <i class="fa-solid fa-circle-info"></i> Bạn đã hoàn thành đánh giá cho tất cả các lượt mượn sách này.
+                                </div>
+                            <% } else { %>
+                                <div class="alert alert-info" style="margin-bottom: 35px;">
+                                    <i class="fa-solid fa-circle-info"></i> Bạn cần mượn sách này trước khi có thể đánh giá.
+                                </div>
+                            <% } %>
                         <% } %>
                     <% } %>
 

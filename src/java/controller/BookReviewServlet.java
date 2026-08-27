@@ -126,7 +126,15 @@ public class BookReviewServlet extends HttpServlet {
             return;
         }
 
-        // Nếu không truyền borrowId từ form, tự động tìm lượt mượn gần nhất chưa đánh giá
+        // Kiểm tra xem borrowId được gửi lên có hợp lệ và chưa được đánh giá hay không
+        if (borrowId != null) {
+            boolean isValid = reviewDAO.isBorrowEligibleForReview(borrowId, bookId, loggedUser.getId());
+            if (!isValid) {
+                borrowId = null;
+            }
+        }
+
+        // Nếu chưa có borrowId hợp lệ, tự động tìm lượt mượn chưa đánh giá của độc giả
         if (borrowId == null) {
             borrowId = reviewDAO.getUnreviewedBorrowId(bookId, loggedUser.getId());
         }
