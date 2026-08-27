@@ -179,6 +179,9 @@ public class BookDetailServlet extends HttpServlet {
                     canReview = true;
                     request.setAttribute("unreviewedBorrowId", targetBorrowId);
                 }
+
+                boolean hasBorrowed = reviewDAO.hasBorrowedBook(id, loggedUser.getId());
+                request.setAttribute("hasBorrowed", hasBorrowed);
             }
 
             request.setAttribute("reviews", reviews);
