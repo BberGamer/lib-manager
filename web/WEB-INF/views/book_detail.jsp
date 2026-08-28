@@ -349,9 +349,9 @@
 
                                         <div style="margin-bottom: 20px;">
                                             <label style="font-weight: 600; margin-bottom: 10px; display: block; color: var(--text-primary);">Nhận xét</label>
-                                            <textarea name="comment" rows="3"
+                                            <textarea name="comment" rows="3" maxlength="500"
                                                       style="width:100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical;"
-                                                      placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+                                                      placeholder="Chia sẻ cảm nhận của bạn (tối đa 500 ký tự)..."></textarea>
                                         </div>
 
                                         <div style="display: flex; gap: 12px; align-items: center;">
@@ -542,9 +542,9 @@
 
                 <div style="margin-bottom: 20px;">
                     <label style="font-weight: 600; margin-bottom: 10px; display: block; color: var(--text-primary);">Nhận xét</label>
-                    <textarea name="comment" id="editCommentInput" rows="3"
+                    <textarea name="comment" id="editCommentInput" rows="3" maxlength="500"
                               style="width:100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical;"
-                              placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+                              placeholder="Chia sẻ cảm nhận của bạn (tối đa 500 ký tự)..."></textarea>
                 </div>
 
                 <div style="display:flex; gap:12px; justify-content:flex-end;">
