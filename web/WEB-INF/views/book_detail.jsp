@@ -282,7 +282,7 @@
             <!-- ===== REVIEWS SECTION (Reader only) ===== -->
             <% boolean isAdminOrLib = loggedUser != null && (loggedUser.isAdmin() || "LIBRARIAN".equals(loggedUser.getRole())); %>
             <% if (!isAdminOrLib) { %>
-                <div class="book-detail-reviews" style="margin-top: 40px; border-top: 1px solid var(--border-light); padding-top: 30px;">
+                <div id="reviews-section" class="book-detail-reviews" style="margin-top: 40px; border-top: 1px solid var(--border-light); padding-top: 30px;">
                     <h3 style="margin-bottom: 25px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-star" style="color: #f5a623;"></i> Đánh giá sách
                     </h3>
@@ -506,6 +506,32 @@
                                 </div>
                             <% } %>
                         </div>
+
+                        <%
+                            int reviewPage = request.getAttribute("reviewPage") != null ? (Integer) request.getAttribute("reviewPage") : 1;
+                            int totalReviewPages = request.getAttribute("totalReviewPages") != null ? (Integer) request.getAttribute("totalReviewPages") : 1;
+                        %>
+                        <% if (totalReviewPages > 1) { %>
+                            <nav aria-label="Phân trang bình luận" style="margin-top: 24px; display: flex; justify-content: center;">
+                                <ul class="pagination">
+                                    <li class="page-item <%= reviewPage <= 1 ? "disabled" : "" %>">
+                                        <a class="page-link" href="<%= ctx %>/book/detail?id=<%= book.getId() %>&reviewPage=<%= reviewPage - 1 %>#reviews-section">
+                                            <i class="fa-solid fa-chevron-left fa-xs"></i>
+                                        </a>
+                                    </li>
+                                    <% for (int pg = 1; pg <= totalReviewPages; pg++) { %>
+                                        <li class="page-item <%= pg == reviewPage ? "active" : "" %>">
+                                            <a class="page-link" href="<%= ctx %>/book/detail?id=<%= book.getId() %>&reviewPage=<%= pg %>#reviews-section"><%= pg %></a>
+                                        </li>
+                                    <% } %>
+                                    <li class="page-item <%= reviewPage >= totalReviewPages ? "disabled" : "" %>">
+                                        <a class="page-link" href="<%= ctx %>/book/detail?id=<%= book.getId() %>&reviewPage=<%= reviewPage + 1 %>#reviews-section">
+                                            <i class="fa-solid fa-chevron-right fa-xs"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        <% } %>
                     <% } %>
                 </div>
             <% } %>
