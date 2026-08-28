@@ -39,6 +39,7 @@ import service.ReservationService;
 public class BookDetailServlet extends HttpServlet {
 
     private final ReservationService reservationService = new ReservationService();
+    private static final int PAGE_SIZE_COMMENT = 6;
 
     private String getRedirectBase(HttpServletRequest request) {
         String path = request.getServletPath();
@@ -146,9 +147,30 @@ public class BookDetailServlet extends HttpServlet {
 
             List<Author> authors = dao.getAuthorsByBookId(id);
 
-            // Fetch review data
+            // Fetch review data with pagination using PAGE_SIZE_COMMENT
+            int reviewPage = 1;
+            String reviewPageStr = request.getParameter("reviewPage");
+            if (reviewPageStr != null && !reviewPageStr.trim().isEmpty()) {
+                try {
+                    reviewPage = Integer.parseInt(reviewPageStr.trim());
+                    if (reviewPage < 1) {
+                        reviewPage = 1;
+                    }
+                } catch (NumberFormatException e) {
+                    reviewPage = 1;
+                }
+            }
             BookReviewDAO reviewDAO = new BookReviewDAO();
-            List<BookReview> reviews = reviewDAO.getReviewsByBookId(id);
+            int totalReviews = reviewDAO.countReviewsByBookId(id);
+            int totalReviewPages = (int) Math.ceil((double) totalReviews / PAGE_SIZE_COMMENT);
+            if (totalReviewPages < 1) {
+                totalReviewPages = 1;
+            }
+            if (reviewPage > totalReviewPages) {
+                reviewPage = totalReviewPages;
+            }
+
+            List<BookReview> reviews = reviewDAO.getReviewsByBookId(id, reviewPage, PAGE_SIZE_COMMENT);
             double avgRating = reviewDAO.getAverageRating(id);
             BookReview myReview = null;
             boolean canReview = false;
@@ -192,6 +214,9 @@ public class BookDetailServlet extends HttpServlet {
             request.setAttribute("avgRating", String.format("%.1f", avgRating).replace(",", "."));
             request.setAttribute("myReview", myReview);
             request.setAttribute("canReview", canReview);
+            request.setAttribute("reviewPage", reviewPage);
+            request.setAttribute("totalReviewPages", totalReviewPages);
+            request.setAttribute("totalReviews", totalReviews);
 
             request.setAttribute("book", book);
             request.setAttribute("authors", authors);

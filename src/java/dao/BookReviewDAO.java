@@ -28,7 +28,21 @@ public class BookReviewDAO {
      * @throws Exception nếu có lỗi truy vấn cơ sở dữ liệu
      */
     public List<BookReview> getReviewsByBookId(int bookId) throws Exception {
+        return getReviewsByBookId(bookId, 1, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Lấy danh sách các đánh giá sách theo trang (LIMIT - OFFSET).
+     *
+     * @param bookId mã số của đầu sách
+     * @param pageNum trang hiện tại (từ 1 trở lên)
+     * @param pageSize số bản ghi hiển thị tối đa trên một trang
+     * @return danh sách các đối tượng {@link BookReview} của trang hiện tại
+     * @throws Exception nếu có lỗi truy vấn cơ sở dữ liệu
+     */
+    public List<BookReview> getReviewsByBookId(int bookId, int pageNum, int pageSize) throws Exception {
         List<BookReview> list = new ArrayList<>();
+        int offset = Math.max(0, (pageNum - 1) * pageSize);
         String sql = "SELECT br.id, br.book_id, br.user_id, br.rating, br.comment, br.created_at, br.updated_at, br.borrow_id, " +
                      "u.full_name, u.student_id, " +
                      "bor.borrow_date " +
@@ -36,10 +50,12 @@ public class BookReviewDAO {
                      "INNER JOIN users u ON br.user_id = u.id " +
                      "LEFT JOIN borrow_records bor ON br.borrow_id = bor.id " +
                      "WHERE br.book_id = ? " +
-                     "ORDER BY br.created_at DESC";
+                     "ORDER BY br.created_at DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, bookId);
+            ps.setInt(2, pageSize);
+            ps.setInt(3, offset);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     BookReview br = new BookReview();
@@ -68,6 +84,27 @@ public class BookReviewDAO {
             }
         }
         return list;
+    }
+
+    /**
+     * Đếm tổng số lượng đánh giá của một đầu sách dựa vào ID sách.
+     *
+     * @param bookId mã số của đầu sách
+     * @return tổng số bản ghi đánh giá
+     * @throws Exception nếu có lỗi truy vấn cơ sở dữ liệu
+     */
+    public int countReviewsByBookId(int bookId) throws Exception {
+        String sql = "SELECT COUNT(*) FROM book_reviews WHERE book_id = ?";
+        try (Connection conn = DBContext.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
     }
 
     /**
