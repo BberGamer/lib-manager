@@ -21,6 +21,8 @@ async function refreshExpectedPickupDate() {
     const pickupInput = reservationForm.querySelector('[data-pickup-date]');
     const earliestDate = reservationForm.querySelector('[data-earliest-date]');
     const expectedDate = reservationForm.querySelector('[data-expected-date]');
+    const expectedEndDate = reservationForm.querySelector('[data-expected-end-date]');
+    const availableCapacity = reservationForm.querySelector('[data-available-capacity]');
     const message = reservationForm.querySelector('[data-estimate-message]');
     const submitButton = reservationForm.querySelector('[data-reservation-submit]');
     const bookId = reservationForm.querySelector('input[name="bookId"]').value;
@@ -46,12 +48,12 @@ async function refreshExpectedPickupDate() {
         }
         earliestDate.dateTime = payload.earliestAvailableDate;
         earliestDate.textContent = formatReservationDate(payload.earliestAvailableDate);
-        pickupInput.min = payload.earliestAvailableDate;
         expectedDate.dateTime = payload.expectedPickupDate;
         expectedDate.textContent = formatReservationDate(payload.expectedPickupDate);
-        message.textContent = pickupInput.value === payload.expectedPickupDate
-                ? 'Còn slot dự kiến đúng ngày bạn chọn.'
-                : 'Ngày bạn chọn đã hết slot; hệ thống đã chuyển sang slot kế tiếp.';
+        expectedEndDate.dateTime = payload.expectedEndDate;
+        expectedEndDate.textContent = formatReservationDate(payload.expectedEndDate);
+        availableCapacity.textContent = payload.availableCapacity;
+        message.textContent = `Còn ${payload.availableCapacity} bản trong toàn bộ khoảng 7 ngày đã chọn.`;
         submitButton.disabled = false;
     } catch (error) {
         message.textContent = error.message;
@@ -62,7 +64,9 @@ if (reservationForm) {
     const pickupInput = reservationForm.querySelector('[data-pickup-date]');
     const earliestDate = reservationForm.querySelector('[data-earliest-date]');
     const expectedDate = reservationForm.querySelector('[data-expected-date]');
+    const expectedEndDate = reservationForm.querySelector('[data-expected-end-date]');
     earliestDate.textContent = formatReservationDate(earliestDate.dateTime);
     expectedDate.textContent = formatReservationDate(expectedDate.dateTime);
+    expectedEndDate.textContent = formatReservationDate(expectedEndDate.dateTime);
     pickupInput.addEventListener('change', refreshExpectedPickupDate);
 }

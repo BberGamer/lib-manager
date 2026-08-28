@@ -36,7 +36,8 @@
                                 <th>Tên sách</th>
                                 <th>Ngày đặt trước</th>
                                 <th>Ngày muốn nhận</th>
-                                <th>Ngày dự kiến</th>
+                                <th>Ngày bắt đầu dự kiến</th>
+                                <th>Ngày kết thúc dự kiến</th>
                                 <th>Vị trí hiện tại</th>
                                 <th>Trạng thái</th>
                                 <th>Hạn thực hiện mượn</th>
@@ -65,6 +66,9 @@
                                                 Sách đang trả trễ; thư viện sẽ báo khi có sách.
                                             </small>
                                         </c:if>
+                                    </td>
+                                    <td data-label="Ngày kết thúc dự kiến">
+                                        <c:out value="${record.expectedEndDate}" default="—"/>
                                     </td>
                                     <td data-label="Vị trí">
                                         <c:out value="${record.queuePosition gt 0 ? record.queuePosition : '—'}"/>

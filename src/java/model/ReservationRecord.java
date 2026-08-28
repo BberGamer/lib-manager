@@ -10,6 +10,7 @@ public class ReservationRecord {
     private LocalDateTime reserveDate;
     private LocalDate requestedPickupDate;
     private LocalDate expectedPickupDate;
+    private LocalDate expectedEndDate;
     private LocalDateTime expiryDate;
     private String status; // WAITING, READY_FOR_PICKUP, COMPLETED, CANCELLED, EXPIRED
     private int queuePosition;
@@ -83,6 +84,16 @@ public class ReservationRecord {
     /** @param expectedPickupDate ngày dự kiến được phân bổ từ lịch trả sách */
     public void setExpectedPickupDate(LocalDate expectedPickupDate) {
         this.expectedPickupDate = expectedPickupDate;
+    }
+
+    /** @return ngày kết thúc dự kiến, không thuộc khoảng đặt trước */
+    public LocalDate getExpectedEndDate() {
+        return expectedEndDate;
+    }
+
+    /** @param expectedEndDate ngày kết thúc do service chuẩn bị cho giao diện */
+    public void setExpectedEndDate(LocalDate expectedEndDate) {
+        this.expectedEndDate = expectedEndDate;
     }
 
     public LocalDateTime getExpiryDate() {

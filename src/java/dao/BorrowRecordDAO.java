@@ -14,9 +14,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Cung cấp các thao tác lưu trữ cho lượt mượn sách và phối hợp cập nhật bản
@@ -24,12 +22,6 @@ import java.util.Set;
  * đặt trước trong cùng giao dịch khi trạng thái mượn thay đổi.
  */
 public class BorrowRecordDAO {
-
-    // Mảnh SQL dùng chung để kiểm tra đầu sách có reservation đang chờ
-    // hoặc đã sẵn sàng nhận hay không.
-    private static final String ACTIVE_RESERVATION_FOR_BOOK_SQL = "EXISTS (SELECT 1 FROM book_reservations reservation "
-            + "WHERE reservation.book_id=br.book_id "
-            + "AND reservation.status IN ('WAITING','READY_FOR_PICKUP'))";
 
     /**
      * Chứa kết quả nhận trả và thông tin đặt trước vừa được kích hoạt để controller
@@ -336,55 +328,123 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Lấy các lượt đang mượn của độc giả bị chặn gia hạn vì đầu sách đã có đặt
-     * trước.
+     * Đọc các lượt đang chiếm bản sao để service dựng lịch theo khoảng thời gian.
      *
-     * @param userId mã độc giả sở hữu các lượt mượn
-     * @return tập mã lượt mượn bị chặn, không bao giờ trả về {@code null}
-     * @throws Exception khi không thể truy vấn cơ sở dữ liệu
+     * @param connection kết nối dùng để đọc cùng một ảnh chụp giao dịch
+     * @param bookId mã đầu sách
+     * @return các lượt chờ nhận, đang mượn hoặc quá hạn còn hiệu lực
+     * @throws SQLException khi không thể đọc dữ liệu mượn
      */
-    public Set<Integer> findRenewalBlockedBorrowIds(int userId) throws Exception {
-        // Lấy ID các lượt đang mượn không được gia hạn vì cùng đầu sách
-        // đã có người xếp hàng đặt trước.
-        String sql = "SELECT br.id FROM borrow_records br WHERE br.user_id=? "
-                + "AND br.status='BORROWED' AND br.return_date IS NULL AND "
-                + ACTIVE_RESERVATION_FOR_BOOK_SQL;
-        Set<Integer> borrowIds = new HashSet<>();
-        try (Connection connection = DBContext.getInstance().getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, userId);
+    public List<BorrowRecord> findSchedulingBorrows(Connection connection, int bookId)
+            throws SQLException {
+        String sql = "SELECT id,user_id,book_id,copy_id,request_date,pickup_deadline,"
+                + "borrow_date,due_date,return_date,renewal_count,status "
+                + "FROM borrow_records WHERE book_id=? AND "
+                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
+                + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL)) "
+                + "ORDER BY due_date,id";
+        List<BorrowRecord> records = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, bookId);
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    borrowIds.add(result.getInt("id"));
+                    records.add(mapSchedulingBorrow(result));
                 }
             }
         }
-        return borrowIds;
+        return records;
     }
 
     /**
-     * Kiểm tra một lượt mượn có bị hàng đặt trước hiện tại chặn gia hạn hay không.
+     * Kiểm tra độc giả đang có lượt mượn hoặc chờ nhận của cùng đầu sách hay không.
      *
-     * @param borrowRecordId mã lượt mượn
-     * @param userId         mã độc giả sở hữu lượt mượn
-     * @return {@code true} khi đầu sách có yêu cầu WAITING hoặc READY_FOR_PICKUP
-     * @throws Exception khi không thể truy vấn cơ sở dữ liệu
+     * @param userId mã độc giả
+     * @param bookId mã đầu sách
+     * @return {@code true} khi tồn tại lượt còn hiệu lực
+     * @throws Exception khi không thể truy vấn dữ liệu
      */
-    public boolean isRenewalBlockedByReservation(int borrowRecordId, int userId)
-            throws Exception {
-        // Kiểm tra trực tiếp một lượt mượn hợp lệ có bị reservation đang hoạt động
-        // của đầu sách chặn gia hạn hay không.
-        String sql = "SELECT 1 FROM borrow_records br WHERE br.id=? AND br.user_id=? "
-                + "AND br.status='BORROWED' AND br.return_date IS NULL AND "
-                + ACTIVE_RESERVATION_FOR_BOOK_SQL + " LIMIT 1";
-        try (Connection connection = DBContext.getInstance().getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, borrowRecordId);
-            statement.setInt(2, userId);
+    public boolean hasActiveForUserAndBook(int userId, int bookId) throws Exception {
+        try (Connection connection = DBContext.getInstance().getConnection()) {
+            return hasActiveForUserAndBook(connection, userId, bookId);
+        }
+    }
+
+    /**
+     * Kiểm tra lượt mượn trùng trong kết nối do service đang điều phối.
+     *
+     * @param connection kết nối đang tham gia giao dịch
+     * @param userId mã độc giả
+     * @param bookId mã đầu sách
+     * @return {@code true} khi tồn tại lượt còn hiệu lực
+     * @throws SQLException khi không thể truy vấn dữ liệu
+     */
+    public boolean hasActiveForUserAndBook(Connection connection, int userId, int bookId)
+            throws SQLException {
+        String sql = "SELECT 1 FROM borrow_records WHERE user_id=? AND book_id=? AND "
+                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
+                + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL)) LIMIT 1";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            statement.setInt(2, bookId);
             try (ResultSet result = statement.executeQuery()) {
                 return result.next();
             }
         }
+    }
+
+    /**
+     * Đọc lượt mượn dùng cho quyết định gia hạn, có thể khóa hàng khi caller chuẩn bị cập nhật.
+     *
+     * @param connection kết nối đang tham gia giao dịch
+     * @param borrowRecordId mã lượt mượn
+     * @param userId mã độc giả sở hữu lượt mượn
+     * @param lockForUpdate có thêm khóa ghi vào lượt mượn hay không
+     * @return lượt mượn phù hợp hoặc {@code null} khi không tồn tại
+     * @throws SQLException khi không thể đọc dữ liệu
+     */
+    public BorrowRecord findRenewalCandidate(Connection connection, int borrowRecordId,
+            int userId, boolean lockForUpdate) throws SQLException {
+        String sql = "SELECT id,user_id,book_id,copy_id,request_date,pickup_deadline,"
+                + "borrow_date,due_date,return_date,renewal_count,status "
+                + "FROM borrow_records WHERE id=? AND user_id=?"
+                + (lockForUpdate ? " FOR UPDATE" : "");
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, borrowRecordId);
+            statement.setInt(2, userId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? mapSchedulingBorrow(result) : null;
+            }
+        }
+    }
+
+    /**
+     * Ánh xạ tập cột rút gọn dùng cho lịch slot và giao dịch gia hạn.
+     *
+     * @param result hàng kết quả hiện tại
+     * @return lượt mượn chứa các mốc thời gian cần thiết
+     * @throws SQLException khi không thể đọc cột bắt buộc
+     */
+    private BorrowRecord mapSchedulingBorrow(ResultSet result) throws SQLException {
+        BorrowRecord record = new BorrowRecord();
+        record.setId(result.getInt("id"));
+        record.setUserId(result.getInt("user_id"));
+        record.setBookId(result.getInt("book_id"));
+        int copyId = result.getInt("copy_id");
+        record.setCopyId(result.wasNull() ? null : copyId);
+        Timestamp requestDate = result.getTimestamp("request_date");
+        Timestamp pickupDeadline = result.getTimestamp("pickup_deadline");
+        Date borrowDate = result.getDate("borrow_date");
+        Date dueDate = result.getDate("due_date");
+        Date returnDate = result.getDate("return_date");
+        record.setRequestDate(requestDate == null ? null : requestDate.toLocalDateTime());
+        record.setPickupDeadline(
+                pickupDeadline == null ? null : pickupDeadline.toLocalDateTime());
+        record.setBorrowDate(borrowDate == null ? null : borrowDate.toLocalDate());
+        record.setDueDate(dueDate == null ? null : dueDate.toLocalDate());
+        record.setReturnDate(returnDate == null ? null : returnDate.toLocalDate());
+        record.setRenewalCount(result.getInt("renewal_count"));
+        record.setStatus(result.getString("status"));
+        return record;
     }
 
     /**
@@ -536,33 +596,25 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Gia hạn một lượt mượn thuộc đúng độc giả và vẫn còn ở trạng thái đang
-     * mượn. Điều kiện số lần gia hạn và không có đặt trước được kiểm tra nguyên tử
-     * trong câu lệnh cập nhật.
+     * Cập nhật hạn trả của lượt đã được khóa và được service xác nhận còn đủ điều kiện.
      *
-     * @param borrowRecordId  mã lượt mượn
-     * @param userId          mã độc giả sở hữu lượt mượn
-     * @param maximumRenewals số lần gia hạn tối đa
-     * @param extensionDays   số ngày cộng thêm vào hạn trả
-     * @return {@code true} nếu có đúng một lượt mượn được gia hạn
-     * @throws Exception khi không thể cập nhật cơ sở dữ liệu
+     * @param connection kết nối đang giữ khóa lượt mượn và đầu sách
+     * @param record lượt mượn chứa hạn trả cùng số lần gia hạn hiện tại
+     * @param proposedDueDate hạn trả mới đã được service tính
+     * @return {@code true} khi cập nhật đúng một lượt và dữ liệu chưa thay đổi
+     * @throws SQLException khi không thể cập nhật dữ liệu
      */
-    public boolean renewForUser(int borrowRecordId, int userId, int maximumRenewals,
-            int extensionDays) throws Exception {
-        // Gia hạn nguyên tử một lượt BORROWED đủ điều kiện,
-        // cộng hạn trả và số lần gia hạn nếu chưa có đặt trước.
-        String sql = "UPDATE borrow_records br "
-                + "SET due_date = DATE_ADD(due_date, INTERVAL ? DAY), "
-                + "renewal_count = renewal_count + 1, updated_at = NOW() "
-                + "WHERE br.id = ? AND br.user_id = ? AND br.status = 'BORROWED' "
-                + "AND br.due_date >= CURDATE() AND br.renewal_count < ? AND NOT "
-                + ACTIVE_RESERVATION_FOR_BOOK_SQL;
-        try (Connection connection = DBContext.getInstance().getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, extensionDays);
-            statement.setInt(2, borrowRecordId);
-            statement.setInt(3, userId);
-            statement.setInt(4, maximumRenewals);
+    public boolean renewLocked(Connection connection, BorrowRecord record,
+            LocalDate proposedDueDate) throws SQLException {
+        String sql = "UPDATE borrow_records SET due_date=?,renewal_count=renewal_count+1,"
+                + "updated_at=NOW() WHERE id=? AND user_id=? AND status='BORROWED' "
+                + "AND return_date IS NULL AND due_date=? AND renewal_count=?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, Date.valueOf(proposedDueDate));
+            statement.setInt(2, record.getId());
+            statement.setInt(3, record.getUserId());
+            statement.setDate(4, Date.valueOf(record.getDueDate()));
+            statement.setInt(5, record.getRenewalCount());
             return statement.executeUpdate() == 1;
         }
     }
@@ -608,7 +660,10 @@ public class BorrowRecordDAO {
 
         // Chuyển reservation kế tiếp sang READY_FOR_PICKUP
         // và thiết lập thời hạn nhận sách trong 24 giờ.
-        String updateRes = "UPDATE book_reservations SET status = 'READY_FOR_PICKUP', notified_at = NOW(), expiry_date = DATE_ADD(NOW(), INTERVAL 24 HOUR), updated_at = NOW() WHERE id = ?";
+        String updateRes = "UPDATE book_reservations SET status='READY_FOR_PICKUP',"
+                + "expected_pickup_date=GREATEST(COALESCE(expected_pickup_date,CURDATE()),"
+                + "CURDATE()),notified_at=NOW(),"
+                + "expiry_date=DATE_ADD(NOW(),INTERVAL 24 HOUR),updated_at=NOW() WHERE id=?";
 
         // Lưu tình trạng thực tế và ghi chú của bản sao vừa được thủ thư nhận lại.
         String updateCopyCondition = "UPDATE book_copies SET book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
@@ -779,117 +834,27 @@ public class BorrowRecordDAO {
     }
 
     /**
-     * Tạo yêu cầu giữ một bản sao khả dụng trong giao dịch có khóa hàng.
+     * Thêm yêu cầu giữ sách bằng kết nối giao dịch do service quản lý.
+     * Service phải khóa đầu sách và kiểm tra lịch sức chứa trước khi gọi phương thức này.
      *
-     * @param userId    mã độc giả
-     * @param bookId    mã đầu sách
+     * @param connection kết nối đang tham gia giao dịch
+     * @param userId mã độc giả
+     * @param bookId mã đầu sách
      * @param holdHours số giờ giữ sách
-     * @return {@code true} nếu tạo yêu cầu thành công
-     * @throws Exception khi thao tác dữ liệu thất bại
+     * @return {@code true} khi thêm đúng một yêu cầu
+     * @throws SQLException khi không thể ghi dữ liệu
      */
-    public boolean createPickupRequest(int userId, int bookId, int holdHours) throws Exception {
-        // Khóa đầu sách còn hoạt động để tuần tự hóa các yêu cầu mượn đồng thời
-        // cho cùng một đầu sách.
-        String lockBookSql = "SELECT id FROM books WHERE id=? AND is_deleted=0 FOR UPDATE";
-        // Khóa và phát hiện người dùng đã có yêu cầu chờ nhận
-        // hoặc lượt mượn chưa trả của cùng đầu sách.
-        String duplicateSql = "SELECT id FROM borrow_records WHERE user_id=? AND book_id=? AND "
-                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
-                + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL)) FOR UPDATE";
-        // Đếm tổng số bản sao vật lý còn lưu thông
-        // và có tình trạng đủ điều kiện cho mượn.
-        String countCopiesSql = "SELECT COUNT(*) FROM book_copies WHERE book_id=? AND is_deleted=0 AND book_condition IN ('GOOD', 'WORN')";
-        // Đếm số slot của đầu sách đang bị giữ hoặc đang được mượn
-        // để suy ra lượng bản sao thực sự khả dụng.
-        String countBorrowsSql = "SELECT COUNT(*) FROM borrow_records WHERE book_id=? AND "
-                + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
-                + "(status IN ('BORROWED', 'OVERDUE') AND return_date IS NULL))";
-        // Tạo yêu cầu PENDING_PICKUP có thời hạn giữ
-        // nhưng hoãn gán copy_id đến lúc thủ thư giao sách.
-        String insertSql = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, "
+    public boolean insertPickupRequest(Connection connection, int userId, int bookId,
+            int holdHours) throws SQLException {
+        String sql = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, "
                 + "pickup_deadline, borrow_date, due_date, renewal_count, status, created_at, updated_at) "
                 + "VALUES (?, ?, NULL, NOW(), DATE_ADD(NOW(), INTERVAL ? HOUR), NULL, NULL, 0, "
                 + "'PENDING_PICKUP', NOW(), NOW())";
-        // Khóa người đứng đầu hàng đặt trước để chỉ người đang có quyền nhận sách
-        // mới được tạo yêu cầu mượn.
-        String queueSql = "SELECT id,user_id,status FROM book_reservations WHERE book_id=? "
-                + "AND status IN ('WAITING','READY_FOR_PICKUP') ORDER BY CASE "
-                + "WHEN status='READY_FOR_PICKUP' THEN 0 ELSE 1 END,created_at,id LIMIT 1 FOR UPDATE";
-        try (Connection connection = DBContext.getInstance().getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                // 1. Khóa đầu sách để tránh tranh chấp ghi đồng thời (race condition)
-                try (PreparedStatement statement = connection.prepareStatement(lockBookSql)) {
-                    statement.setInt(1, bookId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (!resultSet.next()) {
-                            connection.rollback();
-                            return false;
-                        }
-                    }
-                }
-                // 2. Kiểm tra yêu cầu mượn trùng lặp
-                try (PreparedStatement statement = connection.prepareStatement(duplicateSql)) {
-                    statement.setInt(1, userId);
-                    statement.setInt(2, bookId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            connection.rollback();
-                            return false;
-                        }
-                    }
-                }
-                // 3. Kiểm tra hàng chờ đặt trước (reservation queue)
-                try (PreparedStatement statement = connection.prepareStatement(queueSql)) {
-                    statement.setInt(1, bookId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            if (!"READY_FOR_PICKUP".equals(resultSet.getString("status"))
-                                    || resultSet.getInt("user_id") != userId) {
-                                connection.rollback();
-                                return false;
-                            }
-                        }
-                    }
-                }
-                // 4. Tính toán số bản sao khả dụng thực tế
-                int totalCopies = 0;
-                try (PreparedStatement statement = connection.prepareStatement(countCopiesSql)) {
-                    statement.setInt(1, bookId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            totalCopies = resultSet.getInt(1);
-                        }
-                    }
-                }
-                int activeBorrows = 0;
-                try (PreparedStatement statement = connection.prepareStatement(countBorrowsSql)) {
-                    statement.setInt(1, bookId);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            activeBorrows = resultSet.getInt(1);
-                        }
-                    }
-                }
-                if (totalCopies - activeBorrows <= 0) {
-                    connection.rollback();
-                    return false;
-                }
-                // 5. Thêm bản ghi yêu cầu mượn (chưa đính kèm copy_id)
-                try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
-                    statement.setInt(1, userId);
-                    statement.setInt(2, bookId);
-                    statement.setInt(3, holdHours);
-                    statement.executeUpdate();
-                }
-                connection.commit();
-                return true;
-            } catch (Exception exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            statement.setInt(2, bookId);
+            statement.setInt(3, holdHours);
+            return statement.executeUpdate() == 1;
         }
     }
 
@@ -1082,16 +1047,27 @@ public class BorrowRecordDAO {
      * @throws Exception khi truy vấn cơ sở dữ liệu thất bại
      */
     public int countActiveByUserId(int userId) throws Exception {
-        // Đếm các lượt chờ nhận còn hạn hoặc lượt chưa trả
-        // để service kiểm tra giới hạn mượn của độc giả.
+        try (Connection conn = DBContext.getInstance().getConnection()) {
+            return countActiveByUserId(conn, userId);
+        }
+    }
+
+    /**
+     * Đếm lượt mượn còn hoạt động bằng kết nối giao dịch hiện tại.
+     *
+     * @param connection kết nối đang tham gia giao dịch
+     * @param userId mã độc giả
+     * @return số lượt chờ nhận, đang mượn hoặc quá hạn
+     * @throws SQLException khi không thể truy vấn dữ liệu
+     */
+    public int countActiveByUserId(Connection connection, int userId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM borrow_records WHERE user_id=? AND "
                 + "((status='PENDING_PICKUP' AND pickup_deadline>=NOW()) OR "
                 + "(status IN ('BORROWED','OVERDUE') AND return_date IS NULL))";
-        try (Connection conn = DBContext.getInstance().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getInt(1) : 0;
             }
         }
     }
