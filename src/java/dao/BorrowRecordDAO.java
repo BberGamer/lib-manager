@@ -8,8 +8,8 @@ import model.BorrowRecord;
 import model.Book;
 import model.BookCopy;
 import model.User;
+import java.math.BigDecimal;
 import utils.DBContext;
-
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -512,7 +512,7 @@ public class BorrowRecordDAO {
                 + "WHERE id=? AND is_deleted=0 AND book_condition<>'LOST'";
         // Giảm tổng số lượng và số lượng khả dụng của đầu sách sau khi mất bản sao,
         // đồng thời không cho giá trị âm.
-        String bookSql = "UPDATE books SET available=LEAST(available,GREATEST(0,quantity-1)),"
+        String bookSql = "UPDATE books SET available=GREATEST(0,available-1),"
                 + "quantity=GREATEST(0,quantity-1),updated_by=?,updated_at=NOW() "
                 + "WHERE id=? AND is_deleted=0";
 
@@ -637,12 +637,14 @@ public class BorrowRecordDAO {
         ReturnResult resObj = new ReturnResult();
         resObj.success = false;
 
-        // Khóa lượt đang mượn hoặc quá hạn để lấy đúng đầu sách và bản sao
+        // Khóa lượt đang mượn hoặc quá hạn để lấy đúng đầu sách, bản sao, độc giả và giá sách
         // trước khi thực hiện quy trình trả.
-        String selectRecord = "SELECT book_id, copy_id FROM borrow_records WHERE id = ? "
-                + "AND status IN ('BORROWED', 'OVERDUE') FOR UPDATE";
-        // Hoàn tất lượt mượn bằng cách ghi ngày trả và chuyển trạng thái sang RETURNED.
-        String updateRecord = "UPDATE borrow_records SET return_date = CURDATE(), status = 'RETURNED', updated_at = NOW() WHERE id = ?";
+        String selectRecord = "SELECT br.book_id, br.copy_id, br.user_id, b.price, b.title "
+                + "FROM borrow_records br "
+                + "INNER JOIN books b ON br.book_id = b.id "
+                + "WHERE br.id = ? AND br.status IN ('BORROWED', 'OVERDUE') FOR UPDATE";
+        // Hoàn tất lượt mượn bằng cách ghi ngày trả và chuyển trạng thái tương ứng.
+        String updateRecord = "UPDATE borrow_records SET return_date = CURDATE(), status = ?, updated_at = NOW() WHERE id = ?";
 
         // Khóa reservation WAITING hợp lệ đầu tiên của đầu sách
         // để cấp quyền nhận sách cho đúng người kế tiếp.
@@ -668,6 +670,14 @@ public class BorrowRecordDAO {
         // Lưu tình trạng thực tế và ghi chú của bản sao vừa được thủ thư nhận lại.
         String updateCopyCondition = "UPDATE book_copies SET book_condition = ?, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
 
+        // Đặt bản sao bị mất/hỏng nặng thành đã bị loại bỏ (is_deleted = 1).
+        String updateCopyLostOrDamaged = "UPDATE book_copies SET book_condition = ?, is_deleted = 1, note = ?, updated_by = ?, updated_at = NOW() WHERE id = ?";
+
+        // Giảm tổng số lượng và số lượng khả dụng của đầu sách sau khi mất/hỏng nặng bản sao.
+        String updateBookLostOrDamaged = "UPDATE books SET available = GREATEST(0, available - 1), "
+                + "quantity = GREATEST(0, quantity - 1), updated_by = ?, updated_at = NOW() "
+                + "WHERE id = ? AND is_deleted = 0";
+
         // Tạo lượt PENDING_PICKUP cho người đặt kế tiếp
         // nhưng chưa gán bản sao cho đến lúc xác nhận giao sách.
         String insertBorrow = "INSERT INTO borrow_records (user_id, book_id, copy_id, request_date, "
@@ -680,12 +690,18 @@ public class BorrowRecordDAO {
             try {
                 int bookId = -1;
                 int copyId = -1;
+                int userId = -1;
+                int price = 0;
+                String bookTitle = null;
                 try (PreparedStatement ps = conn.prepareStatement(selectRecord)) {
                     ps.setInt(1, id);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             bookId = rs.getInt("book_id");
                             copyId = rs.getInt("copy_id");
+                            userId = rs.getInt("user_id");
+                            price = rs.getInt("price");
+                            bookTitle = rs.getString("title");
                         }
                     }
                 }
@@ -694,25 +710,74 @@ public class BorrowRecordDAO {
                     return resObj;
                 }
                 boolean isBorrowableCondition = "GOOD".equals(condition) || "WORN".equals(condition);
+                String recordStatus = "LOST".equals(condition) ? "LOST" : "RETURNED";
 
-                // Việc nhận trả không đồng nghĩa khoản phạt đã được thanh toán.
+                // Cập nhật lượt mượn
                 try (PreparedStatement ps = conn.prepareStatement(updateRecord)) {
-                    ps.setInt(1, id);
+                    ps.setString(1, recordStatus);
+                    ps.setInt(2, id);
                     ps.executeUpdate();
                 }
-                try (PreparedStatement ps = conn.prepareStatement(updateCopyCondition)) {
-                    ps.setString(1, condition);
-                    ps.setString(2, note);
-                    ps.setString(3, operator);
-                    ps.setInt(4, copyId);
-                    ps.executeUpdate();
+
+                // Cập nhật bản sao và đầu sách tương ứng
+                if ("LOST".equals(condition) || "DAMAGED".equals(condition)) {
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyLostOrDamaged)) {
+                        ps.setString(1, condition);
+                        ps.setString(2, note);
+                        ps.setString(3, operator);
+                        ps.setInt(4, copyId);
+                        ps.executeUpdate();
+                    }
+                    try (PreparedStatement ps = conn.prepareStatement(updateBookLostOrDamaged)) {
+                        ps.setString(1, operator);
+                        ps.setInt(2, bookId);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    try (PreparedStatement ps = conn.prepareStatement(updateCopyCondition)) {
+                        ps.setString(1, condition);
+                        ps.setString(2, note);
+                        ps.setString(3, operator);
+                        ps.setInt(4, copyId);
+                        ps.executeUpdate();
+                    }
+                }
+
+                // Tự động lập phiếu phạt nếu có hư hỏng hoặc mất mát
+                if ("LOST".equals(condition) || "DAMAGED".equals(condition) || "WORN".equals(condition)) {
+                    BigDecimal fineAmount;
+                    String reason;
+                    if ("LOST".equals(condition)) {
+                        fineAmount = BigDecimal.valueOf(price);
+                        reason = "Bồi thường 100% giá sách do làm mất cuốn sách: " + bookTitle;
+                    } else if ("DAMAGED".equals(condition)) {
+                        fineAmount = BigDecimal.valueOf(price);
+                        reason = "Bồi thường 100% giá sách do làm hỏng nặng cuốn sách: " + bookTitle;
+                    } else {
+                        fineAmount = BigDecimal.valueOf(Math.round(price * 0.3));
+                        reason = "Bồi thường 30% giá sách do làm hỏng nhẹ cuốn sách: " + bookTitle;
+                    }
+
+                    String insertFineSql = "INSERT INTO fines (borrow_record_id, user_id, amount, overdue_days, "
+                            + "book_condition, fine_type, reason, status, created_at, updated_at) "
+                            + "SELECT ?, ?, ?, 0, ?, 'BOOK_CONDITION', ?, 'UNPAID', NOW(), NOW() "
+                            + "WHERE NOT EXISTS (SELECT 1 FROM fines WHERE borrow_record_id = ? AND fine_type = 'BOOK_CONDITION')";
+                    try (PreparedStatement ps = conn.prepareStatement(insertFineSql)) {
+                        ps.setInt(1, id);
+                        ps.setInt(2, userId);
+                        ps.setBigDecimal(3, fineAmount);
+                        ps.setString(4, condition);
+                        ps.setString(5, reason);
+                        ps.setInt(6, id);
+                        ps.executeUpdate();
+                    }
                 }
 
                 // Khóa người đặt hợp lệ đầu tiên để tránh hai giao dịch cùng cấp một slot chờ
                 // nhận.
                 int waitingResId = -1;
                 int waitingUserId = -1;
-                String bookTitle = null;
+                String waitingBookTitle = null;
                 String userEmail = null;
                 String userFullName = null;
                 if (isBorrowableCondition) {
@@ -722,7 +787,7 @@ public class BorrowRecordDAO {
                             if (rs.next()) {
                                 waitingResId = rs.getInt("id");
                                 waitingUserId = rs.getInt("user_id");
-                                bookTitle = rs.getString("title");
+                                waitingBookTitle = rs.getString("title");
                                 userEmail = rs.getString("email");
                                 userFullName = rs.getString("full_name");
                             }
@@ -745,7 +810,7 @@ public class BorrowRecordDAO {
 
                     resObj.activatedReservationId = waitingResId;
                     resObj.activatedUserId = waitingUserId;
-                    resObj.bookTitle = bookTitle;
+                    resObj.bookTitle = waitingBookTitle;
                     resObj.userEmail = userEmail;
                     resObj.userFullName = userFullName;
                 }

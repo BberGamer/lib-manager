@@ -424,8 +424,9 @@
                                 <label>
                                     <span>Tình trạng cuốn sách</span>
                                     <select name="bookCondition" required data-fine-field="condition">
-                                        <option value="DAMAGED">Hỏng nhẹ</option>
-                                        <option value="LOST">Mất sách</option>
+                                        <option value="WORN">Hỏng nhẹ (30%)</option>
+                                        <option value="DAMAGED">Hỏng nặng (100%)</option>
+                                        <option value="LOST">Mất sách (100%)</option>
                                     </select>
                                 </label>
                                 <label>

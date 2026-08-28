@@ -80,7 +80,7 @@
         if (!condition || !amount) {
             return;
         }
-        const rate = condition.value === 'LOST' ? LOST_RATE : DAMAGED_RATE;
+        const rate = (condition.value === 'LOST' || condition.value === 'DAMAGED') ? LOST_RATE : DAMAGED_RATE;
         amount.value = Math.round(selectedBookPrice * rate);
     }
 
@@ -132,7 +132,7 @@
         setModalField(modal, 'fine', 'userId', trigger.dataset.userId);
         setModalField(modal, 'fine', 'readerName', trigger.dataset.readerName);
         setModalField(modal, 'fine', 'bookTitle', trigger.dataset.bookTitle);
-        setModalField(modal, 'fine', 'condition', 'DAMAGED');
+        setModalField(modal, 'fine', 'condition', 'WORN');
         fillCalculatedFine(modal);
         openModal(modal);
     }

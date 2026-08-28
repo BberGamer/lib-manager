@@ -25,6 +25,12 @@ public class BookDAOImpl implements BookDAO {
             + "((br.status = 'PENDING_PICKUP' AND br.pickup_deadline >= NOW()) "
             + "OR (br.status IN ('BORROWED', 'OVERDUE') AND br.return_date IS NULL))))";
 
+    /** Truy vấn con tính tổng số bản sao thực tế không bị xóa (loại bỏ các bản sao đã mất hoặc hỏng nặng). */
+    private static final String TOTAL_COPY_COUNT_SQL
+            = "(CASE WHEN (SELECT COUNT(*) FROM book_copies bc_total WHERE bc_total.book_id = b.id) > 0 "
+            + "THEN (SELECT COUNT(*) FROM book_copies bc_active WHERE bc_active.book_id = b.id AND bc_active.is_deleted = 0) "
+            + "ELSE b.quantity END)";
+
     /** Số bản có thể giao ngay; reservation tương lai không làm giảm chỉ số vật lý này. */
     private static final String AVAILABLE_COPY_COUNT_SQL = "GREATEST(0, "
             + PHYSICALLY_AVAILABLE_COPY_COUNT_SQL + ")";
@@ -38,7 +44,7 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public Book findById(int id) throws Exception {
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
-                + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
+                + "b.publish_year, b.price, " + TOTAL_COPY_COUNT_SQL + " AS quantity, " + AVAILABLE_COPY_COUNT_SQL
                 + " AS available, " + RESERVABLE_SQL
                 + " AS reservable, b.description, b.cover_image, b.subject, b.is_deleted "
                 + "FROM books b WHERE b.id = ? AND b.is_deleted = 0";
@@ -58,7 +64,8 @@ public class BookDAOImpl implements BookDAO {
     public List<Book> searchBooks(String keyword, String category, String sort, String order, int page, int pageSize) throws Exception {
         List<Book> list = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, ")
+        sb.append("SELECT DISTINCT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, b.publish_year, b.price, ")
+          .append(TOTAL_COPY_COUNT_SQL).append(" AS quantity, ")
           .append(AVAILABLE_COPY_COUNT_SQL).append(" AS available, ")
           .append(RESERVABLE_SQL).append(" AS reservable, b.description, b.cover_image, b.subject ")
           .append("FROM books b ")
@@ -432,7 +439,7 @@ public class BookDAOImpl implements BookDAO {
         List<Book> list = new ArrayList<>();
         // Truy vấn danh sách sách được mượn nhiều nhất dựa trên bảng borrow_records
         String sql = "SELECT b.id, b.isbn, b.title, b.category, b.category_id, b.publisher, "
-                   + "b.publish_year, b.price, b.quantity, " + AVAILABLE_COPY_COUNT_SQL
+                   + "b.publish_year, b.price, " + TOTAL_COPY_COUNT_SQL + " AS quantity, " + AVAILABLE_COPY_COUNT_SQL
                    + " AS available, " + RESERVABLE_SQL
                    + " AS reservable, b.description, b.cover_image, b.subject, "
                    + "COUNT(br.id) AS borrow_count "
@@ -459,7 +466,8 @@ public class BookDAOImpl implements BookDAO {
     @Override
     public List<Book> getLatestBooks(int days, int limit) throws Exception {
         List<Book> list = new ArrayList<>();
-        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, b.quantity, "
+        String sql = "SELECT b.id, b.isbn, b.title, COALESCE(c.name, b.category) AS category, b.category_id, b.publisher, b.publish_year, b.price, "
+                   + TOTAL_COPY_COUNT_SQL + " AS quantity, "
                    + AVAILABLE_COPY_COUNT_SQL + " AS available, " + RESERVABLE_SQL
                    + " AS reservable, b.description, b.cover_image, b.subject "
                    + "FROM books b "

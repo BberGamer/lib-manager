@@ -101,8 +101,11 @@ public class Fine {
      * @return nhãn tình trạng cuốn sách
      */
     public String getBookConditionLabel() {
-        if ("DAMAGED".equals(bookCondition)) {
+        if ("WORN".equals(bookCondition)) {
             return "Hỏng nhẹ (30% giá trị sách)";
+        }
+        if ("DAMAGED".equals(bookCondition)) {
+            return "Hỏng nặng (100% giá trị sách)";
         }
         if ("LOST".equals(bookCondition)) {
             return "Mất sách (100% giá trị sách)";

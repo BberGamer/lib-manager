@@ -164,7 +164,15 @@ public class BorrowManagementServlet extends HttpServlet {
 
         dao.BorrowRecordDAO.ReturnResult result = borrowService.confirmReturn(id, operator, condition, note);
         if (result.success) {
-            session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
+            if ("LOST".equals(condition)) {
+                session.setAttribute("successMsg", "Đã xác nhận mất sách và tự động lập phiếu phạt (100% giá sách) thành công!");
+            } else if ("DAMAGED".equals(condition)) {
+                session.setAttribute("successMsg", "Đã xác nhận trả sách (hỏng nặng) và tự động lập phiếu phạt (100% giá sách) thành công!");
+            } else if ("WORN".equals(condition)) {
+                session.setAttribute("successMsg", "Đã xác nhận trả sách (hỏng nhẹ) và tự động lập phiếu phạt (30% giá sách) thành công!");
+            } else {
+                session.setAttribute("successMsg", "Đã xác nhận hoàn trả sách thành công!");
+            }
             AuditLogger.logBorrowConfirmReturn(operator, targetUserId, id, condition);
 
             if (result.activatedReservationId != -1) {
