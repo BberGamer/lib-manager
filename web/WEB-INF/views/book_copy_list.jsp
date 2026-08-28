@@ -194,8 +194,7 @@
                                         boolean isDeletable = !bc.isBorrowedOrReserved();
                                         HttpSession s = request.getSession(false);
                                         User u = (s != null) ? (User) s.getAttribute("loggedUser") : null;
-                                        if (u != null && u.isAdmin
-                                        ()) {
+                                        if (u != null && u.isAdmin()) {
                                     %>
                                         <button type="button" class="btn btn-danger btn-sm" style="padding: 4px 8px;" 
                                                 onclick="confirmDeleteCopy('<%= bc.getId() %>', '<%= bc.getBarcode() %>')"

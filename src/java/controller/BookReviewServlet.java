@@ -126,6 +126,11 @@ public class BookReviewServlet extends HttpServlet {
             return;
         }
 
+        if (comment != null && comment.trim().length() > 500) {
+            response.sendRedirect(request.getContextPath() + "/book/detail?id=" + bookId + "&error=comment_too_long");
+            return;
+        }
+
         // Kiểm tra xem borrowId được gửi lên có hợp lệ và chưa được đánh giá hay không
         if (borrowId != null) {
             boolean isValid = reviewDAO.isBorrowEligibleForReview(borrowId, bookId, loggedUser.getId());
@@ -181,6 +186,11 @@ public class BookReviewServlet extends HttpServlet {
 
         if (rating < 1 || rating > 5) {
             response.sendRedirect(request.getContextPath() + "/book/detail?id=" + bookId + "&error=invalid_rating");
+            return;
+        }
+
+        if (comment != null && comment.trim().length() > 500) {
+            response.sendRedirect(request.getContextPath() + "/book/detail?id=" + bookId + "&error=comment_too_long");
             return;
         }
 
