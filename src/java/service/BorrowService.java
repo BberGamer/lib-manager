@@ -9,11 +9,13 @@ import dao.BookDAOImpl;
 import dao.BookCopyDAO;
 import dao.BookReviewDAO;
 import dao.FineDAO;
+import dao.ReservationDAO;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -40,6 +42,8 @@ public class BorrowService {
 
     private final BorrowRecordDAO borrowRecordDao;
     private final BookDAO bookDao;
+    private final ReservationDAO reservationDao;
+    private final ReservationService reservationService;
     private final BookCopyDAO bookCopyDao = new BookCopyDAO();
     private final BookReviewDAO bookReviewDao = new BookReviewDAO();
     private final FineDAO fineDao = new FineDAO();
@@ -48,7 +52,7 @@ public class BorrowService {
      * Khởi tạo service với DAO mặc định của ứng dụng.
      */
     public BorrowService() {
-        this(new BorrowRecordDAO(), new BookDAOImpl());
+        this(new BorrowRecordDAO(), new BookDAOImpl(), new ReservationDAO());
     }
 
     /**
@@ -57,13 +61,32 @@ public class BorrowService {
      * @param borrowRecordDao DAO quản lý dữ liệu lượt mượn
      */
     public BorrowService(BorrowRecordDAO borrowRecordDao) {
-        this(borrowRecordDao, new BookDAOImpl());
+        this(borrowRecordDao, new BookDAOImpl(), new ReservationDAO());
     }
 
-    /** Khởi tạo service với các DAO sở hữu dữ liệu mượn và sách. */
+    /**
+     * Khởi tạo service với các DAO sở hữu dữ liệu mượn và sách.
+     *
+     * @param borrowRecordDao DAO quản lý lượt mượn
+     * @param bookDao DAO quản lý đầu sách
+     */
     public BorrowService(BorrowRecordDAO borrowRecordDao, BookDAO bookDao) {
+        this(borrowRecordDao, bookDao, new ReservationDAO());
+    }
+
+    /**
+     * Khởi tạo service với các DAO phục vụ mượn, sách và khóa lịch đặt trước.
+     *
+     * @param borrowRecordDao DAO quản lý lượt mượn
+     * @param bookDao DAO quản lý đầu sách
+     * @param reservationDao DAO quản lý reservation và khóa lịch
+     */
+    public BorrowService(BorrowRecordDAO borrowRecordDao, BookDAO bookDao,
+            ReservationDAO reservationDao) {
         this.borrowRecordDao = borrowRecordDao;
         this.bookDao = bookDao;
+        this.reservationDao = reservationDao;
+        this.reservationService = new ReservationService();
     }
 
     /**
@@ -78,10 +101,10 @@ public class BorrowService {
         borrowRecordDao.markOverdueBorrows();
         List<BorrowRecord> activeRecords = new ArrayList<>();
         List<BorrowRecord> historyRecords = new ArrayList<>();
-        Set<Integer> renewalBlockedBorrowIds
-                = borrowRecordDao.findRenewalBlockedBorrowIds(userId);
+        Set<Integer> renewalBlockedBorrowIds = new HashSet<>();
+        Set<Integer> renewalEligibleBorrowIds = new HashSet<>();
         int upcomingDueCount = 0;
-        LocalDate today = LocalDate.now();
+        LocalDate today = reservationService.businessToday();
 
         for (BorrowRecord record : borrowRecordDao.findByUserId(userId)) {
             if (isActive(record)) {
@@ -89,16 +112,22 @@ public class BorrowService {
                 if (isUpcoming(record, today)) {
                     upcomingDueCount++;
                 }
+                BorrowRenewalResult renewalResult = evaluateRenewal(record, null);
+                if (renewalResult == BorrowRenewalResult.BLOCKED_BY_RESERVATION) {
+                    renewalBlockedBorrowIds.add(record.getId());
+                } else if (renewalResult == BorrowRenewalResult.SUCCESS) {
+                    renewalEligibleBorrowIds.add(record.getId());
+                }
             } else {
                 historyRecords.add(record);
             }
         }
         return new BorrowPageData(activeRecords, historyRecords, upcomingDueCount,
-                renewalBlockedBorrowIds);
+                renewalBlockedBorrowIds, renewalEligibleBorrowIds);
     }
 
     /**
-     * Gia hạn lượt mượn của chính độc giả, đồng thời từ chối khi đầu sách đã có người đặt trước.
+     * Gia hạn lượt mượn của chính độc giả khi khoảng mới không làm thiếu capacity cho reservation.
      *
      * @param borrowRecordId mã lượt mượn dương
      * @param userId mã độc giả đang đăng nhập
@@ -109,16 +138,77 @@ public class BorrowService {
         if (borrowRecordId <= 0 || userId <= 0) {
             return BorrowRenewalResult.NOT_ELIGIBLE;
         }
-        if (borrowRecordDao.isRenewalBlockedByReservation(borrowRecordId, userId)) {
-            return BorrowRenewalResult.BLOCKED_BY_RESERVATION;
+        try (Connection connection = borrowRecordDao.openTransactionConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                BorrowRecord candidate = borrowRecordDao.findRenewalCandidate(
+                        connection, borrowRecordId, userId, false);
+                if (candidate == null
+                        || !reservationDao.lockBook(connection, candidate.getBookId())) {
+                    connection.rollback();
+                    return BorrowRenewalResult.NOT_ELIGIBLE;
+                }
+                BorrowRecord lockedRecord = borrowRecordDao.findRenewalCandidate(
+                        connection, borrowRecordId, userId, true);
+                BorrowRenewalResult eligibility = evaluateRenewal(lockedRecord, connection);
+                if (eligibility != BorrowRenewalResult.SUCCESS) {
+                    connection.rollback();
+                    return eligibility;
+                }
+                LocalDate proposedDueDate = lockedRecord.getDueDate()
+                        .plusDays(RENEWAL_EXTENSION_DAYS);
+                if (!borrowRecordDao.renewLocked(connection, lockedRecord, proposedDueDate)) {
+                    connection.rollback();
+                    return BorrowRenewalResult.NOT_ELIGIBLE;
+                }
+                connection.commit();
+                return BorrowRenewalResult.SUCCESS;
+            } catch (Exception exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         }
-        if (borrowRecordDao.renewForUser(
-                borrowRecordId, userId, MAXIMUM_RENEWALS, RENEWAL_EXTENSION_DAYS)) {
-            return BorrowRenewalResult.SUCCESS;
+    }
+
+    /**
+     * Dùng chung một quyết định cho nút gia hạn trên trang và thao tác POST.
+     *
+     * @param record lượt mượn cần đánh giá
+     * @param connection kết nối đang giữ khóa khi cập nhật, hoặc {@code null} khi chỉ hiển thị
+     * @return kết quả đủ điều kiện, xung đột reservation hoặc không hợp lệ
+     * @throws Exception khi không thể đọc lịch reservation
+     */
+    private BorrowRenewalResult evaluateRenewal(BorrowRecord record, Connection connection)
+            throws Exception {
+        LocalDate today = reservationService.businessToday();
+        if (!isBaseRenewalEligible(record, today)) {
+            return BorrowRenewalResult.NOT_ELIGIBLE;
         }
-        return borrowRecordDao.isRenewalBlockedByReservation(borrowRecordId, userId)
-                ? BorrowRenewalResult.BLOCKED_BY_RESERVATION
-                : BorrowRenewalResult.NOT_ELIGIBLE;
+        LocalDate proposedDueDate = record.getDueDate().plusDays(RENEWAL_EXTENSION_DAYS);
+        boolean isAvailable = connection == null
+                ? reservationService.isSlotAvailable(record.getBookId(),
+                        record.getDueDate(), proposedDueDate)
+                : reservationService.isSlotAvailable(connection, record.getBookId(),
+                        record.getDueDate(), proposedDueDate);
+        return isAvailable ? BorrowRenewalResult.SUCCESS
+                : BorrowRenewalResult.BLOCKED_BY_RESERVATION;
+    }
+
+    /**
+     * Kiểm tra các điều kiện gia hạn không phụ thuộc lịch reservation.
+     *
+     * @param record lượt mượn cần kiểm tra
+     * @param today ngày nghiệp vụ hiện tại
+     * @return {@code true} khi lượt đang mượn, chưa quá hạn và chưa vượt số lần gia hạn
+     */
+    public static boolean isBaseRenewalEligible(BorrowRecord record, LocalDate today) {
+        return record != null && today != null
+                && "BORROWED".equalsIgnoreCase(record.getStatus())
+                && record.getReturnDate() == null && record.getDueDate() != null
+                && !record.getDueDate().isBefore(today)
+                && record.getRenewalCount() < MAXIMUM_RENEWALS;
     }
 
     /**
@@ -154,16 +244,49 @@ public class BorrowService {
         return bookReviewDao.getReviewedBorrowIds(userId);
     }
 
-    /** Tạo yêu cầu giữ sách nếu sách tồn tại và còn bản sao khả dụng. */
+    /**
+     * Tạo yêu cầu giữ sách nếu còn sức chứa trong toàn bộ kỳ mượn dự kiến.
+     * Đầu sách được khóa để yêu cầu mượn và đặt trước đồng thời không vượt số bản sao.
+     *
+     * @param userId mã độc giả
+     * @param bookId mã đầu sách
+     * @return {@code true} khi yêu cầu được tạo
+     * @throws Exception khi không thể đọc hoặc ghi dữ liệu
+     */
     public boolean createBorrowRequest(int userId, int bookId) throws Exception {
-        if (userId <= 0 || bookId <= 0 || bookDao.findById(bookId) == null) return false;
-        
-        if (getActiveBorrowCount(userId) >= MAXIMUM_ACTIVE_BORROWS) {
+        if (userId <= 0 || bookId <= 0 || bookDao.findById(bookId) == null) {
             return false;
         }
-        
         borrowRecordDao.expirePendingRequests();
-        return borrowRecordDao.createPickupRequest(userId, bookId, PICKUP_HOLD_HOURS);
+        LocalDate startDate = reservationService.businessToday();
+        LocalDate endDate = startDate.plusDays(LOAN_PERIOD_DAYS);
+        try (Connection connection = borrowRecordDao.openTransactionConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                if (!reservationDao.lockBook(connection, bookId)
+                        || borrowRecordDao.hasActiveForUserAndBook(
+                                connection, userId, bookId)
+                        || borrowRecordDao.countActiveByUserId(connection, userId)
+                                >= MAXIMUM_ACTIVE_BORROWS) {
+                    connection.rollback();
+                    return false;
+                }
+                int available = reservationService.getAvailableCapacity(
+                        connection, bookId, startDate, endDate);
+                if (available <= 0 || !borrowRecordDao.insertPickupRequest(
+                        connection, userId, bookId, PICKUP_HOLD_HOURS)) {
+                    connection.rollback();
+                    return false;
+                }
+                connection.commit();
+                return true;
+            } catch (Exception exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
     }
 
     /** Hủy yêu cầu chờ nhận thuộc chính độc giả. */
@@ -321,6 +444,7 @@ public class BorrowService {
         private final List<BorrowRecord> historyRecords;
         private final int upcomingDueCount;
         private final Set<Integer> renewalBlockedBorrowIds;
+        private final Set<Integer> renewalEligibleBorrowIds;
 
         /**
          * Tạo dữ liệu trang từ các nhóm lượt mượn đã phân loại.
@@ -328,15 +452,18 @@ public class BorrowService {
          * @param activeRecords các lượt đang mượn hoặc quá hạn
          * @param historyRecords các lượt đã kết thúc
          * @param upcomingDueCount số lượt sắp đến hạn
-         * @param renewalBlockedBorrowIds các lượt không được gia hạn vì đã có đặt trước
+         * @param renewalBlockedBorrowIds các lượt bị xung đột slot đặt trước
+         * @param renewalEligibleBorrowIds các lượt được cùng implementation xác nhận có thể gia hạn
          */
         public BorrowPageData(List<BorrowRecord> activeRecords,
                 List<BorrowRecord> historyRecords, int upcomingDueCount,
-                Set<Integer> renewalBlockedBorrowIds) {
+                Set<Integer> renewalBlockedBorrowIds,
+                Set<Integer> renewalEligibleBorrowIds) {
             this.activeRecords = activeRecords;
             this.historyRecords = historyRecords;
             this.upcomingDueCount = upcomingDueCount;
             this.renewalBlockedBorrowIds = renewalBlockedBorrowIds;
+            this.renewalEligibleBorrowIds = renewalEligibleBorrowIds;
         }
 
         /** @return các lượt mượn đang hoạt động */
@@ -354,9 +481,14 @@ public class BorrowService {
             return upcomingDueCount;
         }
 
-        /** @return mã các lượt bị chặn gia hạn do đầu sách đã có đặt trước */
+        /** @return mã các lượt bị chặn gia hạn do xung đột slot đặt trước */
         public Set<Integer> getRenewalBlockedBorrowIds() {
             return renewalBlockedBorrowIds;
+        }
+
+        /** @return mã các lượt đã được service xác nhận có thể hiển thị thao tác gia hạn */
+        public Set<Integer> getRenewalEligibleBorrowIds() {
+            return renewalEligibleBorrowIds;
         }
     }
 }

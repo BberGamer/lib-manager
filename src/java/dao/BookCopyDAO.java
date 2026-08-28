@@ -210,18 +210,71 @@ public class BookCopyDAO {
     }
 
     public boolean updateCopy(BookCopy copy) {
+        String selectOldSql = "SELECT book_id, book_condition FROM book_copies WHERE id = ? AND is_deleted = 0";
         String sql = "UPDATE book_copies SET barcode = ?, book_condition = ?, note = ?, area = ?, shelf = ?, slot = ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
-        try (Connection conn = DBContext.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, copy.getBarcode());
-            ps.setString(2, copy.getBookCondition());
-            ps.setString(3, copy.getNote());
-            ps.setString(4, copy.getArea());
-            ps.setString(5, copy.getShelf());
-            ps.setString(6, copy.getSlot());
-            ps.setString(7, copy.getUpdatedBy());
-            ps.setInt(8, copy.getId());
-            return ps.executeUpdate() > 0;
+        String decAvailSql = "UPDATE books SET available = GREATEST(0, available - 1), updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
+        String incAvailSql = "UPDATE books SET available = LEAST(quantity, available + 1), updated_by = ?, updated_at = NOW() WHERE id = ? AND is_deleted = 0";
+
+        try (Connection conn = DBContext.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int bookId = -1;
+                String oldCondition = "GOOD";
+                try (PreparedStatement ps = conn.prepareStatement(selectOldSql)) {
+                    ps.setInt(1, copy.getId());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            bookId = rs.getInt("book_id");
+                            oldCondition = rs.getString("book_condition");
+                        }
+                    }
+                }
+                if (bookId == -1) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, copy.getBarcode());
+                    ps.setString(2, copy.getBookCondition());
+                    ps.setString(3, copy.getNote());
+                    ps.setString(4, copy.getArea());
+                    ps.setString(5, copy.getShelf());
+                    ps.setString(6, copy.getSlot());
+                    ps.setString(7, copy.getUpdatedBy());
+                    ps.setInt(8, copy.getId());
+                    if (ps.executeUpdate() <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                boolean wasBorrowable = ("GOOD".equals(oldCondition) || "WORN".equals(oldCondition));
+                boolean isNowBorrowable = ("GOOD".equals(copy.getBookCondition()) || "WORN".equals(copy.getBookCondition()));
+
+                if (wasBorrowable && !isNowBorrowable && !isCopyBorrowedOrReserved(copy.getId())) {
+                    try (PreparedStatement ps = conn.prepareStatement(decAvailSql)) {
+                        ps.setString(1, copy.getUpdatedBy());
+                        ps.setInt(2, bookId);
+                        ps.executeUpdate();
+                    }
+                } else if (!wasBorrowable && isNowBorrowable && !isCopyBorrowedOrReserved(copy.getId())) {
+                    try (PreparedStatement ps = conn.prepareStatement(incAvailSql)) {
+                        ps.setString(1, copy.getUpdatedBy());
+                        ps.setInt(2, bookId);
+                        ps.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+                return false;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return false;

@@ -142,10 +142,10 @@
                                                 and borrowPage.renewalBlockedBorrowIds.contains(record.id)}">
                                             <span class="renew-unavailable">Không thể gia hạn</span>
                                             <small class="renew-reservation-note">
-                                                Đầu sách đã có người đặt trước.
+                                                Khoảng gia hạn trùng slot đặt trước và không còn bản sao khác.
                                             </small>
                                         </c:when>
-                                        <c:when test="${record.status eq 'BORROWED' and record.renewalCount lt maximumRenewals}">
+                                        <c:when test="${borrowPage.renewalEligibleBorrowIds.contains(record.id)}">
                                             <form action="${renewUrl}" method="post" class="renew-form">
                                                 <input type="hidden" name="borrowRecordId" value="${record.id}">
                                                 <button type="submit" class="renew-button">

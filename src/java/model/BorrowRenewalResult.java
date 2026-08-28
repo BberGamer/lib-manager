@@ -10,7 +10,7 @@ public enum BorrowRenewalResult {
     /** Lượt mượn đã được cộng thêm thời gian thành công. */
     SUCCESS,
 
-    /** Đầu sách đã có người đặt trước nên phải giữ nguyên hạn trả hiện tại. */
+    /** Khoảng gia hạn xung đột slot đặt trước và không còn bản sao khác đáp ứng. */
     BLOCKED_BY_RESERVATION,
 
     /** Lượt mượn quá hạn, vượt số lần gia hạn hoặc không thuộc độc giả thao tác. */

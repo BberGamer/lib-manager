@@ -51,7 +51,7 @@ public class FineService {
         }
         String normalizedCondition = bookCondition == null
                 ? "" : bookCondition.trim().toUpperCase(Locale.ROOT);
-        if (!"DAMAGED".equals(normalizedCondition) && !"LOST".equals(normalizedCondition)) {
+        if (!"DAMAGED".equals(normalizedCondition) && !"LOST".equals(normalizedCondition) && !"WORN".equals(normalizedCondition)) {
             throw new IllegalArgumentException("Tình trạng cuốn sách không hợp lệ.");
         }
         Integer bookPrice = record.getBook().getPrice();

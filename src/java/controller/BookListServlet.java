@@ -9,6 +9,7 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebServlet;
 import java.io.IOException;
 import service.BorrowService;
+import service.ReservationService;
 import java.util.List;
 
 /**
@@ -27,6 +28,7 @@ import java.util.List;
 public class BookListServlet extends HttpServlet {
 
     private final BorrowService borrowService = new BorrowService();
+    private final ReservationService reservationService = new ReservationService();
 
     private static final int PAGE_SIZE = 12;
 
@@ -78,6 +80,7 @@ public class BookListServlet extends HttpServlet {
             BookDAO dao = new BookDAOImpl();
 
             List<Book> books = dao.searchBooks(keyword, category, sort, order, page, PAGE_SIZE);
+            reservationService.applyImmediateAvailability(books);
             int totalRecords = dao.countBooks(keyword, category);
             int totalPages   = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
             if (totalPages < 1) totalPages = 1;

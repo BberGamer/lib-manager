@@ -27,7 +27,7 @@ public class Book {
     private Integer publishYear;
     private Integer price;
     private int     quantity;       // tổng số bản
-    private int     available;      // số bản còn cho mượn
+    private int     available;      // số bản có thể bắt đầu một lượt mượn trọn 7 ngày từ hôm nay
     private boolean reservable;     // có bản chờ nhận hoặc đang mượn đúng hạn để dự kiến slot
     private String  description;
     private String  coverImage;

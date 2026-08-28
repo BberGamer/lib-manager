@@ -104,8 +104,10 @@ public class MyReservationServlet extends HttpServlet {
                 ReservationService.CreationResult result = reservationService.createReservation(
                         user.getId(), bookId, requestedPickupDate);
                 session.setAttribute("reservationSuccessMessage",
-                        "Đặt trước thành công. Ngày nhận dự kiến: "
-                                + DISPLAY_DATE.format(result.getExpectedPickupDate()) + ".");
+                        "Đặt trước thành công từ "
+                                + DISPLAY_DATE.format(result.getExpectedPickupDate())
+                                + " đến " + DISPLAY_DATE.format(result.getExpectedEndDate())
+                                + " (không bao gồm ngày kết thúc).");
             }
         } catch (ReservationValidationException exception) {
             session.setAttribute("reservationErrorMessage", exception.getMessage());
@@ -160,7 +162,11 @@ public class MyReservationServlet extends HttpServlet {
             response.getWriter().write("{\"earliestAvailableDate\":\""
                     + estimate.getEarliestAvailableDate()
                     + "\",\"expectedPickupDate\":\""
-                    + estimate.getExpectedPickupDate() + "\"}");
+                    + estimate.getExpectedPickupDate()
+                    + "\",\"expectedEndDate\":\""
+                    + estimate.getExpectedEndDate()
+                    + "\",\"availableCapacity\":"
+                    + estimate.getAvailableCapacity() + "}");
         } catch (ReservationValidationException | NumberFormatException
                 | DateTimeParseException exception) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

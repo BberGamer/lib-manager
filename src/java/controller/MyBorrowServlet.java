@@ -119,7 +119,7 @@ public class MyBorrowServlet extends HttpServlet {
                 success = renewalResult == BorrowRenewalResult.SUCCESS;
                 successMessage = "Gia hạn sách thành công. Hạn trả đã được cộng thêm 7 ngày.";
                 errorMessage = renewalResult == BorrowRenewalResult.BLOCKED_BY_RESERVATION
-                        ? "Không thể gia hạn vì đầu sách đã có người đặt trước. Vui lòng trả sách đúng hạn hiện tại."
+                        ? "Không thể gia hạn vì khoảng 7 ngày mới trùng slot đặt trước và không còn bản sao khác."
                         : "Không thể gia hạn. Sách có thể đã quá hạn hoặc đã đạt giới hạn gia hạn.";
             }
             session.setAttribute(success ? "borrowSuccessMessage" : "borrowErrorMessage",

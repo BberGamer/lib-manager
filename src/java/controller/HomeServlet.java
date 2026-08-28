@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import dao.BookDAO;
 import dao.BookDAOImpl;
 import model.Book;
+import service.ReservationService;
 
 /**
  * HomeServlet — hiển thị trang chủ của hệ thống thư viện.
@@ -21,6 +22,7 @@ public class HomeServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(HomeServlet.class.getName());
     private final BookDAO bookDAO = new BookDAOImpl();
+    private final ReservationService reservationService = new ReservationService();
 
     /**
      * Xử lý yêu cầu GET hiển thị trang chủ.
@@ -39,6 +41,7 @@ public class HomeServlet extends HttpServlet {
         // 1. Sách mượn nhiều nhất
         try {
             List<Book> popularBooks = bookDAO.getTopBorrowedBooks(8);
+            reservationService.applyImmediateAvailability(popularBooks);
             request.setAttribute("popularBooks", popularBooks);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mượn nhiều nhất trong HomeServlet", e);
@@ -47,6 +50,7 @@ public class HomeServlet extends HttpServlet {
         // 2. Sách mới nhất
         try {
             List<Book> latestBooks = bookDAO.getLatestBooks(30, 8);
+            reservationService.applyImmediateAvailability(latestBooks);
             request.setAttribute("latestBooks", latestBooks);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mới nhất trong HomeServlet", e);

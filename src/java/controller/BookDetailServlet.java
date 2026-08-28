@@ -14,6 +14,7 @@ import jakarta.servlet.annotation.MultipartConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import service.ReservationService;
 
 /**
  * BookDetailServlet – xử lý CRUD sách.
@@ -37,6 +38,7 @@ import java.util.List;
 )
 public class BookDetailServlet extends HttpServlet {
 
+    private final ReservationService reservationService = new ReservationService();
     private static final int PAGE_SIZE_COMMENT = 6;
 
     private String getRedirectBase(HttpServletRequest request) {
@@ -141,6 +143,7 @@ public class BookDetailServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/views/book_detail.jsp").forward(request, response);
                 return;
             }
+            reservationService.applyImmediateAvailability(book);
 
             List<Author> authors = dao.getAuthorsByBookId(id);
 
