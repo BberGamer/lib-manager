@@ -53,7 +53,14 @@ public class NotificationSchedulerListener implements ServletContextListener {
         if (scheduler != null && !scheduler.isShutdown()) {
             scheduler.shutdownNow();
         }
+        try {
+            com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.checkedShutdown();
+            System.out.println("[NotificationSchedulerListener] Đã dừng MySQL AbandonedConnectionCleanupThread thành công.");
+        } catch (Exception e) {
+            System.err.println("[NotificationSchedulerListener] Lỗi khi dọn dẹp MySQL AbandonedConnectionCleanupThread: " + e.getMessage());
+        }
     }
+
 
     /**
      * Tính số phút từ hiện tại cho tới mốc giờ mục tiêu (ví dụ 07:00 sáng)

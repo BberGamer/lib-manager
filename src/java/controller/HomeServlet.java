@@ -41,8 +41,12 @@ public class HomeServlet extends HttpServlet {
         // 1. Sách mượn nhiều nhất
         try {
             List<Book> popularBooks = bookDAO.getTopBorrowedBooks(8);
-            reservationService.applyImmediateAvailability(popularBooks);
             request.setAttribute("popularBooks", popularBooks);
+            try {
+                reservationService.applyImmediateAvailability(popularBooks);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Lỗi khi cập nhật trạng thái khả dụng cho sách mượn nhiều nhất", e);
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mượn nhiều nhất trong HomeServlet", e);
         }
@@ -50,11 +54,16 @@ public class HomeServlet extends HttpServlet {
         // 2. Sách mới nhất
         try {
             List<Book> latestBooks = bookDAO.getLatestBooks(30, 8);
-            reservationService.applyImmediateAvailability(latestBooks);
             request.setAttribute("latestBooks", latestBooks);
+            try {
+                reservationService.applyImmediateAvailability(latestBooks);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Lỗi khi cập nhật trạng thái khả dụng cho sách mới nhất", e);
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi khi lấy sách mới nhất trong HomeServlet", e);
         }
+
 
         // 3. Thống kê tổng số sách
         try {
