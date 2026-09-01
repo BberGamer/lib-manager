@@ -20,8 +20,8 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class VNPayConfig {
 
-    public static final String VNP_TMN_CODE = "9FZ51WZV";
-    public static final String VNP_HASH_SECRET = "QLAYGQVKQQSMIECGADAZHVLKRXWSDJHK";
+    public static final String VNP_TMN_CODE = "";
+    public static final String VNP_HASH_SECRET = "";
     public static final String VNP_PAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
     public static final String VNP_VERSION = "2.1.0";
     public static final String VNP_COMMAND = "pay";
