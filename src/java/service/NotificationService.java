@@ -16,8 +16,8 @@ public class NotificationService {
 
     private final NotificationDAO notificationDAO = new NotificationDAO();
     
-    private static final String from = "hainhhe187030@fpt.edu.vn";
-    private static final String password = "dtbw hgii vekm klit";
+    private static final String from = "";
+    private static final String password = "";
 
     public boolean createAndSendNotification(int userId, String title, String message, String type, Integer refId, String refType, String emailTo) {
         try {
@@ -41,6 +41,9 @@ public class NotificationService {
     }
 
     private void sendEmail(String to, String subject, String text) {
+        if (from == null || from.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return; // Bỏ qua gửi email nếu thông tin tài khoản bị bỏ rỗng
+        }
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");

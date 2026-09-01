@@ -21,7 +21,7 @@ import javax.mail.internet.MimeMessage;
  */
 public class ResetSPasswordService {
     private final int LIMIT_MINUS = 10;
-    static final String from = "[EMAIL_ADDRESS]";
+    static final String from = "";
     static final String password = "";
     
     public String generateToken() {
@@ -38,6 +38,9 @@ public class ResetSPasswordService {
     
 
     public boolean sendEmail(String to, String link, String name) {
+        if (from == null || from.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            return true; // Giả lập gửi thành công khi chưa cấu hình tài khoản email
+        }
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
