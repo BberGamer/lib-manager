@@ -21,8 +21,8 @@ import javax.mail.internet.MimeMessage;
  */
 public class ResetSPasswordService {
     private final int LIMIT_MINUS = 10;
-    static final String from = "hainhhe187030@fpt.edu.vn";
-    static final String password = "dtbw hgii vekm klit";
+    static final String from = "[EMAIL_ADDRESS]";
+    static final String password = "";
     
     public String generateToken() {
         return UUID.randomUUID().toString();
